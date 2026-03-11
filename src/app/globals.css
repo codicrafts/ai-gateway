@@ -1,0 +1,43 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@layer base {
+  body {
+    @apply font-sans bg-gradient-to-br from-dark-darker to-dark text-text-primary leading-relaxed min-h-screen;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply px-6 py-2.5 bg-primary text-white rounded-lg font-semibold cursor-pointer transition-all border-none text-[0.95rem] hover:bg-primary-hover hover:-translate-y-0.5 hover:shadow-[0_10px_25px_rgba(99,102,241,0.3)] inline-flex items-center gap-2;
+  }
+  .btn-secondary {
+    @apply px-6 py-2.5 bg-transparent text-text-primary border border-border rounded-lg font-semibold cursor-pointer transition-all text-[0.95rem] hover:bg-dark-light hover:border-primary inline-flex items-center gap-2;
+  }
+  .btn-danger {
+    @apply px-6 py-2.5 bg-danger text-white rounded-lg font-semibold cursor-pointer transition-all border-none hover:bg-red-600 inline-flex items-center gap-2;
+  }
+  .btn-large {
+    @apply px-8 py-4 text-lg;
+  }
+  .form-control {
+    @apply w-full py-3 px-3 bg-dark-light/50 border border-border rounded-lg text-text-primary text-base transition-all focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_rgba(99,102,241,0.1)];
+  }
+  .card {
+    @apply bg-dark/60 border border-border rounded-xl p-8 mb-8;
+  }
+}
+
+@layer utilities {
+  .animate-slide-in {
+    animation: slideIn 0.3s ease-out;
+  }
+}
+
+@keyframes slideIn {
+  from { transform: translateX(400px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
