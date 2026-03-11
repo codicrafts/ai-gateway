@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "name": "生成 Commit 并推送",
+  "description": "分析 git diff，生成中文 commit message，自动提交并推送到远程",
+  "version": "1",
+  "when": {
+    "type": "userTriggered"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "请执行以下步骤：\n1. 使用 git diff --cached 分析当前 staged 的改动\n2. 生成符合 Conventional Commits 规范的中文 commit message（标题：type(scope): 简短描述，正文：列出主要改动点）\n3. 执行 git commit -m '生成的message'\n4. 执行 git push\n5. 报告执行结果"
+  }
+}
