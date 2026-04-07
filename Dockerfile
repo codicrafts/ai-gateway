@@ -10,7 +10,7 @@ COPY packages/shared-config/package.json ./packages/shared-config/package.json
 COPY packages/shared-types/package.json ./packages/shared-types/package.json
 COPY packages/design-system/package.json ./packages/design-system/package.json
 COPY packages/product-services/package.json ./packages/product-services/package.json
-RUN corepack enable pnpm && pnpm install --frozen-lockfile
+RUN corepack enable && corepack prepare pnpm@9.15.9 --activate && pnpm install --frozen-lockfile
 
 FROM base AS builder
 WORKDIR /app
@@ -18,7 +18,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED 1
-RUN corepack enable pnpm && pnpm build
+RUN corepack enable && corepack prepare pnpm@9.15.9 --activate && pnpm build
 
 FROM base AS runner
 WORKDIR /app
@@ -37,4 +37,4 @@ EXPOSE 3000
 ENV PORT 3000
 ENV HOSTNAME "0.0.0.0"
 
-CMD ["sh", "-lc", "corepack enable pnpm >/dev/null 2>&1 && pnpm --dir apps/web start"]
+CMD ["sh", "-lc", "corepack enable >/dev/null 2>&1 && corepack prepare pnpm@9.15.9 --activate >/dev/null 2>&1 && pnpm --dir apps/web start"]
