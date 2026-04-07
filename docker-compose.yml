@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ai-gateway-frontend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - ONE_API_URL=${ONE_API_URL}
+      - ONE_API_KEY=${ONE_API_KEY}
+      - ONE_API_ACCESS_TOKEN=${ONE_API_ACCESS_TOKEN}
+      - ONE_API_USER_ID=${ONE_API_USER_ID}
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-your-secret-key}

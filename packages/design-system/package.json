@@ -1,0 +1,6 @@
+{
+  "name": "@ai-gateway/design-system",
+  "version": "0.1.0",
+  "private": true,
+  "types": "src/index.ts"
+}

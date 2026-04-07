@@ -1,0 +1,281 @@
+import { createServerAdminSupabaseClient, type Database } from '@/lib/supabase';
+import type { AppUser } from '@/services/account/app-user.service';
+import { resolveAccessibleTeamContext } from '@/services/team/team-context.service';
+
+export type BillingEntry = {
+  id: string;
+  type: 'usage' | 'recharge';
+  title: string;
+  description: string;
+  amount: number;
+  created_at: string;
+  status: 'settled';
+  model?: string;
+  token_name?: string;
+  total_tokens?: number;
+  currency?: 'CNY' | 'USD';
+  reference?: string;
+};
+
+export type BillingSummary = {
+  current_balance: number;
+  current_month_spend: number;
+  previous_month_spend: number;
+  change_percentage: number | null;
+  average_daily_spend: number;
+  estimated_available_days: number | null;
+  recent_entries: BillingEntry[];
+  currency: 'USD';
+};
+
+export type BillingExportRow = {
+  time: string;
+  type: 'usage' | 'recharge';
+  title: string;
+  description: string;
+  model: string;
+  token_name: string;
+  total_tokens: number | '';
+  amount: number;
+  currency: string;
+  reference: string;
+};
+
+function isSameMonth(date: Date, target: Date): boolean {
+  return date.getFullYear() === target.getFullYear() && date.getMonth() === target.getMonth();
+}
+
+function getPreviousMonth(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth() - 1, 1);
+}
+
+function roundToTwo(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
+type OrgUsageLedgerRow = Database['public']['Tables']['org_usage_ledger']['Row'];
+type OrgBillingLedgerRow = Database['public']['Tables']['org_billing_ledger']['Row'];
+
+function mapOrgBillingEntry(row: OrgBillingLedgerRow): BillingEntry {
+  const metadata = row.metadata as Record<string, unknown>;
+  const title = row.type === 'topup'
+    ? '组织充值'
+    : row.type === 'refund'
+      ? '退款'
+      : row.type === 'adjustment'
+        ? '账务调整'
+        : '组织账单';
+
+  return {
+    id: `${row.type}-${row.id}`,
+    type: row.type === 'usage' ? 'usage' : 'recharge',
+    title,
+    description: typeof metadata.description === 'string' ? metadata.description : row.reference_id || title,
+    amount: Number(row.amount),
+    created_at: row.occurred_at,
+    status: 'settled',
+    currency: 'USD',
+    reference: row.reference_id || undefined,
+  };
+}
+
+export async function getOrganizationBalance(teamId: string): Promise<number> {
+  const supabase = createServerAdminSupabaseClient();
+  const { data: usageRowsData, error: usageError } = await supabase
+    .from('org_usage_ledger')
+    .select('amount')
+    .eq('team_id', teamId);
+
+  if (usageError) {
+    throw new Error('获取组织用量账本失败');
+  }
+
+  const { data: billingRowsData, error: billingError } = await supabase
+    .from('org_billing_ledger')
+    .select('amount')
+    .eq('team_id', teamId);
+
+  if (billingError) {
+    throw new Error('获取组织账务账本失败');
+  }
+
+  const usageRows = (usageRowsData || []) as Array<Pick<OrgUsageLedgerRow, 'amount'>>;
+  const billingRows = (billingRowsData || []) as Array<Pick<OrgBillingLedgerRow, 'amount'>>;
+
+  return roundToTwo(
+    billingRows.reduce((sum, row) => sum + Number(row.amount || 0), 0) -
+      usageRows.reduce((sum, row) => sum + Number(row.amount || 0), 0)
+  );
+}
+
+export async function getBillingSummaryForTeam(teamId: string): Promise<BillingSummary> {
+  const supabase = createServerAdminSupabaseClient();
+
+  const [usageRowsResult, billingRowsResult, usageAggregateRowsResult, billingBalanceRowsResult] = await Promise.all([
+    supabase
+      .from('org_usage_ledger')
+      .select('*')
+      .eq('team_id', teamId)
+      .order('occurred_at', { ascending: false })
+      .limit(100),
+    supabase
+      .from('org_billing_ledger')
+      .select('*')
+      .eq('team_id', teamId)
+      .order('occurred_at', { ascending: false })
+      .limit(100),
+    supabase
+      .from('org_usage_ledger')
+      .select('amount, occurred_at')
+      .eq('team_id', teamId),
+    supabase
+      .from('org_billing_ledger')
+      .select('amount')
+      .eq('team_id', teamId),
+  ]);
+
+  const { data: usageRowsData, error: usageError } = usageRowsResult;
+  if (usageError) {
+    throw new Error('获取组织账单失败');
+  }
+
+  const { data: billingRowsData, error: billingError } = billingRowsResult;
+  if (billingError) {
+    throw new Error('获取组织账务流水失败');
+  }
+
+  const { data: usageAggregateRowsData, error: usageAggregateError } = usageAggregateRowsResult;
+  if (usageAggregateError) {
+    throw new Error('获取组织用量聚合数据失败');
+  }
+
+  const { data: billingBalanceRowsData, error: billingBalanceError } = billingBalanceRowsResult;
+  if (billingBalanceError) {
+    throw new Error('获取组织账务聚合数据失败');
+  }
+
+  const usageRows = (usageRowsData || []) as OrgUsageLedgerRow[];
+  const billingRows = (billingRowsData || []) as OrgBillingLedgerRow[];
+  const usageAggregateRows = (usageAggregateRowsData || []) as Array<Pick<OrgUsageLedgerRow, 'amount' | 'occurred_at'>>;
+  const billingBalanceRows = (billingBalanceRowsData || []) as Array<Pick<OrgBillingLedgerRow, 'amount'>>;
+  const now = new Date();
+  const previousMonth = getPreviousMonth(now);
+  const recentThirtyDaysStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+  const usageEntries: BillingEntry[] = usageRows.map((row) => ({
+    id: `usage-${row.new_api_log_id ?? row.id}`,
+    type: 'usage',
+    title: '模型调用',
+    description: row.provider ? `${row.model} / ${row.provider}` : row.model,
+    amount: -Number(row.amount || 0),
+    created_at: row.occurred_at,
+    status: 'settled',
+    model: row.model,
+    token_name: row.org_api_key_id ? `Key #${row.org_api_key_id}` : undefined,
+    total_tokens: Number(row.total_tokens || 0),
+  }));
+  const rechargeEntries = billingRows.map(mapOrgBillingEntry);
+
+  const currentMonthSpend = usageAggregateRows
+    .filter((row) => isSameMonth(new Date(row.occurred_at), now))
+    .reduce((sum, row) => sum + Math.abs(Number(row.amount || 0)), 0);
+
+  const previousMonthSpend = usageAggregateRows
+    .filter((row) => isSameMonth(new Date(row.occurred_at), previousMonth))
+    .reduce((sum, row) => sum + Math.abs(Number(row.amount || 0)), 0);
+
+  const recentThirtyDaySpend = usageAggregateRows
+    .filter((row) => new Date(row.occurred_at) >= recentThirtyDaysStart)
+    .reduce((sum, row) => sum + Math.abs(Number(row.amount || 0)), 0);
+
+  const averageDailySpend = roundToTwo(recentThirtyDaySpend / 30);
+  const totalBillingAmount = billingBalanceRows.reduce((sum, row) => sum + Number(row.amount || 0), 0);
+  const totalUsageAmount = usageAggregateRows.reduce((sum, row) => sum + Number(row.amount || 0), 0);
+  const currentBalance = roundToTwo(totalBillingAmount - totalUsageAmount);
+  const estimatedAvailableDays = averageDailySpend > 0 ? Math.max(0, Math.floor(currentBalance / averageDailySpend)) : null;
+  const changePercentage = previousMonthSpend > 0
+    ? roundToTwo(((currentMonthSpend - previousMonthSpend) / previousMonthSpend) * 100)
+    : null;
+
+  const recentEntries = [...usageEntries, ...rechargeEntries]
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .slice(0, 20);
+
+  return {
+    current_balance: currentBalance,
+    current_month_spend: roundToTwo(currentMonthSpend),
+    previous_month_spend: roundToTwo(previousMonthSpend),
+    change_percentage: changePercentage,
+    average_daily_spend: averageDailySpend,
+    estimated_available_days: estimatedAvailableDays,
+    recent_entries: recentEntries,
+    currency: 'USD',
+  };
+}
+
+export async function getBillingSummary(appUser: AppUser, teamId?: string | null): Promise<BillingSummary> {
+  const teamContext = await resolveAccessibleTeamContext(appUser.id, teamId);
+  return getBillingSummaryForTeam(teamContext.teamId);
+}
+
+export async function getBillingExportRows(appUser: AppUser, teamId?: string | null): Promise<BillingExportRow[]> {
+  const summary = await getBillingSummary(appUser, teamId);
+
+  return summary.recent_entries.map((entry) => ({
+    time: entry.created_at,
+    type: entry.type,
+    title: entry.title,
+    description: entry.description,
+    model: entry.model || '',
+    token_name: entry.token_name || '',
+    total_tokens: entry.total_tokens ?? '',
+    amount: entry.amount,
+    currency: entry.currency || summary.currency,
+    reference: entry.reference || '',
+  }));
+}
+
+function escapeCsvCell(value: string | number): string {
+  const text = String(value);
+  if (/[",\n]/.test(text)) {
+    return `"${text.replace(/"/g, '""')}"`;
+  }
+  return text;
+}
+
+export function buildBillingExportCsv(rows: BillingExportRow[]): string {
+  const headers = [
+    'time',
+    'type',
+    'title',
+    'description',
+    'model',
+    'token_name',
+    'total_tokens',
+    'amount',
+    'currency',
+    'reference',
+  ];
+
+  const lines = [
+    headers.join(','),
+    ...rows.map((row) =>
+      [
+        row.time,
+        row.type,
+        row.title,
+        row.description,
+        row.model,
+        row.token_name,
+        row.total_tokens,
+        row.amount,
+        row.currency,
+        row.reference,
+      ]
+        .map(escapeCsvCell)
+        .join(',')
+    ),
+  ];
+
+  return lines.join('\n');
+}

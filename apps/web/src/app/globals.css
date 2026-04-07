@@ -1,0 +1,194 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --page-paper: #f7efe1;
+    --page-paper-deep: #eadbc3;
+    --page-ink: #181310;
+    --page-muted: #6c5b4f;
+    --page-border: #cdb79a;
+    --page-accent: #a94b2b;
+    --page-accent-deep: #215d59;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply font-sans text-[15px] text-text-primary leading-relaxed min-h-screen;
+    background:
+      radial-gradient(circle at top left, rgba(169, 75, 43, 0.08), transparent 30%),
+      radial-gradient(circle at top right, rgba(33, 93, 89, 0.08), transparent 26%),
+      linear-gradient(180deg, #fff9ef 0%, #f7efe1 48%, #f1e3cf 100%);
+    position: relative;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(24, 19, 16, 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(24, 19, 16, 0.035) 1px, transparent 1px);
+    background-size: 42px 42px;
+    mask-image: radial-gradient(circle at center, black 35%, transparent 100%);
+    pointer-events: none;
+    z-index: -2;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      linear-gradient(transparent, rgba(255, 248, 238, 0.35)),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+    mix-blend-mode: multiply;
+    opacity: 0.45;
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+    letter-spacing: -0.03em;
+    line-height: 1.02;
+  }
+
+  ::selection {
+    background: rgba(169, 75, 43, 0.18);
+    color: var(--page-ink);
+  }
+
+  a {
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.22em;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply px-5 py-2.5 bg-primary text-white rounded-full font-semibold cursor-pointer transition-all border border-primary text-[0.86rem] shadow-glow hover:bg-primary-hover hover:-translate-y-0.5 hover:shadow-lg inline-flex items-center gap-2 uppercase tracking-[0.1em];
+  }
+  .btn-secondary {
+    @apply px-5 py-2.5 bg-dark-light/80 text-text-primary border border-border rounded-full font-semibold cursor-pointer transition-all text-[0.86rem] hover:bg-white hover:border-primary inline-flex items-center gap-2 shadow-sm uppercase tracking-[0.1em];
+  }
+  .btn-danger {
+    @apply px-5 py-2.5 bg-danger text-white rounded-full font-semibold cursor-pointer transition-all border border-danger hover:opacity-90 inline-flex items-center gap-2 uppercase tracking-[0.1em];
+  }
+  .btn-large {
+    @apply px-6 py-3 text-base;
+  }
+  .form-control {
+    @apply w-full py-2.5 px-4 bg-white/90 border border-border rounded-[1rem] text-text-primary text-sm transition-all focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 shadow-sm;
+  }
+  .card {
+    @apply bg-white/80 border border-border rounded-[1.5rem] p-6 mb-8 shadow-soft hover:shadow-md transition-shadow duration-300;
+  }
+  .editorial-panel {
+    @apply bg-white/80 border border-border rounded-[1.75rem] shadow-soft backdrop-blur-sm;
+  }
+  .section-shell {
+    @apply max-w-[1280px] mx-auto px-4 sm:px-5;
+  }
+  .eyebrow {
+    @apply inline-flex items-center gap-2 rounded-full border border-border bg-white/80 px-3.5 py-1.5 text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-text-secondary;
+  }
+}
+
+@layer utilities {
+  .animate-slide-in {
+    animation: slideIn 0.3s ease-out;
+  }
+  .animation-delay-2000 {
+    animation-delay: 2s;
+  }
+}
+
+@keyframes slideIn {
+  from { transform: translateX(400px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes drawerIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes drawerOut {
+  from { transform: translateX(0); }
+  to { transform: translateX(100%); }
+}
+
+@keyframes overlayIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes overlayOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+.animate-slide-down {
+  animation: slideDown 0.2s ease-out;
+}
+
+.animate-drawer-in {
+  animation: drawerIn 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.animate-drawer-out {
+  animation: drawerOut 0.22s ease-in forwards;
+}
+
+.animate-overlay-in {
+  animation: overlayIn 0.28s ease-out forwards;
+}
+
+.animate-overlay-out {
+  animation: overlayOut 0.22s ease-in forwards;
+}
+
+/* Custom scrollbar for mobile tables */
+.overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Elegant custom scrollbar for modals and panels */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.25);
+}

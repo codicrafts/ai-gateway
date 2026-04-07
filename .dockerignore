@@ -1,0 +1,17 @@
+.git
+.github
+.next
+.turbo
+node_modules
+**/node_modules
+**/.next
+.env
+.env.*
+Dockerfile.*
+docker-compose.yml
+new-api/
+tmp/
+coverage/
+dist/
+*.log
+README.md

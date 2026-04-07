@@ -1,0 +1,2021 @@
+'use client';
+
+import { useEffect, useState, useCallback, useRef } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import Navbar from '@/components/Navbar';
+import EditorialSelect from '@/components/ui/EditorialSelect';
+import { useAppDialog } from '@/components/ui/AppDialogProvider';
+import { logoutUser } from '@/lib/logout';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { setUser } from '@/store/slices/authSlice';
+import {
+  createApiKey,
+  confirmPaymentOrder as confirmPaymentOrderAction,
+  createPaymentOrder as createPaymentOrderAction,
+  deleteApiKey as deleteApiKeyAction,
+  fetchApiKeySecret,
+  hydrateDashboardSnapshot,
+  updateApiKey,
+  type PaymentMethod,
+} from '@/store/slices/dashboardSlice';
+import { showNotification } from '@/store/slices/notificationSlice';
+import {
+  createTeam,
+  updateTeam,
+  deleteTeam,
+  updateMemberRole,
+  removeMember,
+  transferOwnership,
+  exportAuditLogs,
+  hydrateTeamWorkspace,
+} from '@/store/slices/teamSlice';
+import { formatDate, formatCurrency, copyToClipboard } from '@/utils/helpers';
+import {
+  TeamRole,
+  AuditAction,
+  CreateTeamRequest,
+  UpdateTeamRequest,
+  CreateTeamInvitationResponse,
+  CancelTeamInvitationResponse,
+} from '@ai-gateway/shared-types/team';
+import type { User } from '@ai-gateway/shared-types';
+import TeamInfoCard from '@/components/team/TeamInfoCard';
+import MemberList from '@/components/team/MemberList';
+import PendingInvitationList from '@/components/team/PendingInvitationList';
+import AuditLogList from '@/components/team/AuditLogList';
+import CreateTeamModal from '@/components/team/CreateTeamModal';
+import InviteModal from '@/components/team/InviteModal';
+import TeamSettingsModal from '@/components/team/TeamSettingsModal';
+import TransferOwnerModal from '@/components/team/TransferOwnerModal';
+import JoinApplicationsPanel from '@/components/team/JoinApplicationsPanel';
+import TeamDirectoryPanel from '@/components/team/TeamDirectoryPanel';
+import PhoneBindingCard from '@/components/account/PhoneBindingCard';
+import TwoFactorCard from '@/components/account/TwoFactorCard';
+import type { DashboardPageBootstrapPayload } from '@/services/dashboard/dashboard-page-bootstrap.service';
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler, ArcElement } from 'chart.js';
+import { Line, Doughnut } from 'react-chartjs-2';
+
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler, ArcElement);
+
+export type DashboardSection = 'overview' | 'api-keys' | 'usage' | 'billing' | 'profile' | 'team';
+
+type DashboardClientProps = {
+  section: DashboardSection;
+  initialBootstrap?: DashboardPageBootstrapPayload | null;
+};
+
+const API_KEY_PERMISSION_SCOPE_ITEMS = [
+  { value: 'chat', zh: '对话补全', en: 'Chat Completions' },
+  { value: 'responses', zh: 'Responses 接口', en: 'Responses API' },
+  { value: 'embeddings', zh: '向量嵌入', en: 'Embeddings' },
+  { value: 'images', zh: '图像生成', en: 'Images' },
+  { value: 'audio', zh: '音频接口', en: 'Audio' },
+  { value: 'rerank', zh: '重排序', en: 'Rerank' },
+  { value: 'models.read', zh: '读取模型列表', en: 'Read Models' },
+] as const;
+
+export default function DashboardClient({ section, initialBootstrap = null }: DashboardClientProps) {
+  const dispatch = useAppDispatch();
+  const router = useRouter();
+  const { confirm: confirmDialog } = useAppDialog();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const { currentUser, isLoggedIn, loading: authLoading } = useAppSelector((s) => s.auth);
+  const { apiKeys, availableModels, usageLogs, usageStats, monthlyRequests, monthlyCost, billingSummary, paymentOrders } = useAppSelector((s) => s.dashboard);
+  const locale = useAppSelector((s) => s.locale.locale);
+  const isZh = locale === 'zh';
+  const tr = useCallback((zh: string, en: string) => (isZh ? zh : en), [isZh]);
+  const getErrorMessage = useCallback((error: unknown, fallback: string) => {
+    if (error instanceof Error && error.message) return error.message;
+    if (typeof error === 'string' && error.trim().length > 0) return error;
+    return fallback;
+  }, []);
+  const getPaymentMethodLabel = useCallback((method: PaymentMethod) => {
+    switch (method) {
+      case 'alipay':
+        return tr('支付宝', 'Alipay');
+      case 'wechat_pay':
+        return tr('微信支付', 'WeChat Pay');
+      case 'credit_card':
+        return tr('信用卡', 'Credit Card');
+      default:
+        return 'PayPal';
+    }
+  }, [tr]);
+  // 团队管理 Redux 状态
+  const { 
+    currentTeam, 
+    teams, 
+    members, 
+    auditLogs: teamAuditLogs, 
+    invitations: teamInvitations,
+    loading: teamLoading 
+  } = useAppSelector((s) => s.team);
+  
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showKeyModal, setShowKeyModal] = useState(false);
+  const [showRechargeModal, setShowRechargeModal] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showAvatarModal, setShowAvatarModal] = useState(false);
+  const [showEditKeyModal, setShowEditKeyModal] = useState(false);
+  const [editingKey, setEditingKey] = useState<typeof apiKeys[0] | null>(null);
+  const [rechargeAmount, setRechargeAmount] = useState('100');
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>('alipay');
+  const [newKeyValue, setNewKeyValue] = useState('');
+  const [keyName, setKeyName] = useState('');
+  const [keyRemark, setKeyRemark] = useState('');
+  const [keyExpiry, setKeyExpiry] = useState('');
+  const [keyModels, setKeyModels] = useState<string[]>([]);
+  const [keyIpWhitelist, setKeyIpWhitelist] = useState('');
+  const [keyPermissionScopes, setKeyPermissionScopes] = useState<string[]>([]);
+  const [copyingFullKeyId, setCopyingFullKeyId] = useState<number | null>(null);
+  const [apiKeyModelOptions, setApiKeyModelOptions] = useState<string[]>([]);
+  const [apiKeyModelOptionsLoading, setApiKeyModelOptionsLoading] = useState(false);
+  const [editKeyStatus, setEditKeyStatus] = useState<'active' | 'disabled'>('active');
+  const [profileData, setProfileData] = useState({ nickname: '', phone: '', avatar: '' });
+  const [passwordData, setPasswordData] = useState({ current: '', newPass: '', confirm: '' });
+  
+  // 团队管理弹窗状态
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [showCreateTeamModal, setShowCreateTeamModal] = useState(false);
+  const [showTeamSettingsModal, setShowTeamSettingsModal] = useState(false);
+  const [showTransferOwnerModal, setShowTransferOwnerModal] = useState(false);
+  const [teamActiveTab, setTeamActiveTab] = useState<'members' | 'applications' | 'audit' | 'settings'>('members');
+  // 团队成员列表筛选状态
+  const [memberSearchQuery, setMemberSearchQuery] = useState('');
+  const [memberRoleFilter, setMemberRoleFilter] = useState<TeamRole | null>(null);
+  
+  // 审计日志筛选状态
+  const [auditStartDate, setAuditStartDate] = useState<string | null>(null);
+  const [auditEndDate, setAuditEndDate] = useState<string | null>(null);
+  const [auditActionFilter, setAuditActionFilter] = useState<AuditAction | null>(null);
+  
+  const [initialDataReady, setInitialDataReady] = useState(Boolean(initialBootstrap));
+  const [routeRefreshing, setRouteRefreshing] = useState(false);
+  const apiKeyModelsRequestedRef = useRef(false);
+  const activeTeamId =
+    currentTeam?.id ||
+    initialBootstrap?.dashboard.team_id ||
+    initialBootstrap?.team.current_team?.id ||
+    searchParams?.get('team') ||
+    null;
+
+  const buildDashboardHref = useCallback((basePath: string, nextTeamId?: string | null) => {
+    const params = new URLSearchParams(searchParams?.toString() || '');
+    if (nextTeamId) {
+      params.set('team', nextTeamId);
+    } else {
+      params.delete('team');
+    }
+    const query = params.toString();
+    return query ? `${basePath}?${query}` : basePath;
+  }, [searchParams]);
+
+  const refreshDashboardRoute = useCallback((nextTeamId?: string | null, nextPathname?: string) => {
+    const targetPath = nextPathname || pathname;
+    const currentTeamId = searchParams?.get('team') ?? initialBootstrap?.dashboard.team_id ?? currentTeam?.id ?? null;
+    const currentHref = buildDashboardHref(pathname, currentTeamId);
+    const nextHref = buildDashboardHref(targetPath, nextTeamId ?? currentTeamId);
+
+    setInitialDataReady(false);
+    setRouteRefreshing(true);
+
+    if (nextHref !== currentHref) {
+      router.push(nextHref);
+      return;
+    }
+
+    router.refresh();
+  }, [buildDashboardHref, currentTeam?.id, initialBootstrap?.dashboard.team_id, pathname, router, searchParams]);
+
+  useEffect(() => {
+    if (currentUser) {
+      const displayName = currentUser.name || currentUser.username || '';
+      const avatarValue = currentUser.image && currentUser.image.trim().length > 0
+        ? currentUser.image
+        : displayName.charAt(0).toUpperCase() || 'U';
+      setProfileData({
+        nickname: displayName,
+        phone: currentUser.phone || '',
+        avatar: avatarValue,
+      });
+    }
+  }, [currentUser]);
+
+  useEffect(() => {
+    if (!initialBootstrap) {
+      setInitialDataReady(false);
+      return;
+    }
+
+    dispatch(hydrateTeamWorkspace({
+      teams: initialBootstrap.team.teams,
+      currentTeam: initialBootstrap.team.current_team,
+      members: initialBootstrap.team.members,
+      auditLogs: initialBootstrap.team.audit_logs,
+      invitations: initialBootstrap.team.invitations,
+    }));
+
+    dispatch(hydrateDashboardSnapshot({
+      apiKeys: initialBootstrap.dashboard.api_keys,
+      availableModels: initialBootstrap.dashboard.available_models,
+      usageLogs: initialBootstrap.dashboard.usage.logs,
+      usageStats: initialBootstrap.dashboard.usage.stats,
+      billingSummary: initialBootstrap.dashboard.billing_summary,
+      paymentOrders: initialBootstrap.dashboard.payment_orders,
+    }));
+
+    setRouteRefreshing(false);
+    setInitialDataReady(true);
+  }, [dispatch, initialBootstrap]);
+
+  useEffect(() => {
+    if (availableModels.length === 0) return;
+    const nextOptions = availableModels.map((model) => model.model_name).filter(Boolean);
+    if (nextOptions.length > 0) {
+      setApiKeyModelOptions(nextOptions);
+      apiKeyModelsRequestedRef.current = true;
+    }
+  }, [availableModels]);
+
+  // 获取当前用户在当前团队中的角色
+  const getCurrentUserRole = useCallback((): TeamRole => {
+    if (!currentTeam || !currentUser) return 'guest';
+    const currentTeamItem = teams.find(t => t.id === currentTeam.id);
+    return currentTeamItem?.user_role || 'guest';
+  }, [currentTeam, currentUser, teams]);
+  const currentUserRole = getCurrentUserRole();
+  const canManageTeam = currentUserRole === 'owner' || currentUserRole === 'admin';
+
+  const handleUserUpdated = useCallback((user: User) => {
+    dispatch(setUser(user));
+    setProfileData((previous) => ({
+      ...previous,
+      nickname: user.name || user.username || previous.nickname,
+      phone: user.phone || '',
+      avatar:
+        user.image && user.image.trim().length > 0
+          ? user.image
+          : (user.name || user.username || previous.avatar || 'U').charAt(0).toUpperCase(),
+    }));
+  }, [dispatch]);
+
+  // 团队管理回调函数
+  const handleCreateTeam = useCallback(async (data: CreateTeamRequest) => {
+    try {
+      const createdTeam = await dispatch(createTeam(data)).unwrap();
+      dispatch(showNotification({ message: tr('团队创建成功', 'Team created successfully') }));
+      setShowCreateTeamModal(false);
+      refreshDashboardRoute(createdTeam.id, '/dashboard/team');
+    } catch (error) {
+      dispatch(showNotification({ message: getErrorMessage(error, tr('创建团队失败', 'Failed to create team')), type: 'error' }));
+    }
+  }, [dispatch, getErrorMessage, refreshDashboardRoute, tr]);
+
+  const handleUpdateTeam = useCallback(async (data: UpdateTeamRequest) => {
+    if (!currentTeam) return;
+    try {
+      await dispatch(updateTeam({ teamId: currentTeam.id, request: data })).unwrap();
+      dispatch(showNotification({ message: tr('团队设置已保存', 'Team settings saved') }));
+      setShowTeamSettingsModal(false);
+      refreshDashboardRoute(currentTeam.id);
+    } catch (error) {
+      dispatch(showNotification({ message: getErrorMessage(error, tr('更新团队失败', 'Failed to update team')), type: 'error' }));
+    }
+  }, [currentTeam, dispatch, getErrorMessage, refreshDashboardRoute, tr]);
+
+  const handleInviteMember = useCallback(async (email: string, role: Exclude<TeamRole, 'owner'>) => {
+    if (!currentTeam) return;
+    try {
+      const response = await fetch(`/api/teams/${currentTeam.id}/invitations`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, role }),
+      });
+      const result: CreateTeamInvitationResponse = await response.json();
+
+      if (!response.ok || !result.success || !result.data) {
+        throw new Error(result.error || tr('邀请成员失败', 'Failed to invite member'));
+      }
+
+      setShowInviteModal(false);
+      dispatch(showNotification({
+        message: isZh ? `已向 ${email} 创建邀请链接` : `Invitation created for ${email}`,
+      }));
+      if (result.data.invite_url) {
+        copyToClipboard(result.data.invite_url);
+        dispatch(showNotification({
+          message: tr('邀请链接已复制到剪贴板', 'Invite link copied to clipboard'),
+        }));
+      }
+      refreshDashboardRoute(currentTeam.id);
+    } catch (error) {
+      dispatch(showNotification({ message: getErrorMessage(error, tr('邀请成员失败', 'Failed to invite member')), type: 'error' }));
+    }
+  }, [currentTeam, dispatch, getErrorMessage, isZh, refreshDashboardRoute, tr]);
+
+  const handleUpdateMemberRole = useCallback(async (userId: string, newRole: TeamRole) => {
+    if (!currentTeam || newRole === 'owner') return;
+    try {
+      await dispatch(updateMemberRole({ 
+        teamId: currentTeam.id, 
+        userId, 
+        request: { role: newRole as Exclude<TeamRole, 'owner'> } 
+      })).unwrap();
+      dispatch(showNotification({ message: tr('角色已更新', 'Role updated') }));
+    } catch (error) {
+      dispatch(showNotification({ message: getErrorMessage(error, tr('更新角色失败', 'Failed to update role')), type: 'error' }));
+    }
+  }, [currentTeam, dispatch, getErrorMessage, tr]);
+
+  const handleRemoveMember = useCallback(async (userId: string) => {
+    if (!currentTeam) return;
+    const member = members.find(m => m.user_id === userId);
+    const memberName = member?.user?.username || tr('该成员', 'this member');
+    const confirmed = await confirmDialog({
+      title: tr('移除成员', 'Remove member'),
+      message: isZh ? `确定移除成员 "${memberName}"？` : `Remove member "${memberName}"?`,
+      confirmText: tr('移除', 'Remove'),
+      cancelText: tr('取消', 'Cancel'),
+      tone: 'danger',
+    });
+    if (!confirmed) return;
+    try {
+      await dispatch(removeMember({ teamId: currentTeam.id, userId })).unwrap();
+      dispatch(showNotification({ message: isZh ? `已移除 ${memberName}` : `${memberName} removed` }));
+    } catch (error) {
+      dispatch(showNotification({ message: getErrorMessage(error, tr('移除成员失败', 'Failed to remove member')), type: 'error' }));
+    }
+  }, [confirmDialog, currentTeam, members, dispatch, getErrorMessage, isZh, tr]);
+
+  const handleTransferOwnership = useCallback(async (newOwnerId: string) => {
+    if (!currentTeam) return;
+    try {
+      await dispatch(transferOwnership({ teamId: currentTeam.id, request: { new_owner_id: newOwnerId } })).unwrap();
+      dispatch(showNotification({ message: tr('所有权转让成功', 'Ownership transferred successfully') }));
+      setShowTransferOwnerModal(false);
+      refreshDashboardRoute(currentTeam.id);
+    } catch (error) {
+      dispatch(showNotification({ message: getErrorMessage(error, tr('转让所有权失败', 'Failed to transfer ownership')), type: 'error' }));
+    }
+  }, [currentTeam, dispatch, getErrorMessage, refreshDashboardRoute, tr]);
+
+  const handleExportAuditLogs = useCallback(async () => {
+    if (!currentTeam) return;
+    try {
+      const result = await dispatch(exportAuditLogs({ 
+        teamId: currentTeam.id, 
+        query: { start_date: auditStartDate || undefined, end_date: auditEndDate || undefined } 
+      })).unwrap();
+      if (result) {
+        // 创建下载链接
+        const blob = new Blob([result.content], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = result.filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        dispatch(showNotification({ message: tr('审计日志导出成功', 'Audit logs exported') }));
+      }
+    } catch (error) {
+      dispatch(showNotification({ message: getErrorMessage(error, tr('导出审计日志失败', 'Failed to export audit logs')), type: 'error' }));
+    }
+  }, [currentTeam, auditStartDate, auditEndDate, dispatch, getErrorMessage, tr]);
+
+  const handleSelectTeam = useCallback((teamId: string) => {
+    refreshDashboardRoute(teamId);
+  }, [refreshDashboardRoute]);
+
+  const handleCancelInvitation = useCallback(async (invitationId: string, email: string) => {
+    if (!currentTeam) return;
+    const confirmed = await confirmDialog({
+      title: tr('取消邀请', 'Cancel invitation'),
+      message: isZh ? `确定取消发给 ${email} 的邀请？` : `Cancel the invitation sent to ${email}?`,
+      confirmText: tr('取消邀请', 'Cancel invite'),
+      cancelText: tr('返回', 'Back'),
+      tone: 'danger',
+    });
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch(`/api/teams/${currentTeam.id}/invitations/${invitationId}`, {
+        method: 'DELETE',
+      });
+      const result: CancelTeamInvitationResponse = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || tr('取消邀请失败', 'Failed to cancel invitation'));
+      }
+
+      dispatch(showNotification({
+        message: isZh ? `已取消 ${email} 的邀请` : `Invitation cancelled for ${email}`,
+      }));
+      refreshDashboardRoute(currentTeam.id);
+    } catch (error) {
+      dispatch(showNotification({
+        message: getErrorMessage(error, tr('取消邀请失败', 'Failed to cancel invitation')),
+        type: 'error',
+      }));
+    }
+  }, [confirmDialog, currentTeam, dispatch, getErrorMessage, isZh, refreshDashboardRoute, tr]);
+
+  const handleLeaveTeam = useCallback(async () => {
+    if (!currentTeam || !currentUser) return;
+    const confirmed = await confirmDialog({
+      title: tr('退出团队', 'Leave team'),
+      message: isZh ? `确定退出团队 "${currentTeam.name}"？` : `Leave team "${currentTeam.name}"?`,
+      confirmText: tr('退出', 'Leave'),
+      cancelText: tr('取消', 'Cancel'),
+      tone: 'danger',
+    });
+    if (!confirmed) return;
+
+    try {
+      await dispatch(removeMember({ teamId: currentTeam.id, userId: currentUser.id })).unwrap();
+      dispatch(showNotification({ message: tr('已退出当前团队', 'You left the team') }));
+      refreshDashboardRoute(null);
+    } catch (error) {
+      dispatch(showNotification({
+        message: getErrorMessage(error, tr('退出团队失败', 'Failed to leave team')),
+        type: 'error',
+      }));
+    }
+  }, [confirmDialog, currentTeam, currentUser, dispatch, getErrorMessage, isZh, refreshDashboardRoute, tr]);
+
+  const handleApplyToJoinTeam = useCallback(async (payload: {
+    slug: string;
+    requestedRole: Extract<TeamRole, 'member' | 'guest'>;
+    message?: string;
+  }) => {
+    try {
+      const response = await fetch('/api/teams/join-applications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          slug: payload.slug,
+          requested_role: payload.requestedRole,
+          message: payload.message,
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || tr('提交加入申请失败', 'Failed to submit join request'));
+      }
+      dispatch(showNotification({ message: tr('加入申请已提交', 'Join request submitted') }));
+      refreshDashboardRoute(currentTeam?.id || null, '/dashboard/team');
+    } catch (error) {
+      dispatch(showNotification({ message: getErrorMessage(error, tr('提交加入申请失败', 'Failed to submit join request')), type: 'error' }));
+    }
+  }, [currentTeam?.id, dispatch, getErrorMessage, refreshDashboardRoute, tr]);
+
+  const handleReviewJoinApplication = useCallback(async (applicationId: string, decision: 'approve' | 'reject') => {
+    if (!currentTeam) return;
+    try {
+      const response = await fetch(`/api/teams/${currentTeam.id}/join-applications/${applicationId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ decision }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || tr('处理加入申请失败', 'Failed to process join request'));
+      }
+      dispatch(showNotification({
+        message: decision === 'approve'
+          ? tr('已批准加入申请', 'Join request approved')
+          : tr('已拒绝加入申请', 'Join request rejected'),
+      }));
+      refreshDashboardRoute(currentTeam.id, '/dashboard/team');
+    } catch (error) {
+      dispatch(showNotification({ message: getErrorMessage(error, tr('处理加入申请失败', 'Failed to process join request')), type: 'error' }));
+    }
+  }, [currentTeam, dispatch, getErrorMessage, refreshDashboardRoute, tr]);
+
+  const handleCreateKey = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentUser || !activeTeamId) return;
+    
+    try {
+      const result = await dispatch(createApiKey({
+        team_id: activeTeamId,
+        name: keyName,
+        remark: keyRemark || null,
+        subnet: keyIpWhitelist || null,
+        permission_scopes: keyPermissionScopes,
+        expires_at: keyExpiry || null,
+        unlimited_quota: true,
+        models: keyModels.length > 0 ? keyModels : undefined,
+      })).unwrap();
+      
+      dispatch(showNotification({ message: tr('API 密钥创建成功', 'API key created successfully') }));
+      setNewKeyValue(result.plain_key || result.key);
+      setShowCreateModal(false);
+      setShowKeyModal(true);
+      setKeyName('');
+      setKeyRemark('');
+      setKeyExpiry('');
+      setKeyModels([]);
+      setKeyIpWhitelist('');
+      setKeyPermissionScopes([]);
+    } catch (error) {
+      dispatch(showNotification({ message: getErrorMessage(error, tr('创建失败', 'Creation failed')), type: 'error' }));
+    }
+  }, [activeTeamId, currentUser, keyExpiry, keyIpWhitelist, keyModels, keyName, keyPermissionScopes, keyRemark, dispatch, getErrorMessage, tr]);
+
+  const handleCopyFullKey = useCallback(async (keyId: number) => {
+    if (!activeTeamId) return;
+
+    try {
+      const cachedKey = apiKeys.find((item) => item.id === keyId)?.plain_key;
+      if (cachedKey) {
+        copyToClipboard(cachedKey);
+        dispatch(showNotification({ message: tr('已复制完整密钥', 'Full key copied') }));
+        return;
+      }
+
+      setCopyingFullKeyId(keyId);
+      const result = await dispatch(fetchApiKeySecret({
+        id: keyId,
+        team_id: activeTeamId,
+      })).unwrap();
+
+      copyToClipboard(result.plain_key);
+      dispatch(showNotification({ message: tr('已复制完整密钥', 'Full key copied') }));
+    } catch (error) {
+      dispatch(showNotification({
+        message: getErrorMessage(error, tr('获取完整密钥失败', 'Failed to fetch full key')),
+        type: 'error',
+      }));
+    } finally {
+      setCopyingFullKeyId((current) => (current === keyId ? null : current));
+    }
+  }, [activeTeamId, apiKeys, dispatch, getErrorMessage, tr]);
+
+  const handleCreatePaymentOrder = useCallback(async () => {
+    const amount = Number(rechargeAmount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      dispatch(showNotification({ message: tr('请输入有效充值金额', 'Please enter a valid amount'), type: 'error' }));
+      return;
+    }
+
+    try {
+      const order = await dispatch(createPaymentOrderAction({
+        team_id: activeTeamId,
+        amount,
+        payment_method: selectedPaymentMethod,
+      })).unwrap();
+
+      dispatch(showNotification({
+        message: isZh
+          ? `充值订单已创建：${getPaymentMethodLabel(order.payment_method)} / ${order.currency} ${order.amount.toFixed(2)}`
+          : `Top-up order created: ${getPaymentMethodLabel(order.payment_method)} / ${order.currency} ${order.amount.toFixed(2)}`,
+      }));
+      setShowRechargeModal(false);
+    } catch (error) {
+      dispatch(showNotification({ message: getErrorMessage(error, tr('创建充值订单失败', 'Failed to create top-up order')), type: 'error' }));
+    }
+  }, [activeTeamId, dispatch, getErrorMessage, rechargeAmount, selectedPaymentMethod, isZh, getPaymentMethodLabel, tr]);
+
+  const ensureApiKeyModelOptionsLoaded = useCallback(async () => {
+    if (apiKeyModelsRequestedRef.current) return;
+    apiKeyModelsRequestedRef.current = true;
+    setApiKeyModelOptionsLoading(true);
+    try {
+      const response = await fetch('/api/catalog/models?limit=200');
+      const result = await response.json();
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || tr('获取模型列表失败', 'Failed to load models'));
+      }
+      const nextOptions = Array.isArray(result.data)
+        ? result.data.map((model: { model_name?: string }) => model.model_name).filter(Boolean)
+        : [];
+      setApiKeyModelOptions(nextOptions);
+    } catch (error) {
+      apiKeyModelsRequestedRef.current = false;
+      dispatch(showNotification({ message: getErrorMessage(error, tr('获取模型列表失败', 'Failed to load models')), type: 'error' }));
+    } finally {
+      setApiKeyModelOptionsLoading(false);
+    }
+  }, [dispatch, getErrorMessage, tr]);
+
+  const openCreateKeyModal = useCallback(() => {
+    setShowCreateModal(true);
+    void ensureApiKeyModelOptionsLoaded();
+  }, [ensureApiKeyModelOptionsLoaded]);
+
+  const handleConfirmPaymentOrder = useCallback(async (orderId: string) => {
+    try {
+      await dispatch(confirmPaymentOrderAction(orderId)).unwrap();
+      dispatch(showNotification({ message: tr('充值到账成功，可用额度已更新', 'Top-up applied and available balance updated') }));
+      refreshDashboardRoute(activeTeamId);
+    } catch (error) {
+      dispatch(showNotification({ message: getErrorMessage(error, tr('确认充值订单失败', 'Failed to confirm top-up order')), type: 'error' }));
+    }
+  }, [activeTeamId, dispatch, getErrorMessage, refreshDashboardRoute, tr]);
+
+  const handleToggleKeyStatus = useCallback(async (key: typeof apiKeys[0]) => {
+    if (!activeTeamId) return;
+    const newStatus = key.status === 'active' ? 'disabled' : 'active';
+    try {
+      await dispatch(updateApiKey({ id: key.id, team_id: activeTeamId, status: newStatus })).unwrap();
+      dispatch(showNotification({ message: isZh ? `密钥已${newStatus === 'active' ? '启用' : '禁用'}` : `Key ${newStatus === 'active' ? 'enabled' : 'disabled'}` }));
+    } catch (error) {
+      dispatch(showNotification({ message: getErrorMessage(error, tr('操作失败', 'Action failed')), type: 'error' }));
+    }
+  }, [activeTeamId, dispatch, getErrorMessage, isZh, tr]);
+
+  const handleEditKey = useCallback((key: typeof apiKeys[0]) => {
+    setEditingKey(key);
+    setKeyName(key.name);
+    setKeyRemark(key.remark || '');
+    setKeyModels(key.models || []);
+    setKeyIpWhitelist(key.subnet || '');
+    setKeyPermissionScopes(key.permission_scopes || []);
+    setEditKeyStatus(key.status === 'active' ? 'active' : 'disabled');
+    setShowEditKeyModal(true);
+    void ensureApiKeyModelOptionsLoaded();
+  }, [ensureApiKeyModelOptionsLoaded]);
+
+  const handleSaveKeyEdit = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingKey || !activeTeamId) return;
+
+    try {
+      await dispatch(updateApiKey({
+        id: editingKey.id,
+        team_id: activeTeamId,
+        name: keyName,
+        remark: keyRemark || null,
+        subnet: keyIpWhitelist || null,
+        permission_scopes: keyPermissionScopes,
+        status: editKeyStatus,
+        models: keyModels.length > 0 ? keyModels : [],
+      })).unwrap();
+      dispatch(showNotification({ message: tr('密钥信息已更新', 'Key details updated') }));
+      setShowEditKeyModal(false);
+      setEditingKey(null);
+      setKeyName('');
+      setKeyRemark('');
+      setKeyModels([]);
+      setKeyIpWhitelist('');
+      setKeyPermissionScopes([]);
+    } catch (error) {
+      dispatch(showNotification({ message: getErrorMessage(error, tr('更新失败', 'Update failed')), type: 'error' }));
+    }
+  }, [activeTeamId, dispatch, editKeyStatus, editingKey, getErrorMessage, keyIpWhitelist, keyModels, keyName, keyPermissionScopes, keyRemark, tr]);
+
+  const handleDeleteKey = useCallback(async (keyId: number, name: string) => {
+    if (!activeTeamId) return;
+    const confirmed = await confirmDialog({
+      title: tr('删除 API 密钥', 'Delete API key'),
+      message: isZh ? `确定删除密钥 "${name}"？` : `Delete key "${name}"?`,
+      confirmText: tr('删除', 'Delete'),
+      cancelText: tr('取消', 'Cancel'),
+      tone: 'danger',
+    });
+    if (!confirmed) return;
+    try {
+      await dispatch(deleteApiKeyAction({ keyId, teamId: activeTeamId })).unwrap();
+      dispatch(showNotification({ message: tr('已删除', 'Deleted') }));
+    } catch (error) {
+      dispatch(showNotification({ message: getErrorMessage(error, tr('删除失败', 'Delete failed')), type: 'error' }));
+    }
+  }, [activeTeamId, confirmDialog, dispatch, getErrorMessage, isZh, tr]);
+
+  const handleUpdateProfile = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await fetch('/api/account/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: profileData.nickname,
+          image: profileData.avatar,
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || tr('更新个人信息失败', 'Failed to update profile'));
+      }
+
+      dispatch(setUser(result.data));
+      dispatch(showNotification({ message: tr('个人信息已更新', 'Profile updated') }));
+    } catch (error) {
+      dispatch(showNotification({ message: getErrorMessage(error, tr('更新个人信息失败', 'Failed to update profile')), type: 'error' }));
+    }
+  }, [dispatch, getErrorMessage, profileData.avatar, profileData.nickname, tr]);
+
+  const handleChangePassword = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passwordData.newPass !== passwordData.confirm) {
+      dispatch(showNotification({ message: tr('两次密码不一致', 'Passwords do not match'), type: 'error' }));
+      return;
+    }
+    try {
+      const response = await fetch('/api/account/password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          currentPassword: passwordData.current,
+          nextPassword: passwordData.newPass,
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || tr('修改密码失败', 'Failed to change password'));
+      }
+
+      dispatch(showNotification({ message: tr('密码修改成功', 'Password updated successfully') }));
+      setShowPasswordModal(false);
+      setPasswordData({ current: '', newPass: '', confirm: '' });
+    } catch (error) {
+      dispatch(showNotification({ message: getErrorMessage(error, tr('修改密码失败', 'Failed to change password')), type: 'error' }));
+    }
+  }, [dispatch, getErrorMessage, passwordData, tr]);
+
+  const handleExportBilling = useCallback(async () => {
+    try {
+      const query = activeTeamId ? `?team_id=${encodeURIComponent(activeTeamId)}` : '';
+      const response = await fetch(`/api/billing/export${query}`);
+      if (!response.ok) {
+        const result = await response.json().catch(() => null);
+        throw new Error(result?.error || tr('导出账单失败', 'Failed to export billing data'));
+      }
+
+      const blob = await response.blob();
+      const downloadUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `billing-export-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(downloadUrl);
+
+      dispatch(showNotification({ message: tr('账单导出成功', 'Billing export completed') }));
+    } catch (error) {
+      dispatch(showNotification({ message: getErrorMessage(error, tr('导出账单失败', 'Failed to export billing data')), type: 'error' }));
+    }
+  }, [activeTeamId, dispatch, getErrorMessage, tr]);
+
+  const handleDeleteAccount = useCallback(async () => {
+    const confirmed = await confirmDialog({
+      title: tr('删除账户', 'Delete account'),
+      message: isZh ? '确定删除账户？此操作不可恢复。' : 'Delete this account permanently? This cannot be undone.',
+      confirmText: tr('删除账户', 'Delete account'),
+      cancelText: tr('取消', 'Cancel'),
+      tone: 'danger',
+    });
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch('/api/account/delete', {
+        method: 'POST',
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || tr('删除账户失败', 'Failed to delete account'));
+      }
+
+      dispatch(showNotification({ message: tr('账户已删除', 'Account deleted') }));
+      await logoutUser();
+      router.push('/');
+      router.refresh();
+    } catch (error) {
+      dispatch(showNotification({ message: getErrorMessage(error, tr('删除账户失败', 'Failed to delete account')), type: 'error' }));
+    }
+  }, [confirmDialog, dispatch, getErrorMessage, isZh, router, tr]);
+
+  const activeKeys = apiKeys.filter(k => k.status === 'active');
+  const currentBalance = billingSummary?.current_balance ?? 0;
+  const currentMonthSpend = billingSummary?.current_month_spend ?? monthlyCost;
+  const changePercentage = billingSummary?.change_percentage ?? null;
+  const estimatedAvailableDays = billingSummary?.estimated_available_days ?? null;
+  const averageDailySpend = billingSummary?.average_daily_spend ?? 0;
+  const billingEntries = billingSummary?.recent_entries ?? [];
+  const pendingPaymentOrders = paymentOrders.filter((order) => order.status === 'pending').length;
+  const totalPromptTokens = usageLogs.reduce((sum, log) => sum + (log.prompt_tokens || 0), 0);
+  const totalCompletionTokens = usageLogs.reduce((sum, log) => sum + (log.completion_tokens || 0), 0);
+  const totalTokenUsage = usageLogs.reduce((sum, log) => sum + (log.total_tokens || 0), 0);
+  const averageTokensPerRequest = usageLogs.length > 0 ? Math.round(totalTokenUsage / usageLogs.length) : 0;
+  const uniqueModelsUsed = new Set(usageLogs.map((log) => log.model).filter(Boolean)).size;
+  const activeDays = new Set(usageLogs.map((log) => new Date(log.created_at).toDateString())).size;
+  const lastActiveAt = usageLogs.length > 0
+    ? usageLogs.reduce((latest, log) => {
+        const timestamp = new Date(log.created_at).getTime();
+        return Number.isNaN(timestamp) ? latest : Math.max(latest, timestamp);
+      }, 0)
+    : 0;
+  const lastActiveLabel = lastActiveAt ? formatDate(new Date(lastActiveAt).toISOString()) : tr('暂无记录', 'No recent activity');
+  const availableModelNames = apiKeyModelOptions;
+  const apiKeyPermissionScopeOptions = API_KEY_PERMISSION_SCOPE_ITEMS.map((item) => ({
+    value: item.value,
+    label: tr(item.zh, item.en),
+  }));
+  const teamMemberCount = members.length;
+  const teamAdmins = members.filter((member) => member.role === 'admin' || member.role === 'owner').length;
+  const pendingInvites = teamInvitations.length;
+  const pendingJoinApplications = initialBootstrap?.team.join_applications || [];
+  const myJoinApplications = initialBootstrap?.team.my_join_applications || [];
+  const teamPermissionRows = [
+    { name: tr('查看用量统计', 'View usage metrics'), desc: tr('查看团队 API 使用情况', 'Review team API activity'), owner: true, admin: true, member: true, guest: true },
+    { name: tr('使用 API', 'Use API'), desc: tr('调用 API 接口', 'Call model endpoints'), owner: true, admin: true, member: true, guest: false },
+    { name: 'Create/Delete API Key', desc: tr('管理 API 密钥', 'Manage API keys'), owner: true, admin: true, member: false, guest: false },
+    { name: tr('邀请/移除成员', 'Invite/Remove members'), desc: tr('管理团队成员', 'Manage team members'), owner: true, admin: true, member: false, guest: false },
+    { name: tr('修改成员角色', 'Change member roles'), desc: tr('调整成员权限', 'Adjust team permissions'), owner: true, admin: false, member: false, guest: false },
+    { name: tr('账单和充值', 'Billing and top-up'), desc: tr('财务相关操作', 'Handle finance-related actions'), owner: true, admin: false, member: false, guest: false },
+    { name: tr('团队设置', 'Team settings'), desc: tr('修改团队信息', 'Update team information'), owner: true, admin: true, member: false, guest: false },
+    { name: tr('删除团队', 'Delete team'), desc: tr('解散团队', 'Disband the team'), owner: true, admin: false, member: false, guest: false },
+  ];
+  const recent7DayLabels = Array.from({ length: 7 }, (_, index) => {
+    const date = new Date();
+    date.setDate(date.getDate() - (6 - index));
+    return isZh
+      ? `${date.getMonth() + 1}/${date.getDate()}`
+      : date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  });
+  const profileDisplayName = currentUser?.name || currentUser?.username || tr('用户', 'User');
+  const avatarImageUrl = /^https?:\/\//.test(profileData.avatar) || profileData.avatar.startsWith('data:image')
+    ? profileData.avatar
+    : null;
+  const recent7DayRequests = recent7DayLabels.map((label, index) => {
+    const date = new Date();
+    date.setDate(date.getDate() - (6 - index));
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const day = date.getDate();
+    return usageLogs.filter((log) => {
+      const logDate = new Date(log.created_at);
+      return (
+        logDate.getFullYear() === year &&
+        logDate.getMonth() === month &&
+        logDate.getDate() === day
+      );
+    }).length;
+  });
+  const modelUsagePairs = Object.entries(
+    usageLogs.reduce<Record<string, number>>((accumulator, log) => {
+      const key = log.model || tr('未知模型', 'Unknown');
+      accumulator[key] = (accumulator[key] || 0) + 1;
+      return accumulator;
+    }, {})
+  )
+    .sort((left, right) => right[1] - left[1])
+    .slice(0, 4);
+  const usageChartData = {
+    labels: recent7DayLabels,
+    datasets: [{
+      label: tr('请求数', 'Requests'),
+      data: recent7DayRequests,
+      borderColor: '#6366f1',
+      backgroundColor: 'rgba(99,102,241,0.1)',
+      tension: 0.4,
+      fill: true
+    }]
+  };
+  const tokenChartData = {
+    labels: modelUsagePairs.length > 0 ? modelUsagePairs.map(([label]) => label) : [tr('暂无数据', 'No data')],
+    datasets: [{
+      data: modelUsagePairs.length > 0 ? modelUsagePairs.map(([, value]) => value) : [1],
+      backgroundColor: ['#6366f1', '#8b5cf6', '#10b981', '#f59e0b'],
+      borderWidth: 0
+    }]
+  };
+  const chartOptions = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: 'rgba(51,65,85,0.3)' }, ticks: { color: '#94a3b8' } }, x: { grid: { display: false }, ticks: { color: '#94a3b8' } } } };
+  const selectedTeamIdForLinks = activeTeamId;
+  const tabs: { id: DashboardSection; label: string; icon: string; href: string }[] = [
+    { id: 'overview', label: tr('概览', 'Overview'), icon: 'fa-chart-pie', href: '/dashboard/overview' },
+    { id: 'api-keys', label: tr('API 密钥', 'API Keys'), icon: 'fa-key', href: '/dashboard/api-keys' },
+    { id: 'usage', label: tr('用量统计', 'Usage'), icon: 'fa-chart-line', href: '/dashboard/usage' },
+    { id: 'billing', label: tr('账单', 'Billing'), icon: 'fa-receipt', href: '/dashboard/billing' },
+    { id: 'team', label: tr('团队管理', 'Team'), icon: 'fa-users', href: '/dashboard/team' },
+    { id: 'profile', label: tr('个人中心', 'Profile'), icon: 'fa-user', href: '/dashboard/profile' }
+  ];
+  const apiKeyStatusLabel = (status: string) => {
+    switch (status) {
+      case 'active':
+        return tr('活跃', 'Active');
+      case 'disabled':
+        return tr('已禁用', 'Disabled');
+      case 'expired':
+        return tr('已过期', 'Expired');
+      default:
+        return tr('已耗尽', 'Exhausted');
+    }
+  };
+  const paymentStatusLabel = (status: string) => {
+    switch (status) {
+      case 'paid':
+        return tr('已支付', 'Paid');
+      case 'pending':
+        return tr('待支付', 'Pending');
+      default:
+        return tr('已关闭', 'Closed');
+    }
+  };
+  const paymentRegionLabel = (region: string) => region === 'domestic' ? tr('国内', 'Domestic') : tr('国际', 'International');
+
+  const dashboardBootstrapping = authLoading || (Boolean(currentUser) && !initialDataReady);
+  const activeTab = section;
+
+  if (!authLoading && !isLoggedIn && !currentUser) return null;
+
+  return (
+    <>
+      <Navbar variant="dashboard" />
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-5 py-4 sm:py-8">
+        <div className="grid gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:items-start">
+          <aside className="space-y-4 lg:sticky lg:top-24">
+            <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 lg:hidden scrollbar-hide">
+                {tabs.map((tab) => (
+                  <Link
+                    key={tab.id}
+                    href={buildDashboardHref(tab.href, selectedTeamIdForLinks)}
+                    className={`px-3 sm:px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-all text-sm sm:text-base ${
+                      activeTab === tab.id ? 'bg-primary text-white' : 'bg-white/60 text-text-secondary hover:text-text-primary hover:bg-white'
+                    }`}
+                >
+                  <i className={`fas ${tab.icon} mr-1 sm:mr-2`} />
+                  {tab.label}
+                </Link>
+              ))}
+            </div>
+
+            <div className="hidden lg:block editorial-panel p-4">
+              <div className="space-y-2">
+                {tabs.map((tab) => (
+                  <Link
+                    key={tab.id}
+                    href={buildDashboardHref(tab.href, selectedTeamIdForLinks)}
+                    className={`flex w-full items-center gap-3 rounded-[18px] px-4 py-3 text-left text-sm font-medium transition-all ${
+                      activeTab === tab.id
+                        ? 'bg-primary text-white shadow-glow'
+                        : 'bg-white/60 text-text-secondary hover:bg-white hover:text-text-primary'
+                    }`}
+                  >
+                    <i className={`fas ${tab.icon} w-4 text-center`} />
+                    <span>{tab.label}</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </aside>
+
+          <div className="min-w-0">
+            {dashboardBootstrapping || routeRefreshing ? (
+              <div className="flex h-[60vh] flex-col items-center justify-center text-text-secondary bg-white border border-border rounded-[2rem] shadow-sm">
+                <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-2xl text-primary animate-pulse shadow-sm">
+                  <i className="fas fa-spinner fa-spin" />
+                </div>
+                <div className="text-lg font-bold tracking-tight text-text-primary mb-2">{tr('正在载入...', 'Loading...')}</div>
+                <p className="text-sm text-text-secondary">{tr('请稍候，正在获取最新数据', 'Please wait while we fetch the latest data')}</p>
+              </div>
+            ) : (
+              <>
+        {activeTab === 'overview' && (
+          <>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+              {[
+                { label: tr('组织余额', 'Org Balance'), value: formatCurrency(currentBalance), icon: 'fa-wallet', color: 'primary', change: null }, 
+                { label: tr('本月请求', 'Monthly Requests'), value: monthlyRequests.toLocaleString(), icon: 'fa-paper-plane', color: 'success', change: usageStats ? tr('来自当前团队账本', 'From current team ledger') : null }, 
+                { label: tr('本月消耗', 'Monthly Spend'), value: formatCurrency(currentMonthSpend), icon: 'fa-coins', color: 'warning', change: changePercentage === null ? null : `${changePercentage > 0 ? '+' : ''}${changePercentage}%` }, 
+                { label: tr('API 密钥', 'API Keys'), value: String(activeKeys.length), icon: 'fa-key', color: 'secondary', change: null }
+              ].map((s) => (
+                <div key={s.label} className="bg-white border border-border rounded-[1.5rem] p-5 sm:p-6 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex justify-between items-start mb-4">
+                    <span className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary">{s.label}</span>
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center bg-${s.color}/10 text-${s.color} text-lg`}>
+                      <i className={`fas ${s.icon}`} />
+                    </div>
+                  </div>
+                  <div className="text-3xl font-bold tracking-tight text-text-primary mb-2">{s.value}</div>
+                  {s.change && (
+                    <span className={`text-[0.65rem] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${
+                      s.change.startsWith('+') ? 'bg-danger/10 text-danger' : 
+                      s.change.startsWith('-') ? 'bg-success/10 text-success' : 'bg-dark-light/50 text-text-secondary'
+                    }`}>
+                      {s.change}{s.change.startsWith('+') || s.change.startsWith('-') ? ` ${tr('较上月', 'vs last month')}` : ''}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+              <div className="lg:col-span-2 bg-white border border-border rounded-[2rem] p-6 sm:p-8 shadow-sm">
+                <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <h3 className="text-xl font-bold tracking-tight text-text-primary">{tr('请求趋势', 'Request Trend')}</h3>
+                  <EditorialSelect 
+                    className="w-full sm:w-[180px] bg-dark-light/10 border-transparent rounded-xl text-sm" 
+                    size="sm" 
+                    value="7d" 
+                    onChange={() => {}} 
+                    options={[{ value: '7d', label: tr('最近 7 天', 'Last 7 Days') }, { value: '30d', label: tr('最近 30 天', 'Last 30 Days') }]} 
+                  />
+                </div>
+                <div className="h-[250px] w-full relative">
+                  <Line 
+                    data={usageChartData} 
+                    options={{
+                      ...chartOptions,
+                      plugins: {
+                        ...chartOptions.plugins,
+                        legend: { display: false }
+                      },
+                      scales: {
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 11 } } },
+                        y: { grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { color: '#94a3b8', font: { size: 11 }, padding: 10 } }
+                      }
+                    }} 
+                  />
+                </div>
+              </div>
+              
+              <div className="bg-white border border-border rounded-[2rem] p-6 sm:p-8 shadow-sm">
+                <h3 className="text-xl font-bold tracking-tight text-text-primary mb-6">{tr('模型使用分布', 'Model Distribution')}</h3>
+                <div className="h-[220px] relative flex justify-center">
+                  <Doughnut 
+                    data={tokenChartData} 
+                    options={{ 
+                      responsive: true, 
+                      maintainAspectRatio: false, 
+                      cutout: '75%',
+                      plugins: { 
+                        legend: { position: 'bottom', labels: { color: '#64748b', padding: 20, usePointStyle: true, pointStyle: 'circle', font: { size: 11, weight: 500 } } } 
+                      } 
+                    }} 
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+              {[
+                { label: tr('总 Token 消耗', 'Total Token Usage'), value: totalTokenUsage.toLocaleString(), icon: 'fa-database' }, 
+                { label: tr('平均每次请求 Token', 'Average Tokens per Request'), value: averageTokensPerRequest.toLocaleString(), icon: 'fa-wave-square' }, 
+                { label: tr('待处理充值订单', 'Pending Top-up Orders'), value: String(pendingPaymentOrders), icon: 'fa-clock' }, 
+                { label: tr('最近账单记录', 'Recent Ledger Entries'), value: String(billingEntries.length), icon: 'fa-receipt' }
+              ].map((s) => (
+                <div key={s.label} className="bg-white border border-border rounded-[1.5rem] p-5 sm:p-6 text-center shadow-sm hover:shadow-md transition-shadow group">
+                  <div className="w-12 h-12 rounded-2xl bg-primary/5 flex items-center justify-center text-primary text-xl mx-auto mb-4 group-hover:scale-110 group-hover:bg-primary/10 transition-all">
+                    <i className={`fas ${s.icon}`} />
+                  </div>
+                  <div className="text-2xl font-bold tracking-tight text-text-primary mb-1">{s.value}</div>
+                  <div className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary">{s.label}</div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {activeTab === 'api-keys' && (
+          <div className="space-y-6 sm:space-y-8">
+            {/* 统计卡片 */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+              <div className="bg-white border border-border rounded-[1.5rem] p-5 shadow-sm hover:shadow-md transition-shadow group">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary text-xl group-hover:scale-110 transition-transform"><i className="fas fa-key" /></div>
+                  <div><div className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary mb-1">{tr('总密钥数', 'Total Keys')}</div><div className="text-2xl font-bold tracking-tight text-text-primary">{apiKeys.length}</div></div>
+                </div>
+              </div>
+              <div className="bg-white border border-border rounded-[1.5rem] p-5 shadow-sm hover:shadow-md transition-shadow group">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-success/10 flex items-center justify-center text-success text-xl group-hover:scale-110 transition-transform"><i className="fas fa-check-circle" /></div>
+                  <div><div className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary mb-1">{tr('活跃密钥', 'Active Keys')}</div><div className="text-2xl font-bold tracking-tight text-text-primary">{activeKeys.length}</div></div>
+                </div>
+              </div>
+              <div className="bg-white border border-border rounded-[1.5rem] p-5 shadow-sm hover:shadow-md transition-shadow group">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-warning/10 flex items-center justify-center text-warning text-xl group-hover:scale-110 transition-transform"><i className="fas fa-paper-plane" /></div>
+                  <div><div className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary mb-1">{tr('本月请求', 'Monthly Requests')}</div><div className="text-2xl font-bold tracking-tight text-text-primary">{monthlyRequests.toLocaleString()}</div></div>
+                </div>
+              </div>
+              <div className="bg-white border border-border rounded-[1.5rem] p-5 shadow-sm hover:shadow-md transition-shadow group">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-secondary/10 flex items-center justify-center text-secondary text-xl group-hover:scale-110 transition-transform"><i className="fas fa-database" /></div>
+                  <div><div className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary mb-1">{tr('Token 消耗', 'Token Usage')}</div><div className="text-2xl font-bold tracking-tight text-text-primary">{totalTokenUsage.toLocaleString()}</div></div>
+                </div>
+              </div>
+            </div>
+
+            {/* 密钥列表 */}
+            <div className="bg-white border border-border rounded-[2rem] p-6 sm:p-8 shadow-sm">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+                <div>
+                  <h3 className="text-2xl font-bold tracking-tight text-text-primary mb-2">{tr('API 密钥管理', 'API Key Management')}</h3>
+                  <p className="text-text-secondary text-sm leading-relaxed">{tr('创建和管理您的 API 密钥，用于调用模型接口', 'Create and manage the API keys used to access model endpoints')}</p>
+                </div>
+                <button className="btn-primary w-full sm:w-auto justify-center rounded-full shadow-sm hover:shadow hover:-translate-y-0.5 transition-all px-6 py-2.5" onClick={openCreateKeyModal}>
+                  <i className="fas fa-plus mr-2" /> {tr('创建密钥', 'Create Key')}
+                </button>
+              </div>
+              
+              {apiKeys.length === 0 ? (
+                <div className="text-center py-16 sm:py-24 text-text-secondary bg-dark-light/10 rounded-[1.5rem] border border-dashed border-border/60">
+                  <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
+                    <i className="fas fa-key text-3xl text-text-secondary/40" />
+                  </div>
+                  <p className="mb-6 text-lg text-text-primary font-medium">{tr('还没有 API 密钥', 'No API keys yet')}</p>
+                  <button className="btn-primary rounded-full shadow-sm hover:-translate-y-0.5 transition-all" onClick={openCreateKeyModal}>{tr('创建第一个密钥', 'Create your first key')}</button>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {apiKeys.map((key) => {
+                    const isCopyingFullKey = copyingFullKeyId === key.id;
+
+                    return (
+                    <div key={key.id} className="bg-white border border-border/80 rounded-[1.5rem] p-6 sm:p-8 hover:shadow-md hover:border-primary/20 transition-all duration-300">
+                      {/* 头部：名称和状态 */}
+                      <div className="flex flex-col sm:flex-row justify-between items-start gap-5 mb-6">
+                        <div className="flex items-start gap-4">
+                          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-lg ${key.status === 'active' ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'}`}>
+                            <i className="fas fa-key" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-3 flex-wrap mb-1.5">
+                              <span className="font-bold text-lg text-text-primary tracking-tight">{key.name}</span>
+                              <span className={`px-2.5 py-1 rounded-md text-[0.65rem] font-bold uppercase tracking-wider ${key.status === 'active' ? 'bg-success/10 text-success' : key.status === 'disabled' ? 'bg-danger/10 text-danger' : key.status === 'expired' ? 'bg-warning/10 text-warning' : 'bg-dark-light/50 text-text-secondary'}`}>
+                                {apiKeyStatusLabel(key.status)}
+                              </span>
+                            </div>
+                            <div className="text-text-secondary text-xs">
+                              {tr('创建于', 'Created')} {formatDate(key.created_at)} {key.expires_at && <span className="ml-2 pl-2 border-l border-border/60">{tr('过期时间', 'Expires')} {formatDate(key.expires_at)}</span>}
+                            </div>
+                            {key.remark && (
+                              <div className="text-text-secondary text-sm mt-3 leading-relaxed bg-dark-light/30 px-3 py-2 rounded-xl border border-border/50">
+                                {key.remark}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+                          <button 
+                            onClick={() => { handleCopyFullKey(key.id); }} 
+                            disabled={isCopyingFullKey}
+                            className="btn-secondary rounded-full text-xs py-2 px-4 flex-1 sm:flex-none justify-center disabled:cursor-not-allowed disabled:opacity-70 bg-white shadow-sm hover:border-primary/30 hover:text-primary transition-colors"
+                            title={tr('复制密钥', 'Copy key')}
+                          >
+                            <i className={`fas ${isCopyingFullKey ? 'fa-spinner fa-spin' : 'fa-copy'} mr-1.5`} />
+                            {tr('复制', 'Copy')}
+                          </button>
+                          <button 
+                            onClick={() => handleEditKey(key)} 
+                            className="btn-secondary rounded-full text-xs py-2 px-4 flex-1 sm:flex-none justify-center bg-white shadow-sm hover:border-primary/30 hover:text-primary transition-colors"
+                            title={tr('编辑', 'Edit')}
+                          >
+                            <i className="fas fa-edit mr-1.5" />
+                            {tr('编辑', 'Edit')}
+                          </button>
+                          <button 
+                            onClick={() => handleToggleKeyStatus(key)} 
+                            className={`btn-secondary rounded-full text-xs py-2 px-4 flex-1 sm:flex-none justify-center bg-white shadow-sm transition-colors ${key.status === 'active' ? 'hover:border-warning hover:text-warning hover:bg-warning/5' : 'hover:border-success hover:text-success hover:bg-success/5'}`}
+                            title={key.status === 'active' ? tr('禁用', 'Disable') : tr('启用', 'Enable')}
+                          >
+                            <i className={`fas ${key.status === 'active' ? 'fa-ban' : 'fa-check'} mr-1.5`} />
+                            {key.status === 'active' ? tr('禁用', 'Disable') : tr('启用', 'Enable')}
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteKey(key.id, key.name)} 
+                            className="btn-secondary rounded-full text-xs py-2 px-4 flex-1 sm:flex-none justify-center bg-white shadow-sm hover:border-danger hover:text-danger hover:bg-danger/5 transition-colors"
+                            title={tr('删除', 'Delete')}
+                          >
+                            <i className="fas fa-trash mr-1.5" />
+                            {tr('删除', 'Delete')}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* 密钥值 */}
+                      <div className="bg-dark-light/10 rounded-[1rem] p-4 mb-6 border border-border/50 shadow-inner">
+                        <div className="flex items-center justify-between gap-4">
+                          <code className="font-mono text-text-primary text-sm font-semibold tracking-wider">{key.key.substring(0, 20)}...{key.key.slice(-8)}</code>
+                          <button 
+                            onClick={() => { handleCopyFullKey(key.id); }}
+                            disabled={isCopyingFullKey}
+                            className="inline-flex items-center gap-1.5 text-primary text-xs font-bold uppercase tracking-wider hover:underline disabled:cursor-not-allowed disabled:no-underline disabled:opacity-70 bg-primary/10 px-3 py-1.5 rounded-lg"
+                          >
+                            {isCopyingFullKey && <i className="fas fa-spinner fa-spin" />}
+                            <span>{isCopyingFullKey ? tr('获取中...', 'Loading...') : tr('复制完整', 'Copy Full')}</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* 使用统计 */}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+                        <div className="bg-white border border-border/60 rounded-[1rem] p-4 text-center shadow-sm">
+                          <div className="text-xl font-bold tracking-tight text-primary mb-1">{key.used_quota.toLocaleString()}</div>
+                          <div className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary">{tr('已用额度', 'Used Quota')}</div>
+                        </div>
+                        <div className="bg-white border border-border/60 rounded-[1rem] p-4 text-center shadow-sm">
+                          <div className="text-xl font-bold tracking-tight text-success mb-1">{key.unlimited_quota ? '∞' : key.quota.toLocaleString()}</div>
+                          <div className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary">{tr('总额度', 'Total Quota')}</div>
+                        </div>
+                        <div className="bg-white border border-border/60 rounded-[1rem] p-4 text-center shadow-sm">
+                          <div className="text-xl font-bold tracking-tight text-warning mb-1">{key.unlimited_quota ? '∞' : (key.quota - key.used_quota).toLocaleString()}</div>
+                          <div className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary">{tr('剩余额度', 'Remaining')}</div>
+                        </div>
+                        <div className="bg-white border border-border/60 rounded-[1rem] p-4 text-center shadow-sm">
+                          <div className="text-xl font-bold tracking-tight text-secondary mb-1">{key.models.length > 0 ? key.models.length : tr('全部', 'All')}</div>
+                          <div className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary">{tr('可用模型', 'Available Models')}</div>
+                        </div>
+                      </div>
+
+                      {/* 权限标签 */}
+                      <div className="flex flex-wrap gap-2.5">
+                        <span className="px-3 py-1.5 bg-primary/5 text-primary border border-primary/20 rounded-lg text-xs font-medium">
+                          <i className="fas fa-cube mr-1.5 opacity-70" />{key.models.length > 0 ? (isZh ? `${key.models.length} 个模型` : `${key.models.length} models`) : tr('全部模型', 'All models')}
+                        </span>
+                        <span className="px-3 py-1.5 bg-secondary/5 text-secondary border border-secondary/20 rounded-lg text-xs font-medium">
+                          <i className="fas fa-shield-halved mr-1.5 opacity-70" />
+                          {key.permission_scopes.length > 0
+                            ? (isZh ? `${key.permission_scopes.length} 项权限` : `${key.permission_scopes.length} scopes`)
+                            : tr('默认权限范围', 'Default scopes')}
+                        </span>
+                        <span className={`px-3 py-1.5 rounded-lg border text-xs font-medium ${key.subnet ? 'bg-warning/5 text-warning border-warning/20' : 'bg-dark-light/20 text-text-secondary border-border/50'}`}>
+                          <i className="fas fa-network-wired mr-1.5 opacity-70" />
+                          {key.subnet ? tr('已绑定 IP 白名单', 'IP allowlist enabled') : tr('未限制 IP', 'No IP allowlist')}
+                        </span>
+                        <span className={`px-3 py-1.5 rounded-lg border text-xs font-medium ${key.unlimited_quota ? 'bg-success/5 text-success border-success/20' : 'bg-warning/5 text-warning border-warning/20'}`}>
+                          <i className={`fas ${key.unlimited_quota ? 'fa-infinity' : 'fa-coins'} mr-1.5 opacity-70`} />{key.unlimited_quota ? tr('无限额度', 'Unlimited quota') : (isZh ? `${key.quota} 额度` : `${key.quota} quota`)}
+                        </span>
+                        <span className={`px-3 py-1.5 rounded-lg border text-xs font-medium ${key.expires_at ? 'bg-warning/5 text-warning border-warning/20' : 'bg-dark-light/20 text-text-secondary border-border/50'}`}>
+                          <i className="fas fa-clock mr-1.5 opacity-70" />{key.expires_at ? (isZh ? `${formatDate(key.expires_at)} 过期` : `Expires ${formatDate(key.expires_at)}`) : tr('永不过期', 'Never expires')}
+                        </span>
+                        {key.last_full_key_viewed_at && (
+                          <span className="px-3 py-1.5 bg-dark-light/20 text-text-secondary border border-border/50 rounded-lg text-xs font-medium">
+                            <i className="fas fa-eye mr-1.5 opacity-70" />
+                            {tr('最近查看', 'Last revealed')} {formatDate(key.last_full_key_viewed_at)}
+                          </span>
+                        )}
+                      </div>
+                      {key.permission_scopes.length > 0 && (
+                        <div className="mt-4 pt-4 border-t border-border/40 flex flex-wrap gap-2">
+                          <span className="text-xs text-text-secondary mr-1 self-center">{tr('具体权限:', 'Scopes:')}</span>
+                          {key.permission_scopes.map((scope) => {
+                            const scopeOption = apiKeyPermissionScopeOptions.find((item) => item.value === scope);
+                            return (
+                              <span key={scope} className="px-2.5 py-1 bg-white shadow-sm text-text-primary rounded-md text-xs border border-border/60 font-medium">
+                                {scopeOption?.label || scope}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* 使用说明 */}
+            <div className="bg-white border border-border rounded-[2rem] p-6 sm:p-8 shadow-sm">
+              <h3 className="text-2xl font-bold tracking-tight text-text-primary mb-8">{tr('API 密钥使用说明', 'API Key Guide')}</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-6">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-bold text-xl flex-shrink-0 shadow-inner">1</div>
+                    <div>
+                      <div className="font-bold text-text-primary mb-1 tracking-tight">{tr('创建 API Key', 'Create an API key')}</div>
+                      <div className="text-text-secondary text-sm leading-relaxed">{tr('自动生成唯一密钥，作为开发者接入 API 的核心入口', 'Generate a unique key that serves as the main entry point for API access')}</div>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-bold text-xl flex-shrink-0 shadow-inner">2</div>
+                    <div>
+                      <div className="font-bold text-text-primary mb-1 tracking-tight">{tr('撤销/禁用 Key', 'Revoke or disable keys')}</div>
+                      <div className="text-text-secondary text-sm leading-relaxed">{tr('用户可手动停用或设置过期时间，控制安全访问，防止泄露', 'Disable keys manually or set expiration dates to control access and reduce leakage risk')}</div>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-bold text-xl flex-shrink-0 shadow-inner">3</div>
+                    <div>
+                      <div className="font-bold text-text-primary mb-1 tracking-tight">{tr('使用统计', 'Usage analytics')}</div>
+                      <div className="text-text-secondary text-sm leading-relaxed">{tr('查看请求次数、调用量，了解 Key 使用情况，成本透明', 'Review requests and token usage to understand cost and activity per key')}</div>
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-6">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center text-primary text-xl font-bold flex-shrink-0">4</div>
+                    <div>
+                      <div className="font-bold text-text-primary mb-1 tracking-tight">{tr('权限绑定', 'Permission binding')}</div>
+                      <div className="text-text-secondary text-sm leading-relaxed">{tr('通过模型范围、IP 白名单和权限范围约束使用边界，并完整记录审计行为', 'Constrain usage by model range, IP allowlists, and permission scopes with a full audit trail')}</div>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center text-primary text-xl font-bold flex-shrink-0">5</div>
+                    <div>
+                      <div className="font-bold text-text-primary mb-1 tracking-tight">{tr('Key 命名与管理', 'Naming and organization')}</div>
+                      <div className="text-text-secondary text-sm leading-relaxed">{tr('给每个 Key 起别名、备注，提高管理效率，方便多 Key 场景', 'Use aliases and notes to organize keys more efficiently across multiple environments')}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'usage' && (
+          <div className="space-y-6 sm:space-y-8">
+            <div className="bg-white border border-border rounded-[2rem] p-6 sm:p-8 shadow-sm">
+              <h3 className="text-2xl font-bold tracking-tight text-text-primary mb-6">{tr('实时监控', 'Live Metrics')}</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 sm:gap-6">{[
+                { label: tr('请求数', 'Requests'), value: (usageStats?.request_count ?? usageLogs.length).toLocaleString(), unit: tr('当前可见日志', 'Visible logs') },
+                { label: tr('输入 Token', 'Input Tokens'), value: totalPromptTokens.toLocaleString(), unit: tr('当前可见日志', 'Visible logs') },
+                { label: tr('输出 Token', 'Output Tokens'), value: totalCompletionTokens.toLocaleString(), unit: tr('当前可见日志', 'Visible logs') },
+                { label: tr('平均每次请求 Token', 'Avg Tokens / Request'), value: averageTokensPerRequest.toLocaleString(), unit: '' },
+                { label: tr('涉及模型数', 'Models Touched'), value: uniqueModelsUsed.toLocaleString(), unit: '' },
+              ].map((m) => (
+                <div key={m.label} className="text-center p-5 sm:p-6 bg-white border border-border/60 rounded-[1.5rem] shadow-sm hover:shadow-md transition-shadow group">
+                  <div className="text-2xl font-bold tracking-tight text-primary mb-1 group-hover:scale-105 transition-transform">{m.value}</div>
+                  <div className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary mb-1">{m.label}</div>
+                  {m.unit && <div className="text-[0.6rem] text-text-secondary/70 uppercase tracking-wider">{m.unit}</div>}
+                </div>
+              ))}</div>
+            </div>
+            <div className="bg-white border border-border rounded-[2rem] p-6 sm:p-8 shadow-sm">
+              <h3 className="text-2xl font-bold tracking-tight text-text-primary mb-6">{tr('请求日志', 'Request Logs')}</h3>
+              <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+                <table className="w-full min-w-[500px]">
+                  <thead>
+                    <tr className="border-b border-border/80">
+                      {[tr('时间', 'Time'), tr('模型', 'Model'), 'Input', 'Output', 'Token', tr('状态', 'Status')].map(h => (
+                        <th key={h} className="text-left py-3 sm:py-4 px-3 sm:px-4 text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {usageLogs.length === 0 ? (
+                      <tr><td colSpan={6} className="text-center py-12 text-text-secondary text-sm">{tr('暂无记录', 'No records')}</td></tr>
+                    ) : usageLogs.map((log, i) => (
+                      <tr key={i} className="border-b border-border/50 hover:bg-primary/5 transition-colors">
+                        <td className="py-3 px-3 sm:px-4 text-sm font-medium text-text-primary">{formatDate(log.created_at)}</td>
+                        <td className="py-3 px-3 sm:px-4 text-sm font-medium text-text-primary">{log.model}</td>
+                        <td className="py-3 px-3 sm:px-4 text-sm text-text-secondary">{log.prompt_tokens?.toLocaleString()}</td>
+                        <td className="py-3 px-3 sm:px-4 text-sm text-text-secondary">{log.completion_tokens?.toLocaleString()}</td>
+                        <td className="py-3 px-3 sm:px-4 text-sm text-text-secondary">{log.token_name}</td>
+                        <td className="py-3 px-3 sm:px-4">
+                          <span className="px-2.5 py-1 bg-success/10 text-success rounded-md text-[0.65rem] font-bold uppercase tracking-wider">{tr('成功', 'Success')}</span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'billing' && (
+          <div className="space-y-6 sm:space-y-8">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+              <div className="bg-white border border-border rounded-[2rem] p-6 sm:p-8 shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex justify-between items-start mb-4">
+                  <span className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary">{tr('组织余额', 'Org Balance')}</span>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-primary/10 text-primary text-lg"><i className="fas fa-wallet" /></div>
+                </div>
+                <div className="text-3xl font-bold tracking-tight text-primary mb-6">{formatCurrency(currentBalance)}</div>
+                <button onClick={() => setShowRechargeModal(true)} className="btn-primary w-full justify-center rounded-full shadow-sm hover:shadow hover:-translate-y-0.5 transition-all"><i className="fas fa-plus mr-2" />{tr('充值', 'Top Up')}</button>
+              </div>
+              <div className="bg-white border border-border rounded-[2rem] p-6 sm:p-8 shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex justify-between items-start mb-4">
+                  <span className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary">{tr('本月消耗', 'Monthly Spend')}</span>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-warning/10 text-warning text-lg"><i className="fas fa-coins" /></div>
+                </div>
+                <div className="text-3xl font-bold tracking-tight text-text-primary mb-2">{formatCurrency(currentMonthSpend)}</div>
+                <div className="text-xs font-medium text-text-secondary mt-2">{changePercentage === null ? tr('暂无上月对比数据', 'No comparison data for last month') : <>{tr('较上月', 'vs last month')} <span className={`px-2 py-0.5 rounded-md ${changePercentage <= 0 ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'} ml-1`}>{changePercentage > 0 ? '+' : ''}{changePercentage}%</span></>}</div>
+              </div>
+              <div className="bg-white border border-border rounded-[2rem] p-6 sm:p-8 shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex justify-between items-start mb-4">
+                  <span className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary">{tr('预计可用', 'Estimated Coverage')}</span>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-success/10 text-success text-lg"><i className="fas fa-calendar-check" /></div>
+                </div>
+                <div className="text-3xl font-bold tracking-tight text-text-primary mb-2">{estimatedAvailableDays === null ? '∞' : isZh ? `~${estimatedAvailableDays} 天` : `~${estimatedAvailableDays} days`}</div>
+                <div className="text-xs font-medium text-text-secondary mt-2">{tr('按近 30 天日均', 'Based on the last 30 days average of')} <span className="font-semibold text-text-primary">{formatCurrency(averageDailySpend)}</span> {tr('消耗', 'per day')}</div>
+              </div>
+            </div>
+            <div className="bg-white border border-border rounded-[2rem] p-6 sm:p-8 shadow-sm">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+                <div>
+                  <h3 className="text-2xl font-bold tracking-tight text-text-primary mb-2">{tr('账单明细', 'Billing Details')}</h3>
+                  <p className="text-text-secondary text-sm leading-relaxed">{tr('当前基于调用与账务记录聚合展示，支付与充值流水会继续逐步完善。', 'This view is currently aggregated from usage and ledger records. Payment and top-up entries will continue to be refined.')}</p>
+                </div>
+                <button
+                  className="btn-secondary rounded-full shadow-sm text-sm w-full sm:w-auto justify-center px-6"
+                  onClick={handleExportBilling}
+                >
+                  <i className="fas fa-download mr-2" />{tr('导出', 'Export')}
+                </button>
+              </div>
+              {billingEntries.length === 0 ? (
+                <div className="text-center py-16 sm:py-24 text-text-secondary bg-dark-light/10 rounded-[1.5rem] border border-dashed border-border/60">
+                  <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm"><i className="fas fa-receipt text-3xl text-text-secondary/40" /></div>
+                  <p className="text-lg text-text-primary font-medium">{tr('暂无账单记录', 'No billing records')}</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+                  <table className="w-full min-w-[640px]">
+                    <thead>
+                      <tr className="border-b border-border/80">
+                        {[tr('时间', 'Time'), tr('类型', 'Type'), tr('说明', 'Description'), 'Token', tr('金额', 'Amount')].map((h) => (
+                          <th key={h} className="text-left py-3 sm:py-4 px-3 sm:px-4 text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {billingEntries.map((entry) => (
+                        <tr key={entry.id} className="border-b border-border/50 hover:bg-primary/5 transition-colors">
+                          <td className="py-3 px-3 sm:px-4 text-sm font-medium text-text-primary">{formatDate(entry.created_at)}</td>
+                          <td className="py-3 px-3 sm:px-4">
+                            <span className={`px-2.5 py-1 rounded-md text-[0.65rem] font-bold uppercase tracking-wider ${entry.type === 'recharge' ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}>
+                              {entry.type === 'recharge' ? tr('充值', 'Recharge') : tr('消耗', 'Usage')}
+                            </span>
+                          </td>
+                          <td className="py-3 px-3 sm:px-4 text-sm">
+                            <div className="font-semibold text-text-primary">{entry.type === 'recharge' ? entry.title : entry.model}</div>
+                            <div className="text-text-secondary text-xs mt-1">{entry.description}</div>
+                            {entry.reference && <div className="text-text-secondary text-[0.65rem] font-mono mt-1 opacity-70">{entry.reference}</div>}
+                          </td>
+                          <td className="py-3 px-3 sm:px-4 text-sm text-text-secondary">{entry.total_tokens ? entry.total_tokens.toLocaleString() : '--'}</td>
+                          <td className={`py-3 px-3 sm:px-4 text-sm font-bold ${entry.type === 'recharge' ? 'text-success' : 'text-warning'}`}>
+                            {entry.type === 'recharge' ? '+' : '-'}
+                            {entry.currency ? `${entry.currency} ` : '$'}
+                            {Math.abs(entry.amount).toFixed(2)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+            <div className="bg-white border border-border rounded-[2rem] p-6 sm:p-8 shadow-sm">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+                <div>
+                  <h3 className="text-2xl font-bold tracking-tight text-text-primary mb-2">{tr('充值订单', 'Top-Up Orders')}</h3>
+                  <p className="text-text-secondary text-sm leading-relaxed">{tr('支付方式按产品文档收敛为国内与国际两组渠道，当前阶段先完成下单与记录。', 'Payment methods are currently grouped into domestic and international rails, with order creation and recording implemented first.')}</p>
+                  <p className="text-text-secondary text-sm leading-relaxed mt-1">{tr('确认入账后会写入账务流水，并更新可用额度。', 'After confirmation, the recharge will be written to the billing ledger and update the available balance.')}</p>
+                </div>
+              </div>
+              {paymentOrders.length === 0 ? (
+                <div className="text-center py-16 sm:py-24 text-text-secondary bg-dark-light/10 rounded-[1.5rem] border border-dashed border-border/60">
+                  <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm"><i className="fas fa-credit-card text-3xl text-text-secondary/40" /></div>
+                  <p className="text-lg text-text-primary font-medium">{tr('暂无充值订单', 'No top-up orders')}</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+                  <table className="w-full min-w-[720px]">
+                    <thead>
+                      <tr className="border-b border-border/80">
+                        {[tr('时间', 'Time'), tr('支付方式', 'Payment Method'), tr('区域', 'Region'), tr('金额', 'Amount'), tr('状态', 'Status'), tr('订单号', 'Order ID'), tr('操作', 'Action')].map((h) => (
+                          <th key={h} className="text-left py-3 sm:py-4 px-3 sm:px-4 text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {paymentOrders.map((order) => (
+                        <tr key={order.id} className="border-b border-border/50 hover:bg-primary/5 transition-colors">
+                          <td className="py-3 px-3 sm:px-4 text-sm font-medium text-text-primary">{formatDate(order.created_at)}</td>
+                          <td className="py-3 px-3 sm:px-4 text-sm text-text-secondary">
+                            <span className="flex items-center gap-2">
+                              <i className={`fas fa-${order.payment_method === 'alipay' ? 'alipay text-[#1677FF]' : order.payment_method === 'wechat_pay' ? 'weixin text-[#09B908]' : 'credit-card text-primary'}`} />
+                              {getPaymentMethodLabel(order.payment_method)}
+                            </span>
+                          </td>
+                          <td className="py-3 px-3 sm:px-4 text-sm text-text-secondary">{paymentRegionLabel(order.payment_region)}</td>
+                          <td className="py-3 px-3 sm:px-4 text-sm font-semibold text-text-primary">{order.currency} {order.amount.toFixed(2)}</td>
+                          <td className="py-3 px-3 sm:px-4">
+                            <span className={`px-2.5 py-1 rounded-md text-[0.65rem] font-bold uppercase tracking-wider ${
+                              order.status === 'paid'
+                                ? 'bg-success/10 text-success'
+                                : order.status === 'pending'
+                                  ? 'bg-warning/10 text-warning'
+                                  : 'bg-danger/10 text-danger'
+                            }`}>
+                              {paymentStatusLabel(order.status)}
+                            </span>
+                          </td>
+                          <td className="py-3 px-3 sm:px-4 text-xs font-mono text-text-secondary opacity-80">{order.checkout_reference}</td>
+                          <td className="py-3 px-3 sm:px-4">
+                            {order.status === 'pending' ? (
+                              <button
+                                onClick={() => handleConfirmPaymentOrder(order.id)}
+                                className="btn-secondary text-xs py-1.5 px-4 rounded-full shadow-sm hover:border-success hover:text-success hover:bg-success/5 transition-colors"
+                              >
+                                {tr('确认入账', 'Confirm credit')}
+                              </button>
+                            ) : (
+                              <span className="text-[0.65rem] font-bold uppercase tracking-wider text-text-secondary">
+                                {order.fulfillment_status === 'applied' ? tr('已同步额度', 'Quota synced') : tr('已处理', 'Processed')}
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'team' && (
+          <div className="space-y-4 sm:space-y-6">
+            {teams.length === 0 && !teamLoading && (
+              <div className="editorial-panel p-8 text-center">
+                <i className="fas fa-users text-4xl text-text-secondary opacity-50 mb-4" />
+                <h3 className="text-lg font-semibold mb-2">{tr('还没有团队', 'No teams yet')}</h3>
+                <p className="text-text-secondary text-sm mb-4">{tr('创建一个团队来开始协作', 'Create a team to start collaborating')}</p>
+                <button onClick={() => setShowCreateTeamModal(true)} className="btn-primary">
+                  <i className="fas fa-plus mr-2" />{tr('创建团队', 'Create Team')}
+                </button>
+              </div>
+            )}
+
+            {teamLoading && !currentTeam && (
+              <div className="editorial-panel p-8 text-center">
+                <i className="fas fa-spinner fa-spin text-2xl text-primary mb-4" />
+                <p className="text-text-secondary">{tr('加载中...', 'Loading...')}</p>
+              </div>
+            )}
+
+            {currentTeam && (
+              <>
+                <div className="space-y-6">
+                  <TeamDirectoryPanel
+                    teams={teams}
+                    currentTeam={currentTeam}
+                    currentUserRole={currentUserRole}
+                    onSelectTeam={handleSelectTeam}
+                    onCreateTeam={() => setShowCreateTeamModal(true)}
+                  />
+
+                  <TeamInfoCard team={currentTeam} userRole={currentUserRole} onEdit={() => setShowTeamSettingsModal(true)} />
+
+                  <div className="editorial-panel p-5 sm:p-6">
+                    <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+                      <div className="max-w-2xl">
+                        <div className="eyebrow">{tr('团队概览', 'Team Overview')}</div>
+                        <h3 className="mt-3 text-xl font-semibold">{tr('管理成员、邀请和角色权限', 'Manage members, invitations, and roles')}</h3>
+                        <p className="mt-2 text-sm leading-7 text-text-secondary">
+                          {tr('在这里查看团队状态，并处理成员、邀请和权限相关操作。', 'Review team status and manage members, invitations, and permissions here.')}
+                        </p>
+                      </div>
+
+                      <div className="grid gap-3 sm:grid-cols-2 xl:min-w-[440px]">
+                        {[
+                          { label: tr('成员', 'Members'), value: teamMemberCount, icon: 'fa-users', tone: 'text-primary bg-primary/12' },
+                          { label: tr('管理员', 'Admins'), value: teamAdmins, icon: 'fa-user-shield', tone: 'text-warning bg-warning/12' },
+                          { label: tr('待处理邀请', 'Pending'), value: pendingInvites, icon: 'fa-envelope', tone: 'text-[var(--page-accent-deep)] bg-[rgba(33,93,89,0.12)]' },
+                          { label: tr('团队状态', 'Status'), value: tr('正常', 'Active'), icon: 'fa-diagram-project', tone: 'text-success bg-success/12' },
+                        ].map((item) => (
+                          <div key={item.label} className="rounded-[20px] border border-border bg-white/72 px-4 py-4">
+                            <div className="flex items-center gap-3">
+                              <div className={`flex h-10 w-10 items-center justify-center rounded-[14px] ${item.tone}`}>
+                                <i className={`fas ${item.icon}`} />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="text-lg font-semibold leading-none">{item.value}</div>
+                                <div className="mt-1 text-[11px] uppercase tracking-[0.16em] text-text-secondary">{item.label}</div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="mt-5 flex flex-wrap gap-3 border-t border-border pt-5">
+                      <button
+                        onClick={() => setShowTeamSettingsModal(true)}
+                        className="btn-primary text-sm py-2.5 px-5"
+                      >
+                        <i className="fas fa-pen-to-square mr-2" />
+                        {tr('编辑团队', 'Edit Team')}
+                      </button>
+                      {currentUserRole !== 'owner' && (
+                        <button
+                          onClick={handleLeaveTeam}
+                          className="btn-secondary text-sm py-2.5 px-5"
+                        >
+                          <i className="fas fa-right-from-bracket mr-2" />
+                          {tr('退出团队', 'Leave Team')}
+                        </button>
+                      )}
+                      {currentUserRole === 'owner' && (
+                        <>
+                          <button onClick={() => setShowTransferOwnerModal(true)} className="btn-secondary text-sm py-2.5 px-5">
+                            <i className="fas fa-exchange-alt mr-2" />
+                            {tr('转让所有权', 'Transfer Ownership')}
+                          </button>
+                          <button
+                            onClick={async () => {
+                              if (!currentTeam) return;
+                              const confirmed = await confirmDialog({
+                                title: tr('删除团队', 'Delete team'),
+                                message: isZh ? `确定要删除团队 "${currentTeam.name}"？此操作不可撤销。` : `Delete team "${currentTeam.name}"? This action cannot be undone.`,
+                                confirmText: tr('删除团队', 'Delete team'),
+                                cancelText: tr('取消', 'Cancel'),
+                                tone: 'danger',
+                              });
+                              if (!confirmed) return;
+                              try {
+                                await dispatch(deleteTeam(currentTeam.id)).unwrap();
+                                dispatch(showNotification({ message: tr('团队已删除', 'Team deleted') }));
+                                refreshDashboardRoute(null, '/dashboard/team');
+                              } catch (error) {
+                                dispatch(showNotification({ message: getErrorMessage(error, tr('删除团队失败', 'Failed to delete team')), type: 'error' }));
+                              }
+                            }}
+                            className="btn-secondary border-danger/40 text-danger hover:bg-danger/10 text-sm py-2.5 px-5"
+                          >
+                            <i className="fas fa-trash mr-2" />
+                            {tr('删除团队', 'Delete Team')}
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-6">
+                  <div className="flex gap-2 overflow-x-auto pb-0 -mx-4 px-4 sm:mx-0 sm:px-0 mb-6 scrollbar-hide border-b border-border">
+                    {([
+                      { id: 'members', label: tr('成员与角色', 'Members & Roles'), icon: 'fa-users' },
+                      ...(canManageTeam ? [{ id: 'applications', label: tr('邀请与申请', 'Invites & Apps'), icon: 'fa-user-plus' }] : []),
+                      ...(canManageTeam ? [{ id: 'audit', label: tr('审计日志', 'Audit Logs'), icon: 'fa-clipboard-list' }] : []),
+                      { id: 'settings', label: tr('权限矩阵', 'Permission Matrix'), icon: 'fa-shield-halved' }
+                    ] as Array<{ id: 'members' | 'applications' | 'audit' | 'settings'; label: string; icon: string }>).map((tab) => (
+                      <button
+                        key={tab.id}
+                        onClick={() => setTeamActiveTab(tab.id)}
+                        className={`px-4 py-3 font-medium whitespace-nowrap transition-all text-sm sm:text-base flex items-center gap-2 border-b-2 -mb-[1px] ${
+                          teamActiveTab === tab.id ? 'border-primary text-primary' : 'border-transparent text-text-secondary hover:text-text-primary hover:border-border'
+                        }`}
+                      >
+                        <i className={`fas ${tab.icon}`} />
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="space-y-6">
+                    {teamActiveTab === 'members' && (
+                      <MemberList
+                        members={members}
+                        currentUserRole={currentUserRole}
+                        currentUserId={currentUser?.id || ''}
+                        onRoleChange={handleUpdateMemberRole}
+                        onRemove={handleRemoveMember}
+                        onInvite={canManageTeam ? () => setShowInviteModal(true) : undefined}
+                        searchQuery={memberSearchQuery}
+                        onSearchChange={setMemberSearchQuery}
+                        roleFilter={memberRoleFilter}
+                        onRoleFilterChange={setMemberRoleFilter}
+                      />
+                    )}
+
+                    {teamActiveTab === 'applications' && canManageTeam && (
+                      <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
+                        <PendingInvitationList
+                          invitations={teamInvitations}
+                          loading={teamLoading && !initialDataReady}
+                          onCopyLink={(inviteUrl) => {
+                            copyToClipboard(inviteUrl);
+                            dispatch(showNotification({ message: tr('邀请链接已复制到剪贴板', 'Invite link copied to clipboard') }));
+                          }}
+                          onCancel={handleCancelInvitation}
+                        />
+                        <JoinApplicationsPanel
+                          canManageTeam={canManageTeam}
+                          applications={pendingJoinApplications}
+                          myApplications={myJoinApplications}
+                          onApply={handleApplyToJoinTeam}
+                          onReview={handleReviewJoinApplication}
+                        />
+                      </div>
+                    )}
+
+                    {teamActiveTab === 'audit' && canManageTeam && (
+                      <AuditLogList
+                        logs={teamAuditLogs}
+                        onExport={handleExportAuditLogs}
+                        startDate={auditStartDate}
+                        endDate={auditEndDate}
+                        onDateRangeChange={(start, end) => { setAuditStartDate(start); setAuditEndDate(end); }}
+                        actionFilter={auditActionFilter}
+                        onActionFilterChange={setAuditActionFilter}
+                      />
+                    )}
+
+                    {teamActiveTab === 'settings' && (
+                      <div className="editorial-panel p-5 sm:p-6">
+                        <div className="eyebrow">{tr('权限矩阵', 'Permission Matrix')}</div>
+                        <h3 className="mt-3 text-xl font-semibold">{tr('角色权限分配', 'Role Permissions')}</h3>
+                        <p className="mt-2 text-sm leading-7 text-text-secondary">
+                          {tr('以下是各角色在团队内所拥有的操作权限。', 'The following is a breakdown of permissions granted to each role within the team.')}
+                        </p>
+                        <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {teamPermissionRows.map((perm) => (
+                            <div key={perm.name} className="rounded-[20px] border border-border bg-white/72 px-4 py-4">
+                              <div className="flex flex-col gap-3">
+                                <div>
+                                  <div className="text-sm font-medium">{perm.name}</div>
+                                  <div className="mt-1 text-xs leading-6 text-text-secondary">{perm.desc}</div>
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                  {perm.owner && <span className="rounded-full bg-primary/18 px-3 py-1 text-xs font-medium text-primary">Owner</span>}
+                                  {perm.admin && <span className="rounded-full bg-warning/18 px-3 py-1 text-xs font-medium text-warning">Admin</span>}
+                                  {perm.member && <span className="rounded-full bg-success/18 px-3 py-1 text-xs font-medium text-success">Member</span>}
+                                  {perm.guest && <span className="rounded-full bg-secondary/18 px-3 py-1 text-xs font-medium text-secondary">Guest</span>}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'profile' && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+            {/* 个人信息 */}
+            <div className="lg:col-span-2 space-y-6 lg:space-y-8">
+              <div className="bg-white border border-border rounded-[2rem] p-6 sm:p-8 shadow-sm">
+                <h3 className="text-2xl font-bold tracking-tight text-text-primary mb-6">{tr('个人信息', 'Profile')}</h3>
+                <form onSubmit={handleUpdateProfile}>
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 mb-8">
+                    <div className="relative group cursor-pointer" onClick={() => setShowAvatarModal(true)}>
+                      <div className="relative w-24 h-24 rounded-[2rem] bg-gradient-to-br from-primary to-secondary flex items-center justify-center overflow-hidden text-white text-3xl font-bold shadow-md group-hover:shadow-lg transition-all">
+                        {avatarImageUrl ? (
+                          // Show uploaded/OAuth avatar when available.
+                          <Image src={avatarImageUrl} alt={profileDisplayName} fill sizes="96px" className="object-cover" />
+                        ) : (
+                          profileData.avatar
+                        )}
+                      </div>
+                      <div className="absolute inset-0 bg-black/40 rounded-[2rem] opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                        <i className="fas fa-camera text-white text-xl" />
+                      </div>
+                      <button type="button" className="absolute -bottom-2 -right-2 w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white text-xs shadow-md hover:scale-110 transition-transform">
+                        <i className="fas fa-pen" />
+                      </button>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-xl font-bold text-text-primary tracking-tight">{profileDisplayName}</h4>
+                      <p className="text-text-secondary text-sm mt-1">{currentUser?.email}</p>
+                      <p className="inline-block px-3 py-1 bg-dark-light/50 rounded-lg text-text-secondary text-xs mt-3 font-medium border border-border/50">{tr('注册于', 'Joined')} {formatDate(currentUser?.created_at || new Date().toISOString())}</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-8">
+                    <div>
+                      <label className="block text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary mb-2">{tr('昵称', 'Nickname')}</label>
+                      <input type="text" className="form-control bg-dark-light/30 border-transparent focus:bg-white" value={profileData.nickname} onChange={e => setProfileData({...profileData, nickname: e.target.value})} placeholder={tr('设置昵称', 'Set a nickname')} />
+                    </div>
+                    <div>
+                      <label className="block text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary mb-2">{tr('邮箱', 'Email')}</label>
+                      <input type="email" className="form-control bg-dark-light/50 border-transparent opacity-70 cursor-not-allowed" value={currentUser?.email || ''} disabled />
+                    </div>
+                    <div>
+                      <label className="block text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary mb-2">{tr('手机号状态', 'Phone Status')}</label>
+                      <input type="text" className="form-control bg-dark-light/50 border-transparent opacity-70 cursor-not-allowed" value={currentUser?.phone ? `${currentUser.phone}${currentUser.phone_verified_at ? ` · ${tr('已验证', 'Verified')}` : ` · ${tr('未验证', 'Unverified')}`}` : tr('未绑定', 'Not bound')} disabled />
+                    </div>
+                    <div>
+                      <label className="block text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary mb-2">{tr('用户 ID', 'User ID')}</label>
+                      <input type="text" className="form-control bg-dark-light/50 border-transparent opacity-70 cursor-not-allowed font-mono text-sm" value={currentUser?.id || ''} disabled />
+                    </div>
+                  </div>
+                  <button type="submit" className="btn-primary rounded-full px-6 py-2.5 shadow-sm hover:shadow hover:-translate-y-0.5 transition-all"><i className="fas fa-save mr-2" />{tr('保存修改', 'Save Changes')}</button>
+                </form>
+              </div>
+
+              {/* 安全设置 */}
+              <div className="space-y-6 lg:space-y-8">
+                <div className="bg-white border border-border rounded-[2rem] p-6 sm:p-8 shadow-sm">
+                  <h3 className="text-2xl font-bold tracking-tight text-text-primary mb-6">{tr('安全设置', 'Security')}</h3>
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-5 bg-dark-light/20 border border-border/50 rounded-[1.5rem]">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary text-xl"><i className="fas fa-lock" /></div>
+                      <div>
+                        <div className="font-bold text-text-primary tracking-tight">{tr('登录密码', 'Password')}</div>
+                        <div className="text-text-secondary text-sm mt-0.5">{tr('定期修改密码可提升账号安全性', 'Updating your password regularly improves account security')}</div>
+                      </div>
+                    </div>
+                    <button onClick={() => setShowPasswordModal(true)} className="btn-secondary rounded-full shadow-sm text-sm w-full sm:w-auto justify-center px-5">{tr('修改密码', 'Change Password')}</button>
+                  </div>
+                </div>
+
+                <PhoneBindingCard
+                  currentUser={currentUser}
+                  currentTeamId={currentTeam?.id || null}
+                  onUserUpdated={handleUserUpdated}
+                  onNotify={(message, type = 'success') => dispatch(showNotification({ message, type }))}
+                />
+
+                <TwoFactorCard
+                  currentUser={currentUser}
+                  currentTeamId={currentTeam?.id || null}
+                  onUserUpdated={handleUserUpdated}
+                  onNotify={(message, type = 'success') => dispatch(showNotification({ message, type }))}
+                />
+              </div>
+            </div>
+
+            {/* 使用统计 */}
+            <div className="space-y-6 lg:space-y-8">
+              <div className="bg-white border border-border rounded-[2rem] p-6 sm:p-8 shadow-sm">
+                <h3 className="text-xl font-bold tracking-tight text-text-primary mb-6">{tr('使用统计', 'Usage Summary')}</h3>
+                <div className="space-y-5">
+                  <div className="flex justify-between items-center pb-4 border-b border-border/50">
+                    <span className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary">{tr('总请求数', 'Total Requests')}</span>
+                    <span className="font-bold text-text-primary">{monthlyRequests.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between items-center pb-4 border-b border-border/50">
+                    <span className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary">{tr('活跃天数', 'Active Days')}</span>
+                    <span className="font-bold text-text-primary">{isZh ? `${activeDays} 天` : `${activeDays} days`}</span>
+                  </div>
+                  <div className="flex justify-between items-center pb-4 border-b border-border/50">
+                    <span className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary">{tr('最后活跃', 'Last Active')}</span>
+                    <span className="font-bold text-text-primary">{lastActiveLabel}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary">{tr('API 密钥数', 'API Keys')}</span>
+                    <span className="font-bold text-text-primary">{activeKeys.length}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white border border-border rounded-[2rem] p-6 sm:p-8 shadow-sm">
+                <h3 className="text-xl font-bold tracking-tight text-text-primary mb-6">{tr('账户状态', 'Account Status')}</h3>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 p-3 bg-success/5 border border-success/10 rounded-xl">
+                    <i className="fas fa-check-circle text-success text-lg" />
+                    <span className="text-sm font-medium text-text-primary">{tr('邮箱已验证', 'Email verified')}</span>
+                  </div>
+                  <div className={`flex items-center gap-3 p-3 rounded-xl border ${currentUser?.phone_verified_at ? 'bg-success/5 border-success/10' : 'bg-dark-light/20 border-border/50'}`}>
+                    <i className={`fas ${currentUser?.phone_verified_at ? 'fa-check-circle text-success' : 'fa-times-circle text-text-secondary/50'} text-lg`} />
+                    <span className={`text-sm font-medium ${currentUser?.phone_verified_at ? 'text-text-primary' : 'text-text-secondary'}`}>{currentUser?.phone_verified_at ? tr('手机已验证', 'Phone verified') : tr('手机未验证', 'Phone not verified')}</span>
+                  </div>
+                  <div className={`flex items-center gap-3 p-3 rounded-xl border ${currentUser?.two_factor_enabled ? 'bg-success/5 border-success/10' : 'bg-dark-light/20 border-border/50'}`}>
+                    <i className={`fas ${currentUser?.two_factor_enabled ? 'fa-check-circle text-success' : 'fa-times-circle text-text-secondary/50'} text-lg`} />
+                    <span className={`text-sm font-medium ${currentUser?.two_factor_enabled ? 'text-text-primary' : 'text-text-secondary'}`}>{currentUser?.two_factor_enabled ? tr('双因素认证已开启', 'Two-factor authentication enabled') : tr('双因素认证未开启', 'Two-factor authentication disabled')}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-danger/5 border border-danger/20 rounded-[2rem] p-6 sm:p-8 shadow-sm">
+                <h3 className="text-xl font-bold tracking-tight text-danger mb-3">{tr('危险操作', 'Danger Zone')}</h3>
+                <p className="text-text-secondary text-sm leading-relaxed mb-6">{tr('删除账户后，所有数据将无法恢复', 'Deleting the account will permanently remove all data')}</p>
+                <button onClick={handleDeleteAccount} className="btn-secondary text-danger border-danger/30 bg-white hover:bg-danger/10 hover:border-danger/50 w-full justify-center text-sm rounded-full shadow-sm py-2.5 transition-colors">
+                  <i className="fas fa-trash mr-2" />{tr('删除账户', 'Delete Account')}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {showCreateModal && (<div className="fixed inset-0 bg-black/70 z-[9999] flex items-center justify-center p-4" onClick={() => setShowCreateModal(false)}><div className="bg-white border border-border rounded-[2rem] shadow-xl p-6 sm:p-8 max-w-[550px] w-full max-h-[90vh] overflow-y-auto custom-scrollbar" onClick={e => e.stopPropagation()}><div className="flex justify-between items-center mb-6"><h3 className="text-lg sm:text-xl font-semibold">{tr('创建 API 密钥', 'Create API Key')}</h3><button onClick={() => setShowCreateModal(false)} className="text-text-secondary hover:text-text-primary text-xl">&times;</button></div><form onSubmit={handleCreateKey}>
+        <div className="space-y-4 mb-6">
+          <div><label className="block text-sm text-text-secondary mb-2">{tr('密钥名称', 'Key Name')} <span className="text-danger">*</span></label><input type="text" className="form-control" required placeholder={tr('例如：生产环境、测试环境', 'e.g. Production, Staging')} value={keyName} onChange={e => setKeyName(e.target.value)} /></div>
+          <div><label className="block text-sm text-text-secondary mb-2">{tr('备注说明', 'Notes')}</label><textarea className="form-control" rows={2} placeholder={tr('描述此密钥的用途...', 'Describe how this key will be used...')} value={keyRemark} onChange={e => setKeyRemark(e.target.value)} /></div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div><label className="block text-sm text-text-secondary mb-2">{tr('过期时间', 'Expiration')}</label><EditorialSelect value={keyExpiry} onChange={setKeyExpiry} options={[{ value: '', label: tr('永不过期', 'Never expires') }, { value: '7d', label: tr('7 天后', 'After 7 days') }, { value: '30d', label: tr('30 天后', 'After 30 days') }, { value: '90d', label: tr('90 天后', 'After 90 days') }, { value: '1y', label: tr('1 年后', 'After 1 year') }]} /></div>
+            <div><label className="block text-sm text-text-secondary mb-2">{tr('IP 白名单', 'IP Allowlist')}</label><input type="text" className="form-control" placeholder={tr('多个 IP 用逗号分隔，留空则不限制', 'Separate multiple IPs with commas, leave empty for no restriction')} value={keyIpWhitelist} onChange={e => setKeyIpWhitelist(e.target.value)} /></div>
+          </div>
+          <div><label className="block text-sm text-text-secondary mb-2">{tr('允许的模型', 'Allowed Models')}</label><div className="flex flex-wrap gap-2">{apiKeyModelOptionsLoading ? <span className="text-text-secondary text-sm">{tr('正在加载模型列表...', 'Loading models...')}</span> : availableModelNames.length === 0 ? <span className="text-text-secondary text-sm">{tr('暂无可用模型，请稍后重试。', 'No models available yet. Try again later.')}</span> : availableModelNames.map(model => (<label key={model} className="flex items-center gap-2 px-3 py-2 bg-dark-light/50 rounded-lg cursor-pointer hover:bg-dark-light/70"><input type="checkbox" className="rounded" checked={keyModels.includes(model)} onChange={e => { if (e.target.checked) setKeyModels([...keyModels, model]); else setKeyModels(keyModels.filter(m => m !== model)); }} /><span className="text-sm">{model}</span></label>))}</div><p className="text-text-secondary text-xs mt-1">{tr('不选择则允许所有模型', 'Leave empty to allow all models')}</p></div>
+          <div><label className="block text-sm text-text-secondary mb-2">{tr('权限范围', 'Permission Scopes')}</label><div className="flex flex-wrap gap-2">{apiKeyPermissionScopeOptions.map(scope => (<label key={scope.value} className="flex items-center gap-2 px-3 py-2 bg-dark-light/50 rounded-lg cursor-pointer hover:bg-dark-light/70"><input type="checkbox" className="rounded" checked={keyPermissionScopes.includes(scope.value)} onChange={e => { if (e.target.checked) setKeyPermissionScopes([...keyPermissionScopes, scope.value]); else setKeyPermissionScopes(keyPermissionScopes.filter(item => item !== scope.value)); }} /><span className="text-sm">{scope.label}</span></label>))}</div><p className="text-text-secondary text-xs mt-1">{tr('当前用于组织治理与审计，可与模型范围、IP 白名单组合使用。', 'Currently used for organization governance and audit, alongside model range and IP allowlists.')}</p></div>
+        </div>
+        <div className="flex gap-3"><button type="button" onClick={() => setShowCreateModal(false)} className="btn-secondary flex-1 justify-center">{tr('取消', 'Cancel')}</button><button type="submit" className="btn-primary flex-1 justify-center">{tr('创建密钥', 'Create Key')}</button></div>
+      </form></div></div>)}
+      {showKeyModal && (<div className="fixed inset-0 bg-black/70 z-[9999] flex items-center justify-center p-4" onClick={() => setShowKeyModal(false)}><div className="bg-white border border-border rounded-[2rem] shadow-xl p-6 sm:p-8 max-w-[500px] w-full" onClick={e => e.stopPropagation()}><h3 className="text-lg sm:text-xl font-semibold mb-4">{tr('保存您的 API 密钥', 'Save Your API Key')}</h3><div className="bg-danger/10 border border-danger rounded-lg p-3 sm:p-4 mb-4 text-xs sm:text-sm"><i className="fas fa-exclamation-triangle text-danger mr-2" />{tr('请立即复制并保存，密钥只显示一次！', 'Copy and save this key now. It will only be shown once!')}</div><div className="flex gap-2 mb-6"><input type="text" className="form-control font-mono text-xs sm:text-sm" readOnly value={newKeyValue} /><button className="btn-primary flex-shrink-0" onClick={() => { copyToClipboard(newKeyValue); dispatch(showNotification({ message: tr('已复制', 'Copied') })); }}><i className="fas fa-copy" /></button></div><button className="btn-secondary w-full justify-center" onClick={() => setShowKeyModal(false)}>{tr('我已保存', 'I have saved it')}</button></div></div>)}
+      {showRechargeModal && (<div className="fixed inset-0 bg-black/70 z-[9999] flex items-center justify-center p-4" onClick={() => setShowRechargeModal(false)}><div className="bg-white border border-border rounded-[2rem] shadow-xl p-6 sm:p-8 max-w-[520px] w-full" onClick={e => e.stopPropagation()}><div className="flex justify-between items-center mb-6"><h3 className="text-lg sm:text-xl font-semibold">{tr('账户充值', 'Top Up Account')}</h3><button onClick={() => setShowRechargeModal(false)} className="text-text-secondary hover:text-text-primary text-xl">&times;</button></div><div className="mb-6"><div className="text-sm text-text-secondary mb-3">{tr('快捷金额', 'Quick Amount')}</div><div className="grid grid-cols-3 gap-2 sm:gap-3">{[10, 50, 100, 200, 500, 1000].map((amount) => (<button key={amount} className={`py-2 sm:py-3 border rounded-lg transition-all text-sm sm:text-base ${Number(rechargeAmount) === amount ? 'border-primary text-primary bg-primary/10' : 'border-border hover:border-primary hover:text-primary'}`} onClick={() => setRechargeAmount(String(amount))}>${amount}</button>))}</div></div><div className="mb-6"><label className="block text-sm text-text-secondary mb-2">{tr('自定义金额', 'Custom Amount')}</label><input type="number" className="form-control" placeholder={tr('输入金额', 'Enter amount')} min="1" value={rechargeAmount} onChange={e => setRechargeAmount(e.target.value)} /></div><div className="mb-6 space-y-4"><div><div className="text-sm text-text-secondary mb-2">{tr('国内支付', 'Domestic Payments')}</div><div className="grid grid-cols-2 gap-3">{([{ value: 'alipay', label: getPaymentMethodLabel('alipay') }, { value: 'wechat_pay', label: getPaymentMethodLabel('wechat_pay') }] as const).map((item) => (<button key={item.value} onClick={() => setSelectedPaymentMethod(item.value)} className={`py-3 border rounded-lg text-sm transition-all ${selectedPaymentMethod === item.value ? 'border-primary text-primary bg-primary/10' : 'border-border hover:border-primary hover:text-primary'}`}>{item.label}</button>))}</div></div><div><div className="text-sm text-text-secondary mb-2">{tr('国际支付', 'International Payments')}</div><div className="grid grid-cols-2 gap-3">{([{ value: 'credit_card', label: getPaymentMethodLabel('credit_card') }, { value: 'paypal', label: 'PayPal' }] as const).map((item) => (<button key={item.value} onClick={() => setSelectedPaymentMethod(item.value)} className={`py-3 border rounded-lg text-sm transition-all ${selectedPaymentMethod === item.value ? 'border-primary text-primary bg-primary/10' : 'border-border hover:border-primary hover:text-primary'}`}>{item.label}</button>))}</div></div></div><div className="bg-dark-light/40 border border-border rounded-lg p-4 mb-6 text-sm text-text-secondary"><div className="flex justify-between mb-2"><span>{tr('当前渠道', 'Selected Rail')}</span><span className="text-text-primary">{getPaymentMethodLabel(selectedPaymentMethod)}</span></div><div className="flex justify-between mb-2"><span>{tr('结算币种', 'Settlement Currency')}</span><span className="text-text-primary">{selectedPaymentMethod === 'alipay' || selectedPaymentMethod === 'wechat_pay' ? 'CNY' : 'USD'}</span></div><div className="flex justify-between"><span>{tr('说明', 'Notes')}</span><span className="text-text-primary">{tr('当前阶段创建待支付订单', 'This phase only creates a pending payment order')}</span></div></div><button className="btn-primary w-full justify-center" onClick={handleCreatePaymentOrder}><i className="fas fa-credit-card mr-2" />{tr('创建充值订单', 'Create Top-Up Order')}</button></div></div>)}
+      {showPasswordModal && (<div className="fixed inset-0 bg-black/70 z-[9999] flex items-center justify-center p-4" onClick={() => setShowPasswordModal(false)}><div className="bg-white border border-border rounded-[2rem] shadow-xl p-6 sm:p-8 max-w-[450px] w-full" onClick={e => e.stopPropagation()}><div className="flex justify-between items-center mb-6"><h3 className="text-lg sm:text-xl font-semibold">{tr('修改密码', 'Change Password')}</h3><button onClick={() => setShowPasswordModal(false)} className="text-text-secondary hover:text-text-primary text-xl">&times;</button></div><form onSubmit={handleChangePassword}><div className="space-y-4 mb-6"><div><label className="block text-sm text-text-secondary mb-2">{tr('当前密码', 'Current Password')}</label><input type="password" className="form-control" required value={passwordData.current} onChange={e => setPasswordData({...passwordData, current: e.target.value})} /></div><div><label className="block text-sm text-text-secondary mb-2">{tr('新密码', 'New Password')}</label><input type="password" className="form-control" required minLength={6} value={passwordData.newPass} onChange={e => setPasswordData({...passwordData, newPass: e.target.value})} /></div><div><label className="block text-sm text-text-secondary mb-2">{tr('确认新密码', 'Confirm New Password')}</label><input type="password" className="form-control" required value={passwordData.confirm} onChange={e => setPasswordData({...passwordData, confirm: e.target.value})} /></div></div><button type="submit" className="btn-primary w-full justify-center">{tr('确认修改', 'Confirm Change')}</button></form></div></div>)}
+      {showAvatarModal && (<div className="fixed inset-0 bg-black/70 z-[9999] flex items-center justify-center p-4" onClick={() => setShowAvatarModal(false)}><div className="bg-white border border-border rounded-[2rem] shadow-xl p-6 sm:p-8 max-w-[450px] w-full" onClick={e => e.stopPropagation()}><div className="flex justify-between items-center mb-6"><h3 className="text-lg sm:text-xl font-semibold">{tr('更换头像', 'Change Avatar')}</h3><button onClick={() => setShowAvatarModal(false)} className="text-text-secondary hover:text-text-primary text-xl">&times;</button></div><div className="grid grid-cols-4 gap-3 mb-6">{['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'].map((letter) => (<button key={letter} onClick={() => { setProfileData({...profileData, avatar: letter}); setShowAvatarModal(false); dispatch(showNotification({ message: tr('头像已更新', 'Avatar updated') })); }} className={`w-14 h-14 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white text-xl font-bold hover:scale-110 transition-transform ${profileData.avatar === letter ? 'ring-2 ring-primary ring-offset-2 ring-offset-dark' : ''}`}>{letter}</button>))}</div><p className="text-text-secondary text-sm text-center">{tr('选择一个字母作为头像', 'Choose a letter as your avatar')}</p></div></div>)}
+      {showEditKeyModal && editingKey && (
+        <div className="fixed inset-0 bg-black/70 z-[9999] flex items-center justify-center p-4" onClick={() => setShowEditKeyModal(false)}>
+          <div className="bg-white border border-border rounded-[2rem] shadow-xl p-6 sm:p-8 max-w-[600px] w-full max-h-[90vh] overflow-y-auto custom-scrollbar" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg sm:text-xl font-semibold">{tr('编辑 API 密钥', 'Edit API Key')}</h3>
+              <button onClick={() => setShowEditKeyModal(false)} className="text-text-secondary hover:text-text-primary text-xl">&times;</button>
+            </div>
+            <form onSubmit={handleSaveKeyEdit}>
+              <div className="space-y-4 mb-6">
+                <div>
+                  <label className="block text-sm text-text-secondary mb-2">{tr('密钥名称', 'Key Name')}</label>
+                  <input type="text" className="form-control" required value={keyName} onChange={e => setKeyName(e.target.value)} />
+                </div>
+                <div>
+                  <label className="block text-sm text-text-secondary mb-2">{tr('备注说明', 'Notes')}</label>
+                  <textarea className="form-control" rows={2} placeholder={tr('描述此密钥的用途...', 'Describe how this key will be used...')} value={keyRemark} onChange={e => setKeyRemark(e.target.value)} />
+                </div>
+                <div>
+                  <label className="block text-sm text-text-secondary mb-2">{tr('密钥值', 'Key Value')}</label>
+                  <div className="flex gap-2">
+                    <input type="text" className="form-control font-mono text-sm" readOnly value={editingKey.key} />
+                    <button type="button" className="btn-secondary flex-shrink-0" onClick={() => { copyToClipboard(editingKey.key); dispatch(showNotification({ message: tr('已复制', 'Copied') })); }}>
+                      <i className="fas fa-copy" />
+                    </button>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm text-text-secondary mb-2">{tr('状态', 'Status')}</label>
+                    <EditorialSelect value={editKeyStatus} onChange={(value) => setEditKeyStatus(value as 'active' | 'disabled')} options={[{ value: 'active', label: tr('活跃', 'Active') }, { value: 'disabled', label: tr('已禁用', 'Disabled') }]} />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-text-secondary mb-2">{tr('创建时间', 'Created At')}</label>
+                    <input type="text" className="form-control" readOnly value={formatDate(editingKey.created_at)} />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm text-text-secondary mb-2">{tr('IP 白名单', 'IP Allowlist')}</label>
+                  <input type="text" className="form-control" placeholder={tr('多个 IP 用逗号分隔，留空则不限制', 'Separate multiple IPs with commas, leave empty for no restriction')} value={keyIpWhitelist} onChange={e => setKeyIpWhitelist(e.target.value)} />
+                </div>
+                <div>
+                  <label className="block text-sm text-text-secondary mb-2">{tr('允许的模型', 'Allowed Models')}</label>
+                  <div className="flex flex-wrap gap-2">
+                    {apiKeyModelOptionsLoading ? (
+                      <span className="text-text-secondary text-sm">{tr('正在加载模型列表...', 'Loading models...')}</span>
+                    ) : availableModelNames.length === 0 ? (
+                      <span className="text-text-secondary text-sm">{tr('暂无可用模型，请稍后重试。', 'No models available yet. Try again later.')}</span>
+                    ) : (
+                      availableModelNames.map(model => (
+                        <label key={model} className="flex items-center gap-2 px-3 py-2 bg-dark-light/50 rounded-lg cursor-pointer hover:bg-dark-light/70">
+                          <input type="checkbox" className="rounded" checked={keyModels.includes(model)} onChange={e => { if (e.target.checked) setKeyModels([...keyModels, model]); else setKeyModels(keyModels.filter(m => m !== model)); }} />
+                          <span className="text-sm">{model}</span>
+                        </label>
+                      ))
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm text-text-secondary mb-2">{tr('权限范围', 'Permission Scopes')}</label>
+                  <div className="flex flex-wrap gap-2">
+                    {apiKeyPermissionScopeOptions.map(scope => (
+                      <label key={scope.value} className="flex items-center gap-2 px-3 py-2 bg-dark-light/50 rounded-lg cursor-pointer hover:bg-dark-light/70">
+                        <input type="checkbox" className="rounded" checked={keyPermissionScopes.includes(scope.value)} onChange={e => { if (e.target.checked) setKeyPermissionScopes([...keyPermissionScopes, scope.value]); else setKeyPermissionScopes(keyPermissionScopes.filter(item => item !== scope.value)); }} />
+                        <span className="text-sm">{scope.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <p className="text-text-secondary text-xs mt-1">{tr('当前用于组织治理与审计，可与模型范围、IP 白名单组合使用。', 'Currently used for organization governance and audit, alongside model range and IP allowlists.')}</p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <button type="button" onClick={() => setShowEditKeyModal(false)} className="btn-secondary flex-1 justify-center">{tr('取消', 'Cancel')}</button>
+                <button type="submit" className="btn-primary flex-1 justify-center">{tr('保存修改', 'Save Changes')}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 团队管理弹窗组件 */}
+      <CreateTeamModal
+        isOpen={showCreateTeamModal}
+        onClose={() => setShowCreateTeamModal(false)}
+        onSubmit={handleCreateTeam}
+        loading={teamLoading}
+      />
+      <InviteModal
+        isOpen={showInviteModal}
+        onClose={() => setShowInviteModal(false)}
+        onSubmit={handleInviteMember}
+        currentUserRole={currentUserRole}
+        loading={teamLoading}
+      />
+      {currentTeam && (
+        <TeamSettingsModal
+          isOpen={showTeamSettingsModal}
+          onClose={() => setShowTeamSettingsModal(false)}
+          onSubmit={handleUpdateTeam}
+          team={currentTeam}
+          loading={teamLoading}
+        />
+      )}
+      <TransferOwnerModal
+        isOpen={showTransferOwnerModal}
+        onClose={() => setShowTransferOwnerModal(false)}
+        onSubmit={handleTransferOwnership}
+        members={members.filter(m => m.role !== 'owner')}
+        loading={teamLoading}
+      />
+    </>
+  );
+}

@@ -1,0 +1,475 @@
+{
+  "vendors": [
+    {
+      "name": "OpenAI",
+      "description": "OpenAI official and OpenAI-compatible model family.",
+      "icon": "openai"
+    },
+    {
+      "name": "Anthropic",
+      "description": "Anthropic Claude model family.",
+      "icon": "anthropic"
+    },
+    {
+      "name": "Google",
+      "description": "Google Gemini model family.",
+      "icon": "gemini"
+    },
+    {
+      "name": "DeepSeek",
+      "description": "DeepSeek model family.",
+      "icon": "deepseek"
+    },
+    {
+      "name": "Mistral AI",
+      "description": "Mistral model family.",
+      "icon": "mistral"
+    }
+  ],
+  "models": [
+    {
+      "id": "gpt-5",
+      "model_name": "GPT-5",
+      "provider": "OpenAI",
+      "vendor_name": "OpenAI",
+      "category": "text",
+      "description": "OpenAI general reasoning model for coding and agentic tasks.",
+      "description_zh": "OpenAI 的通用推理模型，适合编码、代理式执行和复杂任务。",
+      "description_en": "OpenAI’s general reasoning model for coding, agents, and complex tasks.",
+      "input_price": 1.25,
+      "output_price": 10,
+      "context_length": 400000,
+      "capabilities_zh": ["高推理", "工程", "长上下文"],
+      "capabilities_en": ["High Reasoning", "Engineering", "Long Context"],
+      "source_url": "https://platform.openai.com/docs/models/gpt-5/",
+      "endpoints": {
+        "openai": { "path": "/v1/chat/completions", "method": "POST" },
+        "openai-response": { "path": "/v1/responses", "method": "POST" }
+      }
+    },
+    {
+      "id": "gpt-5-mini",
+      "model_name": "GPT-5 mini",
+      "provider": "OpenAI",
+      "vendor_name": "OpenAI",
+      "category": "text",
+      "description": "A faster, cost-efficient GPT-5 variant for well-defined tasks.",
+      "description_zh": "更快、更经济的 GPT-5 版本，适合边界清晰的任务。",
+      "description_en": "A faster, cost-efficient GPT-5 variant for well-defined tasks.",
+      "input_price": 0.25,
+      "output_price": 2,
+      "context_length": 400000,
+      "capabilities_zh": ["快速", "经济", "通用"],
+      "capabilities_en": ["Fast", "Affordable", "General"],
+      "source_url": "https://platform.openai.com/docs/models/gpt-5-mini/",
+      "endpoints": {
+        "openai": { "path": "/v1/chat/completions", "method": "POST" },
+        "openai-response": { "path": "/v1/responses", "method": "POST" }
+      }
+    },
+    {
+      "id": "gpt-5-nano",
+      "model_name": "GPT-5 nano",
+      "provider": "OpenAI",
+      "vendor_name": "OpenAI",
+      "category": "text",
+      "description": "The lightest GPT-5 tier for classification, extraction, and summaries.",
+      "description_zh": "GPT-5 里最轻量的一档，适合分类、抽取和摘要。",
+      "description_en": "The lightest GPT-5 tier for classification, extraction, and summaries.",
+      "input_price": 0.05,
+      "output_price": 0.4,
+      "context_length": 400000,
+      "capabilities_zh": ["低延迟", "轻量", "经济"],
+      "capabilities_en": ["Low Latency", "Lightweight", "Affordable"],
+      "source_url": "https://platform.openai.com/docs/models/gpt-5-nano/",
+      "endpoints": {
+        "openai": { "path": "/v1/chat/completions", "method": "POST" },
+        "openai-response": { "path": "/v1/responses", "method": "POST" }
+      }
+    },
+    {
+      "id": "gpt-4.1",
+      "model_name": "GPT-4.1",
+      "provider": "OpenAI",
+      "vendor_name": "OpenAI",
+      "category": "text",
+      "description": "A strong non-reasoning model for instruction following and tool use.",
+      "description_zh": "强非推理模型，适合指令遵循、工具调用和稳定交付。",
+      "description_en": "A strong non-reasoning model for instruction following and tool use.",
+      "input_price": 2,
+      "output_price": 8,
+      "context_length": 1047576,
+      "capabilities_zh": ["稳定", "分析", "长上下文"],
+      "capabilities_en": ["Stable", "Analysis", "Long Context"],
+      "source_url": "https://platform.openai.com/docs/models/gpt-4.1",
+      "endpoints": {
+        "openai": { "path": "/v1/chat/completions", "method": "POST" },
+        "openai-response": { "path": "/v1/responses", "method": "POST" }
+      }
+    },
+    {
+      "id": "gpt-4.1-mini",
+      "model_name": "GPT-4.1 mini",
+      "provider": "OpenAI",
+      "vendor_name": "OpenAI",
+      "category": "text",
+      "description": "Smaller GPT-4.1 tier with low latency and broad tooling support.",
+      "description_zh": "更小的 GPT-4.1 档位，低延迟且支持广泛工具能力。",
+      "description_en": "Smaller GPT-4.1 tier with low latency and broad tooling support.",
+      "input_price": 0.4,
+      "output_price": 1.6,
+      "context_length": 1047576,
+      "capabilities_zh": ["快速", "稳定", "工具调用"],
+      "capabilities_en": ["Fast", "Stable", "Tool Calling"],
+      "source_url": "https://platform.openai.com/docs/models/gpt-4.1-mini",
+      "endpoints": {
+        "openai": { "path": "/v1/chat/completions", "method": "POST" },
+        "openai-response": { "path": "/v1/responses", "method": "POST" }
+      }
+    },
+    {
+      "id": "text-embedding-3-large",
+      "model_name": "text-embedding-3-large",
+      "provider": "OpenAI",
+      "vendor_name": "OpenAI",
+      "category": "embedding",
+      "description": "OpenAI’s most capable embedding model for retrieval and ranking.",
+      "description_zh": "OpenAI 的高性能向量模型，适合检索、召回和排序。",
+      "description_en": "OpenAI’s most capable embedding model for retrieval and ranking.",
+      "input_price": 0.13,
+      "output_price": 0,
+      "context_length": 8192,
+      "capabilities_zh": ["检索", "嵌入", "排序"],
+      "capabilities_en": ["Retrieval", "Embedding", "Ranking"],
+      "source_url": "https://platform.openai.com/docs/models/text-embedding-3-large",
+      "endpoints": {
+        "embedding": { "path": "/v1/embeddings", "method": "POST" }
+      }
+    },
+    {
+      "id": "text-embedding-3-small",
+      "model_name": "text-embedding-3-small",
+      "provider": "OpenAI",
+      "vendor_name": "OpenAI",
+      "category": "embedding",
+      "description": "A lower-cost embedding option for large-scale retrieval workloads.",
+      "description_zh": "更低成本的向量模型，适合大规模检索和召回场景。",
+      "description_en": "A lower-cost embedding option for large-scale retrieval workloads.",
+      "input_price": 0.02,
+      "output_price": 0,
+      "context_length": 8192,
+      "capabilities_zh": ["经济", "嵌入", "检索"],
+      "capabilities_en": ["Affordable", "Embedding", "Retrieval"],
+      "source_url": "https://platform.openai.com/docs/models/text-embedding-3-small",
+      "endpoints": {
+        "embedding": { "path": "/v1/embeddings", "method": "POST" }
+      }
+    },
+    {
+      "id": "claude-opus-4-1-20250805",
+      "model_name": "Claude Opus 4.1",
+      "provider": "Anthropic",
+      "vendor_name": "Anthropic",
+      "category": "text",
+      "description": "Anthropic’s flagship Claude model for deep reasoning and advanced coding.",
+      "description_zh": "Anthropic 当前旗舰模型，适合深度推理、复杂分析和高级编码。",
+      "description_en": "Anthropic’s flagship Claude model for deep reasoning and advanced coding.",
+      "input_price": 15,
+      "output_price": 75,
+      "context_length": 200000,
+      "capabilities_zh": ["高推理", "深分析", "代码"],
+      "capabilities_en": ["High Reasoning", "Deep Analysis", "Code"],
+      "source_url": "https://docs.anthropic.com/en/docs/models-overview",
+      "endpoints": {
+        "anthropic": { "path": "/v1/messages", "method": "POST" }
+      }
+    },
+    {
+      "id": "claude-sonnet-4-20250514",
+      "model_name": "Claude Sonnet 4",
+      "provider": "Anthropic",
+      "vendor_name": "Anthropic",
+      "category": "text",
+      "description": "Balanced Claude tier for production reasoning, writing, and tool use.",
+      "description_zh": "平衡型 Claude 档位，适合生产环境推理、写作和工具调用。",
+      "description_en": "Balanced Claude tier for production reasoning, writing, and tool use.",
+      "input_price": 3,
+      "output_price": 15,
+      "context_length": 200000,
+      "capabilities_zh": ["平衡", "写作", "协作"],
+      "capabilities_en": ["Balanced", "Writing", "Collaboration"],
+      "source_url": "https://docs.anthropic.com/en/docs/models-overview",
+      "endpoints": {
+        "anthropic": { "path": "/v1/messages", "method": "POST" }
+      }
+    },
+    {
+      "id": "claude-3-5-haiku-20241022",
+      "model_name": "Claude Haiku 3.5",
+      "provider": "Anthropic",
+      "vendor_name": "Anthropic",
+      "category": "text",
+      "description": "Anthropic’s fast tier for latency-sensitive assistants and workflows.",
+      "description_zh": "Anthropic 的高速档位，适合低延迟助手和工作流。",
+      "description_en": "Anthropic’s fast tier for latency-sensitive assistants and workflows.",
+      "input_price": 0.8,
+      "output_price": 4,
+      "context_length": 200000,
+      "capabilities_zh": ["低延迟", "快速", "经济"],
+      "capabilities_en": ["Low Latency", "Fast", "Affordable"],
+      "source_url": "https://docs.anthropic.com/en/docs/models-overview",
+      "endpoints": {
+        "anthropic": { "path": "/v1/messages", "method": "POST" }
+      }
+    },
+    {
+      "id": "gemini-2.5-pro",
+      "model_name": "Gemini 2.5 Pro",
+      "provider": "Google",
+      "vendor_name": "Google",
+      "category": "text",
+      "description": "Google’s advanced multimodal reasoning model with a 1M-token context window.",
+      "description_zh": "Google 的高阶多模态推理模型，支持 1M 上下文窗口。",
+      "description_en": "Google’s advanced multimodal reasoning model with a 1M-token context window.",
+      "input_price": 1.25,
+      "output_price": 10,
+      "context_length": 1048576,
+      "capabilities_zh": ["多模态", "高推理", "长上下文"],
+      "capabilities_en": ["Multimodal", "High Reasoning", "Long Context"],
+      "source_url": "https://ai.google.dev/pricing",
+      "endpoints": {
+        "gemini": { "path": "/v1beta/models/{model}:generateContent", "method": "POST" }
+      }
+    },
+    {
+      "id": "gemini-2.5-flash",
+      "model_name": "Gemini 2.5 Flash",
+      "provider": "Google",
+      "vendor_name": "Google",
+      "category": "text",
+      "description": "Hybrid reasoning tier for high-throughput, lower-latency production traffic.",
+      "description_zh": "兼顾推理与吞吐的档位，适合高并发、低延迟生产流量。",
+      "description_en": "Hybrid reasoning tier for high-throughput, lower-latency production traffic.",
+      "input_price": 0.3,
+      "output_price": 2.5,
+      "context_length": 1048576,
+      "capabilities_zh": ["快速", "多模态", "通用"],
+      "capabilities_en": ["Fast", "Multimodal", "General"],
+      "source_url": "https://ai.google.dev/gemini-api/docs/pricing",
+      "endpoints": {
+        "gemini": { "path": "/v1beta/models/{model}:generateContent", "method": "POST" }
+      }
+    },
+    {
+      "id": "gemini-2.5-flash-lite",
+      "model_name": "Gemini 2.5 Flash-Lite",
+      "provider": "Google",
+      "vendor_name": "Google",
+      "category": "text",
+      "description": "Lowest-cost Gemini tier for large-scale automation and bulk processing.",
+      "description_zh": "Gemini 中成本最低的一档，适合自动化和批量处理。",
+      "description_en": "Lowest-cost Gemini tier for large-scale automation and bulk processing.",
+      "input_price": 0.1,
+      "output_price": 0.4,
+      "context_length": 1048576,
+      "capabilities_zh": ["经济", "轻量", "大规模处理"],
+      "capabilities_en": ["Affordable", "Lightweight", "High Throughput"],
+      "source_url": "https://ai.google.dev/pricing",
+      "endpoints": {
+        "gemini": { "path": "/v1beta/models/{model}:generateContent", "method": "POST" }
+      }
+    },
+    {
+      "id": "deepseek-chat",
+      "model_name": "DeepSeek Chat",
+      "provider": "DeepSeek",
+      "vendor_name": "DeepSeek",
+      "category": "text",
+      "description": "DeepSeek V3.2 non-thinking mode for efficient general chat and tool tasks.",
+      "description_zh": "DeepSeek V3.2 的非思考模式，适合通用对话和工具调用。",
+      "description_en": "DeepSeek V3.2 non-thinking mode for efficient general chat and tool tasks.",
+      "input_price": 0.28,
+      "output_price": 0.42,
+      "context_length": 128000,
+      "capabilities_zh": ["经济", "工具调用", "通用"],
+      "capabilities_en": ["Affordable", "Tool Calling", "General"],
+      "source_url": "https://api-docs.deepseek.com/quick_start/pricing",
+      "endpoints": {
+        "openai": { "path": "/v1/chat/completions", "method": "POST" },
+        "openai-response": { "path": "/v1/responses", "method": "POST" }
+      }
+    },
+    {
+      "id": "mistral-large-2512",
+      "model_name": "Mistral Large 3",
+      "provider": "Mistral AI",
+      "vendor_name": "Mistral AI",
+      "category": "text",
+      "description": "Mistral’s flagship open-weight multimodal model for broad production tasks.",
+      "description_zh": "Mistral 的旗舰开权重多模态模型，适合广泛生产任务。",
+      "description_en": "Mistral’s flagship open-weight multimodal model for broad production tasks.",
+      "input_price": 0.5,
+      "output_price": 1.5,
+      "context_length": 256000,
+      "capabilities_zh": ["多模态", "开源生态", "长上下文"],
+      "capabilities_en": ["Multimodal", "Open-source Ecosystem", "Long Context"],
+      "source_url": "https://docs.mistral.ai/models/mistral-large-3-25-12",
+      "endpoints": {
+        "openai": { "path": "/v1/chat/completions", "method": "POST" },
+        "openai-response": { "path": "/v1/responses", "method": "POST" }
+      }
+    },
+    {
+      "id": "mistral-medium-2508",
+      "model_name": "Mistral Medium 3.1",
+      "provider": "Mistral AI",
+      "vendor_name": "Mistral AI",
+      "category": "text",
+      "description": "A balanced frontier-class Mistral tier for quality-sensitive workloads.",
+      "description_zh": "平衡型 Mistral 档位，适合对质量敏感的生产工作负载。",
+      "description_en": "A balanced frontier-class Mistral tier for quality-sensitive workloads.",
+      "input_price": 0.4,
+      "output_price": 2,
+      "context_length": 128000,
+      "capabilities_zh": ["平衡", "多模态", "通用"],
+      "capabilities_en": ["Balanced", "Multimodal", "General"],
+      "source_url": "https://docs.mistral.ai/models/mistral-medium-3-1-25-08",
+      "endpoints": {
+        "openai": { "path": "/v1/chat/completions", "method": "POST" },
+        "openai-response": { "path": "/v1/responses", "method": "POST" }
+      }
+    },
+    {
+      "id": "mistral-small-2506",
+      "model_name": "Mistral Small 3.2",
+      "provider": "Mistral AI",
+      "vendor_name": "Mistral AI",
+      "category": "text",
+      "description": "Smaller Mistral tier with strong efficiency for everyday tasks.",
+      "description_zh": "更小的 Mistral 档位，在日常任务上具备很好的效率。",
+      "description_en": "Smaller Mistral tier with strong efficiency for everyday tasks.",
+      "input_price": 0.1,
+      "output_price": 0.3,
+      "context_length": 128000,
+      "capabilities_zh": ["轻量", "经济", "快速"],
+      "capabilities_en": ["Lightweight", "Affordable", "Fast"],
+      "source_url": "https://docs.mistral.ai/models/mistral-small-3-2-25-06",
+      "endpoints": {
+        "openai": { "path": "/v1/chat/completions", "method": "POST" },
+        "openai-response": { "path": "/v1/responses", "method": "POST" }
+      }
+    },
+    {
+      "id": "ministral-8b-2512",
+      "model_name": "Ministral 3 8B",
+      "provider": "Mistral AI",
+      "vendor_name": "Mistral AI",
+      "category": "text",
+      "description": "Efficient Ministral tier for edge deployment with text and vision support.",
+      "description_zh": "适合边缘部署的 Ministral 档位，兼顾文本与视觉能力。",
+      "description_en": "Efficient Ministral tier for edge deployment with text and vision support.",
+      "input_price": 0.15,
+      "output_price": 0.15,
+      "context_length": 256000,
+      "capabilities_zh": ["边缘部署", "轻量", "多模态"],
+      "capabilities_en": ["Edge", "Lightweight", "Multimodal"],
+      "source_url": "https://docs.mistral.ai/models/ministral-3-8b-25-12",
+      "endpoints": {
+        "openai": { "path": "/v1/chat/completions", "method": "POST" },
+        "openai-response": { "path": "/v1/responses", "method": "POST" }
+      }
+    },
+    {
+      "id": "ministral-3b-2512",
+      "model_name": "Ministral 3 3B",
+      "provider": "Mistral AI",
+      "vendor_name": "Mistral AI",
+      "category": "text",
+      "description": "The smallest Ministral tier for lightweight local and edge workloads.",
+      "description_zh": "最小的 Ministral 档位，适合本地化和边缘轻量工作负载。",
+      "description_en": "The smallest Ministral tier for lightweight local and edge workloads.",
+      "input_price": 0.1,
+      "output_price": 0.1,
+      "context_length": 256000,
+      "capabilities_zh": ["边缘部署", "轻量", "经济"],
+      "capabilities_en": ["Edge", "Lightweight", "Affordable"],
+      "source_url": "https://docs.mistral.ai/models/ministral-3-3b-25-12",
+      "endpoints": {
+        "openai": { "path": "/v1/chat/completions", "method": "POST" },
+        "openai-response": { "path": "/v1/responses", "method": "POST" }
+      }
+    },
+    {
+      "id": "codestral-2508",
+      "model_name": "Codestral",
+      "provider": "Mistral AI",
+      "vendor_name": "Mistral AI",
+      "category": "text",
+      "description": "Mistral’s specialized coding model for low-latency code completion and FIM.",
+      "description_zh": "Mistral 的代码专用模型，适合低延迟补全和 FIM 场景。",
+      "description_en": "Mistral’s specialized coding model for low-latency code completion and FIM.",
+      "input_price": 0.3,
+      "output_price": 0.9,
+      "context_length": 128000,
+      "capabilities_zh": ["代码", "低延迟", "工程"],
+      "capabilities_en": ["Code", "Low Latency", "Engineering"],
+      "source_url": "https://docs.mistral.ai/models/codestral-25-08",
+      "endpoints": {
+        "openai": { "path": "/v1/chat/completions", "method": "POST" },
+        "openai-response": { "path": "/v1/responses", "method": "POST" }
+      }
+    }
+  ],
+  "channels": [
+    {
+      "provider": "OpenAI",
+      "envKey": "OPENAI_API_KEY",
+      "envBaseUrl": "OPENAI_BASE_URL",
+      "type": 1,
+      "name": "OpenAI Primary",
+      "group": "default",
+      "models": ["gpt-5", "gpt-5-mini", "gpt-5-nano", "gpt-4.1", "gpt-4.1-mini", "text-embedding-3-large", "text-embedding-3-small"],
+      "testModel": "gpt-5-mini"
+    },
+    {
+      "provider": "Anthropic",
+      "envKey": "ANTHROPIC_API_KEY",
+      "envBaseUrl": "ANTHROPIC_BASE_URL",
+      "type": 14,
+      "name": "Anthropic Primary",
+      "group": "default",
+      "models": ["claude-opus-4-1-20250805", "claude-sonnet-4-20250514", "claude-3-5-haiku-20241022"],
+      "testModel": "claude-sonnet-4-20250514"
+    },
+    {
+      "provider": "Google",
+      "envKey": "GEMINI_API_KEY",
+      "envBaseUrl": "GEMINI_BASE_URL",
+      "type": 24,
+      "name": "Gemini Primary",
+      "group": "default",
+      "models": ["gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.5-flash-lite"],
+      "testModel": "gemini-2.5-flash"
+    },
+    {
+      "provider": "DeepSeek",
+      "envKey": "DEEPSEEK_API_KEY",
+      "envBaseUrl": "DEEPSEEK_BASE_URL",
+      "type": 43,
+      "name": "DeepSeek Primary",
+      "group": "default",
+      "models": ["deepseek-chat"],
+      "testModel": "deepseek-chat"
+    },
+    {
+      "provider": "Mistral AI",
+      "envKey": "MISTRAL_API_KEY",
+      "envBaseUrl": "MISTRAL_BASE_URL",
+      "type": 42,
+      "name": "Mistral Primary",
+      "group": "default",
+      "models": ["mistral-large-2512", "mistral-medium-2508", "mistral-small-2506", "ministral-8b-2512", "ministral-3b-2512", "codestral-2508"],
+      "testModel": "mistral-small-2506"
+    }
+  ]
+}
