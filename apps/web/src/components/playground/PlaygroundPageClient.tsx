@@ -199,46 +199,46 @@ print(response.choices[0].message.content)`;
     <div className="min-h-screen bg-background relative flex flex-col">
       <div className="absolute top-0 inset-x-0 h-[500px] pointer-events-none -z-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent opacity-60"></div>
       <Navbar />
-      <main className="flex-1 max-w-[1400px] w-full mx-auto px-4 sm:px-6 py-8 sm:py-12 flex flex-col">
-        <section className="mb-8">
-          <div className="grid gap-8 xl:grid-cols-[minmax(0,1.18fr)_360px] xl:items-end">
-            <div className="space-y-5">
-              <span className="eyebrow inline-flex items-center gap-2 bg-primary/10 px-3 py-1.5 rounded-full border border-primary/20">
+      <main className="flex-1 max-w-[1400px] w-full mx-auto px-3 sm:px-4 md:px-6 py-6 sm:py-8 md:py-12 flex flex-col">
+        <section className="mb-6 sm:mb-8">
+          <div className="grid gap-6 sm:gap-8 xl:grid-cols-[minmax(0,1.18fr)_360px] xl:items-end">
+            <div className="space-y-3 sm:space-y-5">
+              <span className="eyebrow inline-flex items-center gap-1.5 sm:gap-2 bg-primary/10 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full border border-primary/20">
                 <span className="text-primary font-medium tracking-wider">{t.playgroundPage.eyebrow}</span>
               </span>
-              <h1 className="max-w-3xl text-3xl font-bold tracking-tight leading-[1.1] text-text-primary sm:text-4xl lg:text-5xl">{t.playgroundPage.title}</h1>
-              <p className="max-w-2xl text-lg leading-relaxed text-text-secondary sm:text-xl">{t.playgroundPage.subtitle}</p>
-              <div className="flex flex-wrap gap-4 pt-2">
-                <button onClick={() => setShowCode((value) => !value)} className="btn-primary rounded-full px-6 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all">
-                  <i className={`fas ${showCode ? 'fa-terminal' : 'fa-code'} mr-2`} />
+              <h1 className="max-w-3xl text-[1.75rem] font-bold tracking-tight leading-[1.12] text-text-primary sm:text-3xl md:text-4xl lg:text-5xl">{t.playgroundPage.title}</h1>
+              <p className="max-w-2xl text-[0.9rem] sm:text-lg leading-relaxed text-text-secondary md:text-xl">{t.playgroundPage.subtitle}</p>
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-1 sm:pt-2">
+                <button onClick={() => setShowCode((value) => !value)} className="btn-primary w-full sm:w-auto justify-center rounded-full px-5 sm:px-6 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all">
+                  <i className={`fas ${showCode ? 'fa-terminal' : 'fa-code'} mr-1.5 sm:mr-2`} />
                   {showCode ? t.playgroundPage.backToWorkbench : t.playgroundPage.showCode}
                 </button>
-                <Link href="/models" className="btn-secondary rounded-full px-6 no-underline hover:-translate-y-0.5 transition-transform bg-white/50 backdrop-blur-sm border-border">
-                  <i className="fas fa-layer-group mr-2" />
+                <Link href="/models" className="btn-secondary w-full sm:w-auto justify-center rounded-full px-5 sm:px-6 no-underline hover:-translate-y-0.5 transition-transform bg-white/50 backdrop-blur-sm border-border">
+                  <i className="fas fa-layer-group mr-1.5 sm:mr-2" />
                   {t.playgroundPage.openCatalog}
                 </Link>
               </div>
             </div>
 
-            <div className="editorial-panel space-y-5 p-6 bg-white/80 backdrop-blur-xl rounded-[2rem] shadow-sm border-border">
-              <div className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-text-secondary flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse"></span>
+            <div className="editorial-panel space-y-4 sm:space-y-5 p-4 sm:p-6 bg-white/80 backdrop-blur-xl rounded-xl sm:rounded-[2rem] shadow-sm border-border">
+              <div className="text-[0.625rem] sm:text-[0.68rem] font-bold uppercase tracking-[0.2em] sm:tracking-[0.24em] text-text-secondary flex items-center gap-1.5 sm:gap-2">
+                <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-success animate-pulse"></span>
                 {t.playgroundPage.sessionSnapshot}
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="rounded-2xl border border-border/60 bg-dark-light/30 p-4">
-                  <div className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-text-secondary">{t.playgroundPage.messageCount}</div>
-                  <div className="mt-2 text-3xl font-bold tracking-tight text-text-primary">{messages.length}</div>
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                <div className="rounded-xl sm:rounded-2xl border border-border/60 bg-dark-light/30 p-3 sm:p-4">
+                  <div className="text-[0.6rem] sm:text-[0.65rem] font-semibold uppercase tracking-[0.16em] sm:tracking-[0.18em] text-text-secondary">{t.playgroundPage.messageCount}</div>
+                  <div className="mt-1.5 sm:mt-2 text-[1.75rem] sm:text-3xl font-bold tracking-tight text-text-primary">{messages.length}</div>
                 </div>
-                <div className="rounded-2xl border border-border/60 bg-dark-light/30 p-4">
-                  <div className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-text-secondary">{t.playgroundPage.token}</div>
-                  <div className="mt-2 text-3xl font-bold tracking-tight text-text-primary">{totalTokens.toLocaleString()}</div>
+                <div className="rounded-xl sm:rounded-2xl border border-border/60 bg-dark-light/30 p-3 sm:p-4">
+                  <div className="text-[0.6rem] sm:text-[0.65rem] font-semibold uppercase tracking-[0.16em] sm:tracking-[0.18em] text-text-secondary">{t.playgroundPage.token}</div>
+                  <div className="mt-1.5 sm:mt-2 text-[1.75rem] sm:text-3xl font-bold tracking-tight text-text-primary">{totalTokens.toLocaleString()}</div>
                 </div>
               </div>
-              <div className="rounded-2xl border border-dashed border-primary/20 bg-primary/5 p-4">
-                <div className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-text-secondary">{t.playgroundPage.currentModel}</div>
-                <div className="mt-2 text-xl font-bold tracking-tight text-text-primary">{currentModel?.model_name || t.playgroundPage.noModelSelected}</div>
-                <div className="mt-2 text-xs leading-relaxed text-text-secondary font-medium">
+              <div className="rounded-xl sm:rounded-2xl border border-dashed border-primary/20 bg-primary/5 p-3 sm:p-4">
+                <div className="text-[0.6rem] sm:text-[0.65rem] font-semibold uppercase tracking-[0.16em] sm:tracking-[0.18em] text-text-secondary">{t.playgroundPage.currentModel}</div>
+                <div className="mt-1.5 sm:mt-2 text-base sm:text-xl font-bold tracking-tight text-text-primary">{currentModel?.model_name || t.playgroundPage.noModelSelected}</div>
+                <div className="mt-1.5 sm:mt-2 text-[0.7rem] sm:text-xs leading-relaxed text-text-secondary font-medium">
                   {t.playgroundPage.currentModelHint.replace('{cost}', formatCurrency(estimatedCost))}
                 </div>
               </div>
@@ -246,7 +246,7 @@ print(response.choices[0].message.content)`;
           </div>
         </section>
 
-        <section className="mb-8 grid gap-5 md:grid-cols-3">
+        <section className="mb-6 sm:mb-8 grid gap-4 sm:gap-5 md:grid-cols-3">
           {[
             { title: t.playgroundPage.validationCard1Title, desc: t.playgroundPage.validationCard1Desc },
             { title: t.playgroundPage.validationCard2Title, desc: t.playgroundPage.validationCard2Desc },
@@ -254,34 +254,34 @@ print(response.choices[0].message.content)`;
           ].map((item, index) => (
             <div
               key={item.title}
-              className={`rounded-[2rem] border p-6 shadow-sm hover:shadow-md transition-shadow hover:-translate-y-1 ${index === 1 ? 'bg-primary/5 border-primary/20' : 'bg-white border-border'}`}
+              className={`rounded-xl sm:rounded-[2rem] border p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow hover:-translate-y-1 ${index === 1 ? 'bg-primary/5 border-primary/20' : 'bg-white border-border'}`}
             >
-              <div className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-text-secondary inline-block bg-dark-light/50 px-2 py-1 rounded-md mb-3">{String(index + 1).padStart(2, '0')}</div>
-              <h2 className="text-xl font-bold tracking-tight text-text-primary">{item.title}</h2>
-              <p className="mt-3 text-sm leading-relaxed text-text-secondary">{item.desc}</p>
+              <div className="text-[0.625rem] sm:text-[0.68rem] font-bold uppercase tracking-[0.2em] sm:tracking-[0.24em] text-text-secondary inline-block bg-dark-light/50 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md mb-2 sm:mb-3">{String(index + 1).padStart(2, '0')}</div>
+              <h2 className="text-base sm:text-xl font-bold tracking-tight text-text-primary">{item.title}</h2>
+              <p className="mt-2 sm:mt-3 text-[0.8rem] sm:text-sm leading-relaxed text-text-secondary">{item.desc}</p>
             </div>
           ))}
         </section>
 
-        <div className="flex-1 grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)] min-h-[600px]">
-          <aside className={`space-y-6 flex flex-col h-full ${showSettings ? 'block' : 'hidden lg:flex'}`}>
-            <section className="editorial-panel p-6 sm:p-8 rounded-[2rem] bg-white border-border shadow-sm flex-1">
-              <div className="mb-6 flex items-center justify-between">
+        <div className="flex-1 grid gap-4 sm:gap-6 lg:grid-cols-[320px_minmax(0,1fr)] min-h-[600px]">
+          <aside className={`space-y-4 sm:space-y-6 flex flex-col h-full ${showSettings ? 'block' : 'hidden lg:flex'}`}>
+            <section className="editorial-panel p-4 sm:p-6 md:p-8 rounded-xl sm:rounded-[2rem] bg-white border-border shadow-sm flex-1">
+              <div className="mb-4 sm:mb-6 flex items-center justify-between">
                 <div>
-                  <div className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-text-secondary mb-1">{t.playgroundPage.controlDeck}</div>
-                  <h2 className="text-2xl font-bold tracking-tight text-text-primary">{t.playgroundPage.settingsTitle}</h2>
+                  <div className="text-[0.625rem] sm:text-[0.68rem] font-bold uppercase tracking-[0.2em] sm:tracking-[0.24em] text-text-secondary mb-0.5 sm:mb-1">{t.playgroundPage.controlDeck}</div>
+                  <h2 className="text-lg sm:text-2xl font-bold tracking-tight text-text-primary">{t.playgroundPage.settingsTitle}</h2>
                 </div>
-                <button onClick={handleClear} className="btn-secondary px-3 py-2 text-xs rounded-full hover:bg-danger/10 hover:text-danger hover:border-danger/30 transition-colors">
-                  <i className="fas fa-trash-alt mr-1.5" />
+                <button onClick={handleClear} className="btn-secondary px-2.5 py-1.5 sm:px-3 sm:py-2 text-[0.7rem] sm:text-xs rounded-full hover:bg-danger/10 hover:text-danger hover:border-danger/30 transition-colors">
+                  <i className="fas fa-trash-alt mr-1 sm:mr-1.5" />
                   {t.playgroundPage.clear}
                 </button>
               </div>
 
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 <div>
-                  <label className="mb-2 block text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary">{t.playgroundPage.model}</label>
+                  <label className="mb-1.5 sm:mb-2 block text-[0.6rem] sm:text-[0.65rem] font-bold uppercase tracking-[0.16em] sm:tracking-[0.18em] text-text-secondary">{t.playgroundPage.model}</label>
                   <EditorialSelect
-                    className="rounded-xl bg-dark-light/10 text-sm"
+                    className="rounded-xl bg-dark-light/10 text-xs sm:text-sm"
                     value={selectedModel}
                     onChange={(value) => dispatch(setSelectedModel(value))}
                     options={models.map((model) => ({
@@ -291,10 +291,10 @@ print(response.choices[0].message.content)`;
                   />
                 </div>
 
-                <div className="bg-dark-light/20 p-4 rounded-2xl border border-border/50">
-                  <div className="mb-3 flex items-center justify-between text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary">
+                <div className="bg-dark-light/20 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-border/50">
+                  <div className="mb-2 sm:mb-3 flex items-center justify-between text-[0.6rem] sm:text-[0.65rem] font-bold uppercase tracking-[0.16em] sm:tracking-[0.18em] text-text-secondary">
                     <span>{t.playgroundPage.temperature}</span>
-                    <span className="bg-white px-2 py-0.5 rounded shadow-sm text-text-primary">{temperature}</span>
+                    <span className="bg-white px-1.5 py-0.5 sm:px-2 sm:py-0.5 rounded shadow-sm text-text-primary">{temperature}</span>
                   </div>
                   <input
                     type="range"
@@ -307,10 +307,10 @@ print(response.choices[0].message.content)`;
                   />
                 </div>
 
-                <div className="bg-dark-light/20 p-4 rounded-2xl border border-border/50">
-                  <div className="mb-3 flex items-center justify-between text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary">
+                <div className="bg-dark-light/20 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-border/50">
+                  <div className="mb-2 sm:mb-3 flex items-center justify-between text-[0.6rem] sm:text-[0.65rem] font-bold uppercase tracking-[0.16em] sm:tracking-[0.18em] text-text-secondary">
                     <span>{t.playgroundPage.maxTokens}</span>
-                    <span className="bg-white px-2 py-0.5 rounded shadow-sm text-text-primary">{maxTokens}</span>
+                    <span className="bg-white px-1.5 py-0.5 sm:px-2 sm:py-0.5 rounded shadow-sm text-text-primary">{maxTokens}</span>
                   </div>
                   <input
                     type="range"
@@ -324,9 +324,9 @@ print(response.choices[0].message.content)`;
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary">{t.playgroundPage.systemPrompt}</label>
+                  <label className="mb-1.5 sm:mb-2 block text-[0.6rem] sm:text-[0.65rem] font-bold uppercase tracking-[0.16em] sm:tracking-[0.18em] text-text-secondary">{t.playgroundPage.systemPrompt}</label>
                   <textarea
-                    className="form-control min-h-[140px] rounded-xl bg-dark-light/10 text-sm leading-relaxed focus:bg-white transition-colors resize-y"
+                    className="form-control min-h-[120px] sm:min-h-[140px] rounded-xl bg-dark-light/10 text-xs sm:text-sm leading-relaxed focus:bg-white transition-colors resize-y"
                     value={systemMessage}
                     onChange={(e) => dispatch(setSystemMessage(e.target.value))}
                     placeholder="You are a helpful assistant..."
@@ -336,21 +336,21 @@ print(response.choices[0].message.content)`;
             </section>
           </aside>
 
-          <section className="flex flex-col overflow-hidden rounded-[2.5rem] border border-border bg-white shadow-sm ring-1 ring-border/50">
-            <div className="border-b border-border/60 bg-dark-light/20 px-6 py-5">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                    <i className="fas fa-bolt text-lg" />
+          <section className="flex flex-col overflow-hidden rounded-xl sm:rounded-[2rem] md:rounded-[2.5rem] border border-border bg-white shadow-sm ring-1 ring-border/50">
+            <div className="border-b border-border/60 bg-dark-light/20 px-4 py-3 sm:px-6 sm:py-5">
+              <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                    <i className="fas fa-bolt text-base sm:text-lg" />
                   </div>
                   <div>
-                    <div className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-text-secondary mb-0.5">{t.playgroundPage.workbench}</div>
-                    <div className="text-xl font-bold tracking-tight text-text-primary">{showCode ? t.playgroundPage.codeSample : currentModel?.model_name || t.playgroundPage.readyToStart}</div>
+                    <div className="text-[0.625rem] sm:text-[0.68rem] font-bold uppercase tracking-[0.2em] sm:tracking-[0.24em] text-text-secondary mb-0.5">{t.playgroundPage.workbench}</div>
+                    <div className="text-base sm:text-xl font-bold tracking-tight text-text-primary">{showCode ? t.playgroundPage.codeSample : currentModel?.model_name || t.playgroundPage.readyToStart}</div>
                   </div>
                 </div>
-                <div className="flex gap-3">
-                  <button onClick={() => setShowSettings((value) => !value)} className="btn-secondary rounded-full xl:hidden">
-                    <i className={`fas ${showSettings ? 'fa-times' : 'fa-sliders-h'} mr-2`} />
+                <div className="flex gap-2 sm:gap-3">
+                  <button onClick={() => setShowSettings((value) => !value)} className="btn-secondary rounded-full xl:hidden text-xs sm:text-sm">
+                    <i className={`fas ${showSettings ? 'fa-times' : 'fa-sliders-h'} mr-1.5 sm:mr-2`} />
                     {showSettings ? t.playgroundPage.toggleSettingsHide : t.playgroundPage.toggleSettingsShow}
                   </button>
                   {!showCode && (
@@ -359,9 +359,9 @@ print(response.choices[0].message.content)`;
                         copyToClipboard(selectedModel || '');
                         dispatch(showNotification({ message: t.playgroundPage.copiedModelId }));
                       }}
-                      className="btn-secondary rounded-full bg-white hover:border-primary/30 transition-colors"
+                      className="btn-secondary rounded-full bg-white hover:border-primary/30 transition-colors text-xs sm:text-sm"
                     >
-                      <i className="fas fa-copy mr-2 opacity-70" />
+                      <i className="fas fa-copy mr-1.5 sm:mr-2 opacity-70" />
                       {t.playgroundPage.copyModelId}
                     </button>
                   )}
@@ -448,10 +448,10 @@ print(response.choices[0].message.content)`;
                   )}
                 </div>
 
-                <div className="border-t border-border/60 bg-white p-5 sm:p-6 shadow-[0_-4px_20px_rgba(0,0,0,0.02)] z-10">
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-end relative max-w-4xl mx-auto">
+                <div className="border-t border-border/60 bg-white p-4 sm:p-5 md:p-6 shadow-[0_-4px_20px_rgba(0,0,0,0.02)] z-10">
+                  <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-end relative max-w-4xl mx-auto">
                     <textarea
-                      className="form-control min-h-[60px] max-h-[200px] flex-1 resize-y rounded-2xl bg-dark-light/10 focus:bg-white transition-colors border-border/60 text-base py-4 px-5 pr-14"
+                      className="form-control min-h-[56px] sm:min-h-[60px] max-h-[200px] flex-1 resize-y rounded-xl sm:rounded-2xl bg-dark-light/10 focus:bg-white transition-colors border-border/60 text-sm sm:text-base py-3 px-4 pr-12 sm:py-4 sm:px-5 sm:pr-14"
                       placeholder={t.playgroundPage.inputPlaceholder}
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
@@ -464,15 +464,15 @@ print(response.choices[0].message.content)`;
                       disabled={sending}
                     />
                     <button
-                      className="absolute right-3 bottom-3 w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                      className="absolute right-2 bottom-2 sm:right-3 sm:bottom-3 w-9 h-9 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-primary text-white flex items-center justify-center hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                       onClick={sendMessage}
                       disabled={sending || !input.trim()}
                       title={t.playgroundPage.send}
                     >
-                      {sending ? <i className="fas fa-spinner fa-spin" /> : <i className="fas fa-paper-plane" />}
+                      {sending ? <i className="fas fa-spinner fa-spin text-sm sm:text-base" /> : <i className="fas fa-paper-plane text-sm sm:text-base" />}
                     </button>
                   </div>
-                  <div className="text-center mt-3 text-[0.65rem] text-text-secondary max-w-4xl mx-auto">
+                  <div className="text-center mt-2 sm:mt-3 text-[0.65rem] sm:text-[0.7rem] text-text-secondary max-w-4xl mx-auto">
                     Shift + Enter for new line. AI models can make mistakes.
                   </div>
                 </div>

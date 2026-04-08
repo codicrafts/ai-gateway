@@ -1030,37 +1030,37 @@ export default function DashboardClient({
   return (
     <>
       <Navbar variant="dashboard" />
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-5 py-4 sm:py-8">
-        <div className="grid gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:items-start">
-          <aside className="space-y-4 lg:sticky lg:top-24">
-            <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 lg:hidden scrollbar-hide">
+      <div className="mx-auto max-w-[1400px] px-3 py-3 sm:px-4 md:px-5 sm:py-6 md:py-8">
+        <div className="grid gap-3 sm:gap-4 lg:grid-cols-[240px_minmax(0,1fr)] lg:items-start lg:gap-6">
+          <aside className="space-y-3 sm:space-y-4 lg:sticky lg:top-24">
+            <div className="grid grid-cols-2 gap-2 pb-2 sm:grid-cols-3 lg:hidden">
                 {tabs.map((tab) => (
                   <Link
                     key={tab.id}
                     href={buildDashboardHref(tab.href, selectedTeamIdForLinks)}
-                    className={`px-3 sm:px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-all text-sm sm:text-base ${
+                    className={`flex items-center justify-center rounded-full px-2.5 py-1.5 sm:px-3 sm:py-2 font-medium transition-all text-xs sm:text-sm ${
                       activeTab === tab.id ? 'bg-primary text-white' : 'bg-white/60 text-text-secondary hover:text-text-primary hover:bg-white'
                     }`}
                 >
-                  <i className={`fas ${tab.icon} mr-1 sm:mr-2`} />
+                  <i className={`fas ${tab.icon} mr-1 sm:mr-2 text-[0.7rem] sm:text-sm`} />
                   {tab.label}
                 </Link>
               ))}
             </div>
 
-            <div className="hidden lg:block editorial-panel p-4">
-              <div className="space-y-2">
+            <div className="hidden lg:block editorial-panel p-3 sm:p-4">
+              <div className="space-y-1.5 sm:space-y-2">
                 {tabs.map((tab) => (
                   <Link
                     key={tab.id}
                     href={buildDashboardHref(tab.href, selectedTeamIdForLinks)}
-                    className={`flex w-full items-center gap-3 rounded-[18px] px-4 py-3 text-left text-sm font-medium transition-all ${
+                    className={`flex w-full items-center gap-2.5 sm:gap-3 rounded-[16px] sm:rounded-[18px] px-3 py-2.5 sm:px-4 sm:py-3 text-left text-xs sm:text-sm font-medium transition-all ${
                       activeTab === tab.id
                         ? 'bg-primary text-white shadow-glow'
                         : 'bg-white/60 text-text-secondary hover:bg-white hover:text-text-primary'
                     }`}
                   >
-                    <i className={`fas ${tab.icon} w-4 text-center`} />
+                    <i className={`fas ${tab.icon} w-3.5 sm:w-4 text-center`} />
                     <span>{tab.label}</span>
                   </Link>
                 ))}
@@ -1070,34 +1070,34 @@ export default function DashboardClient({
 
           <div className="min-w-0">
             {dashboardBootstrapping || routeRefreshing ? (
-              <div className="flex h-[60vh] flex-col items-center justify-center text-text-secondary bg-white border border-border rounded-[2rem] shadow-sm">
-                <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-2xl text-primary animate-pulse shadow-sm">
+              <div className="flex min-h-[48vh] flex-col items-center justify-center rounded-xl sm:rounded-[1.125rem] md:rounded-[1.25rem] border border-border bg-white px-3 py-6 sm:px-4 sm:py-8 md:px-6 md:py-10 text-center text-text-secondary shadow-sm sm:min-h-[60vh]">
+                <div className="mb-3 sm:mb-4 inline-flex h-10 w-10 sm:h-12 sm:w-12 md:h-16 md:w-16 items-center justify-center rounded-lg sm:rounded-xl md:rounded-2xl bg-primary/10 text-lg sm:text-xl md:text-2xl text-primary animate-pulse shadow-sm">
                   <i className="fas fa-spinner fa-spin" />
                 </div>
-                <div className="text-lg font-bold tracking-tight text-text-primary mb-2">{tr('正在载入...', 'Loading...')}</div>
-                <p className="text-sm text-text-secondary">{tr('请稍候，正在获取最新数据', 'Please wait while we fetch the latest data')}</p>
+                <div className="mb-1.5 sm:mb-2 text-sm sm:text-base md:text-lg font-bold tracking-tight text-text-primary">{tr('正在载入...', 'Loading...')}</div>
+                <p className="text-[0.7rem] sm:text-xs md:text-sm text-text-secondary">{tr('请稍候，正在获取最新数据', 'Please wait while we fetch the latest data')}</p>
               </div>
             ) : (
               <>
         {activeTab === 'overview' && (
           <>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+            <div className="mb-4 sm:mb-6 md:mb-8 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:gap-6 lg:grid-cols-4">
               {[
                 { label: tr('组织余额', 'Org Balance'), value: formatCurrency(currentBalance), icon: 'fa-wallet', color: 'primary', change: null }, 
                 { label: tr('本月请求', 'Monthly Requests'), value: monthlyRequests.toLocaleString(), icon: 'fa-paper-plane', color: 'success', change: usageStats ? tr('来自当前团队账本', 'From current team ledger') : null }, 
                 { label: tr('本月消耗', 'Monthly Spend'), value: formatCurrency(currentMonthSpend), icon: 'fa-coins', color: 'warning', change: changePercentage === null ? null : `${changePercentage > 0 ? '+' : ''}${changePercentage}%` }, 
                 { label: tr('API 密钥', 'API Keys'), value: String(activeKeys.length), icon: 'fa-key', color: 'secondary', change: null }
               ].map((s) => (
-                <div key={s.label} className="bg-white border border-border rounded-[1.5rem] p-5 sm:p-6 shadow-sm hover:shadow-md transition-shadow">
-                  <div className="flex justify-between items-start mb-4">
-                    <span className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary">{s.label}</span>
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center bg-${s.color}/10 text-${s.color} text-lg`}>
+                <div key={s.label} className="rounded-xl sm:rounded-[1.125rem] md:rounded-[1.5rem] border border-border bg-white p-3 sm:p-3.5 md:p-6 shadow-sm transition-shadow hover:shadow-md">
+                  <div className="mb-2 sm:mb-3 md:mb-4 flex items-start justify-between">
+                    <span className="pr-2 text-[0.6rem] sm:text-[0.625rem] md:text-[0.65rem] font-bold uppercase tracking-[0.14em] sm:tracking-[0.16em] text-text-secondary">{s.label}</span>
+                    <div className={`flex h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 items-center justify-center rounded-lg sm:rounded-xl text-sm sm:text-base md:text-lg bg-${s.color}/10 text-${s.color}`}>
                       <i className={`fas ${s.icon}`} />
                     </div>
                   </div>
-                  <div className="text-3xl font-bold tracking-tight text-text-primary mb-2">{s.value}</div>
+                  <div className="mb-1.5 sm:mb-2 text-[1.5rem] sm:text-[1.75rem] md:text-3xl font-bold tracking-tight text-text-primary">{s.value}</div>
                   {s.change && (
-                    <span className={`text-[0.65rem] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${
+                    <span className={`text-[0.6rem] sm:text-[0.65rem] font-bold uppercase tracking-wider px-1.5 py-0.5 sm:px-2 rounded-md ${
                       s.change.startsWith('+') ? 'bg-danger/10 text-danger' : 
                       s.change.startsWith('-') ? 'bg-success/10 text-success' : 'bg-dark-light/50 text-text-secondary'
                     }`}>
@@ -1108,19 +1108,19 @@ export default function DashboardClient({
               ))}
             </div>
             
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-              <div className="lg:col-span-2 bg-white border border-border rounded-[2rem] p-6 sm:p-8 shadow-sm">
-                <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  <h3 className="text-xl font-bold tracking-tight text-text-primary">{tr('请求趋势', 'Request Trend')}</h3>
+            <div className="mb-4 sm:mb-6 md:mb-8 grid grid-cols-1 gap-3 sm:gap-4 md:gap-6 lg:grid-cols-3">
+              <div className="rounded-xl sm:rounded-[1.125rem] md:rounded-[2rem] border border-border bg-white p-3 sm:p-4 md:p-8 shadow-sm lg:col-span-2">
+                <div className="mb-4 sm:mb-5 md:mb-6 flex flex-col items-start justify-between gap-2 sm:gap-3 md:flex-row md:items-center md:gap-4">
+                  <h3 className="text-base sm:text-lg md:text-xl font-bold tracking-tight text-text-primary">{tr('请求趋势', 'Request Trend')}</h3>
                   <EditorialSelect 
-                    className="w-full sm:w-[180px] bg-dark-light/10 border-transparent rounded-xl text-sm" 
+                    className="w-full sm:w-[160px] md:w-[180px] bg-dark-light/10 border-transparent rounded-lg sm:rounded-xl text-xs sm:text-sm" 
                     size="sm" 
                     value={trendRange}
                     onChange={(value) => setTrendRange(value as '7d' | '30d')}
                     options={[{ value: '7d', label: tr('最近 7 天', 'Last 7 Days') }, { value: '30d', label: tr('最近 30 天', 'Last 30 Days') }]} 
                   />
                 </div>
-                <div className="h-[250px] w-full relative">
+                <div className="relative h-[160px] w-full sm:h-[190px] md:h-[250px]">
                   <Line 
                     data={usageChartData} 
                     options={{
@@ -1134,22 +1134,22 @@ export default function DashboardClient({
                             usePointStyle: true,
                             pointStyle: 'circle',
                             color: '#64748b',
-                            font: { size: 11, weight: 600 }
+                            font: { size: 10, weight: 600 }
                           }
                         }
                       },
                       scales: {
-                        x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 11 } } },
-                        y: { grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { color: '#94a3b8', font: { size: 11 }, padding: 10 } }
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 9 } } },
+                        y: { grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { color: '#94a3b8', font: { size: 9 }, padding: 8 } }
                       }
                     }} 
                   />
                 </div>
               </div>
               
-              <div className="bg-white border border-border rounded-[2rem] p-6 sm:p-8 shadow-sm">
-                <h3 className="text-xl font-bold tracking-tight text-text-primary mb-6">{tr('模型使用分布', 'Model Distribution')}</h3>
-                <div className="h-[220px] relative flex justify-center">
+              <div className="rounded-xl sm:rounded-[1.125rem] md:rounded-[2rem] border border-border bg-white p-3 sm:p-4 md:p-8 shadow-sm">
+                <h3 className="mb-4 sm:mb-5 md:mb-6 text-base sm:text-lg md:text-xl font-bold tracking-tight text-text-primary">{tr('模型使用分布', 'Model Distribution')}</h3>
+                <div className="relative flex h-[180px] justify-center sm:h-[200px] md:h-[240px]">
                   <Doughnut 
                     data={tokenChartData} 
                     options={{ 
@@ -1157,7 +1157,7 @@ export default function DashboardClient({
                       maintainAspectRatio: false, 
                       cutout: '75%',
                       plugins: { 
-                        legend: { position: 'bottom', labels: { color: '#64748b', padding: 20, usePointStyle: true, pointStyle: 'circle', font: { size: 11, weight: 500 } } } 
+                        legend: { position: 'bottom', labels: { color: '#64748b', padding: 16, usePointStyle: true, pointStyle: 'circle', font: { size: 10, weight: 500 } } } 
                       } 
                     }} 
                   />
@@ -1165,19 +1165,19 @@ export default function DashboardClient({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:gap-6 md:grid-cols-4">
               {[
                 { label: tr('总 Token 消耗', 'Total Token Usage'), value: totalTokenUsage.toLocaleString(), icon: 'fa-database' }, 
                 { label: tr('平均每次请求 Token', 'Average Tokens per Request'), value: averageTokensPerRequest.toLocaleString(), icon: 'fa-wave-square' }, 
                 { label: tr('待处理充值订单', 'Pending Top-up Orders'), value: String(pendingPaymentOrders), icon: 'fa-clock' }, 
                 { label: tr('最近账单记录', 'Recent Ledger Entries'), value: String(billingEntries.length), icon: 'fa-receipt' }
               ].map((s) => (
-                <div key={s.label} className="bg-white border border-border rounded-[1.5rem] p-5 sm:p-6 text-center shadow-sm hover:shadow-md transition-shadow group">
-                  <div className="w-12 h-12 rounded-2xl bg-primary/5 flex items-center justify-center text-primary text-xl mx-auto mb-4 group-hover:scale-110 group-hover:bg-primary/10 transition-all">
+                <div key={s.label} className="group rounded-xl sm:rounded-[1.125rem] md:rounded-[1.5rem] border border-border bg-white p-3 sm:p-3.5 md:p-6 text-center shadow-sm transition-shadow hover:shadow-md">
+                  <div className="mx-auto mb-2 sm:mb-3 md:mb-4 flex h-8 w-8 sm:h-9 sm:w-9 md:h-12 md:w-12 items-center justify-center rounded-lg sm:rounded-xl md:rounded-2xl bg-primary/5 text-sm sm:text-base md:text-xl text-primary transition-all group-hover:scale-110 group-hover:bg-primary/10">
                     <i className={`fas ${s.icon}`} />
                   </div>
-                  <div className="text-2xl font-bold tracking-tight text-text-primary mb-1">{s.value}</div>
-                  <div className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary">{s.label}</div>
+                  <div className="mb-0.5 sm:mb-1 text-base sm:text-lg md:text-2xl font-bold tracking-tight text-text-primary">{s.value}</div>
+                  <div className="text-[0.6rem] sm:text-[0.625rem] md:text-[0.65rem] font-bold uppercase tracking-[0.14em] sm:tracking-[0.16em] text-text-secondary">{s.label}</div>
                 </div>
               ))}
             </div>
@@ -1185,71 +1185,71 @@ export default function DashboardClient({
         )}
 
         {activeTab === 'api-keys' && (
-          <div className="space-y-6 sm:space-y-8">
+          <div className="space-y-4 sm:space-y-6 md:space-y-8">
             {/* 统计卡片 */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-              <div className="bg-white border border-border rounded-[1.5rem] p-5 shadow-sm hover:shadow-md transition-shadow group">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary text-xl group-hover:scale-110 transition-transform"><i className="fas fa-key" /></div>
-                  <div><div className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary mb-1">{tr('总密钥数', 'Total Keys')}</div><div className="text-2xl font-bold tracking-tight text-text-primary">{apiKeys.length}</div></div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:gap-6 lg:grid-cols-4">
+              <div className="group rounded-xl sm:rounded-[1.125rem] md:rounded-[1.5rem] border border-border bg-white p-3 sm:p-3.5 md:p-5 shadow-sm transition-shadow hover:shadow-md">
+                <div className="flex items-center gap-2.5 sm:gap-3 md:gap-4">
+                  <div className="flex h-9 w-9 sm:h-10 sm:w-10 md:h-12 md:w-12 items-center justify-center rounded-xl sm:rounded-2xl bg-primary/10 text-base sm:text-lg md:text-xl text-primary transition-transform group-hover:scale-110"><i className="fas fa-key" /></div>
+                  <div><div className="mb-0.5 sm:mb-1 text-[0.6rem] sm:text-[0.65rem] font-bold uppercase tracking-[0.16em] sm:tracking-[0.18em] text-text-secondary">{tr('总密钥数', 'Total Keys')}</div><div className="text-[1.5rem] sm:text-[1.75rem] md:text-[1.75rem] font-bold tracking-tight text-text-primary">{apiKeys.length}</div></div>
                 </div>
               </div>
-              <div className="bg-white border border-border rounded-[1.5rem] p-5 shadow-sm hover:shadow-md transition-shadow group">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-success/10 flex items-center justify-center text-success text-xl group-hover:scale-110 transition-transform"><i className="fas fa-check-circle" /></div>
-                  <div><div className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary mb-1">{tr('活跃密钥', 'Active Keys')}</div><div className="text-2xl font-bold tracking-tight text-text-primary">{activeKeys.length}</div></div>
+              <div className="group rounded-xl sm:rounded-[1.125rem] md:rounded-[1.5rem] border border-border bg-white p-3 sm:p-3.5 md:p-5 shadow-sm transition-shadow hover:shadow-md">
+                <div className="flex items-center gap-2.5 sm:gap-3 md:gap-4">
+                  <div className="flex h-9 w-9 sm:h-10 sm:w-10 md:h-12 md:w-12 items-center justify-center rounded-xl sm:rounded-2xl bg-success/10 text-base sm:text-lg md:text-xl text-success transition-transform group-hover:scale-110"><i className="fas fa-check-circle" /></div>
+                  <div><div className="mb-0.5 sm:mb-1 text-[0.6rem] sm:text-[0.65rem] font-bold uppercase tracking-[0.16em] sm:tracking-[0.18em] text-text-secondary">{tr('活跃密钥', 'Active Keys')}</div><div className="text-[1.5rem] sm:text-[1.75rem] md:text-[1.75rem] font-bold tracking-tight text-text-primary">{activeKeys.length}</div></div>
                 </div>
               </div>
-              <div className="bg-white border border-border rounded-[1.5rem] p-5 shadow-sm hover:shadow-md transition-shadow group">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-warning/10 flex items-center justify-center text-warning text-xl group-hover:scale-110 transition-transform"><i className="fas fa-paper-plane" /></div>
-                  <div><div className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary mb-1">{tr('本月请求', 'Monthly Requests')}</div><div className="text-2xl font-bold tracking-tight text-text-primary">{monthlyRequests.toLocaleString()}</div></div>
+              <div className="group rounded-xl sm:rounded-[1.125rem] md:rounded-[1.5rem] border border-border bg-white p-3 sm:p-3.5 md:p-5 shadow-sm transition-shadow hover:shadow-md">
+                <div className="flex items-center gap-2.5 sm:gap-3 md:gap-4">
+                  <div className="flex h-9 w-9 sm:h-10 sm:w-10 md:h-12 md:w-12 items-center justify-center rounded-xl sm:rounded-2xl bg-warning/10 text-base sm:text-lg md:text-xl text-warning transition-transform group-hover:scale-110"><i className="fas fa-paper-plane" /></div>
+                  <div><div className="mb-0.5 sm:mb-1 text-[0.6rem] sm:text-[0.65rem] font-bold uppercase tracking-[0.16em] sm:tracking-[0.18em] text-text-secondary">{tr('本月请求', 'Monthly Requests')}</div><div className="text-[1.5rem] sm:text-[1.75rem] md:text-[1.75rem] font-bold tracking-tight text-text-primary">{monthlyRequests.toLocaleString()}</div></div>
                 </div>
               </div>
-              <div className="bg-white border border-border rounded-[1.5rem] p-5 shadow-sm hover:shadow-md transition-shadow group">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-secondary/10 flex items-center justify-center text-secondary text-xl group-hover:scale-110 transition-transform"><i className="fas fa-database" /></div>
-                  <div><div className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary mb-1">{tr('Token 消耗', 'Token Usage')}</div><div className="text-2xl font-bold tracking-tight text-text-primary">{totalTokenUsage.toLocaleString()}</div></div>
+              <div className="group rounded-xl sm:rounded-[1.125rem] md:rounded-[1.5rem] border border-border bg-white p-3 sm:p-3.5 md:p-5 shadow-sm transition-shadow hover:shadow-md">
+                <div className="flex items-center gap-2.5 sm:gap-3 md:gap-4">
+                  <div className="flex h-9 w-9 sm:h-10 sm:w-10 md:h-12 md:w-12 items-center justify-center rounded-xl sm:rounded-2xl bg-secondary/10 text-base sm:text-lg md:text-xl text-secondary transition-transform group-hover:scale-110"><i className="fas fa-database" /></div>
+                  <div><div className="mb-0.5 sm:mb-1 text-[0.6rem] sm:text-[0.65rem] font-bold uppercase tracking-[0.16em] sm:tracking-[0.18em] text-text-secondary">{tr('Token 消耗', 'Token Usage')}</div><div className="text-[1.5rem] sm:text-[1.75rem] md:text-[1.75rem] font-bold tracking-tight text-text-primary">{totalTokenUsage.toLocaleString()}</div></div>
                 </div>
               </div>
             </div>
 
             {/* 密钥列表 */}
-            <div className="bg-white border border-border rounded-[2rem] p-6 sm:p-8 shadow-sm">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+            <div className="rounded-xl sm:rounded-[1.125rem] md:rounded-[2rem] border border-border bg-white p-3 sm:p-4 md:p-8 shadow-sm">
+              <div className="mb-4 sm:mb-6 md:mb-8 flex flex-col items-start justify-between gap-3 sm:gap-4 sm:flex-row sm:items-center">
                 <div>
-                  <h3 className="text-2xl font-bold tracking-tight text-text-primary mb-2">{tr('API 密钥管理', 'API Key Management')}</h3>
-                  <p className="text-text-secondary text-sm leading-relaxed">{tr('创建和管理您的 API 密钥，用于调用模型接口', 'Create and manage the API keys used to access model endpoints')}</p>
+                  <h3 className="mb-1.5 sm:mb-2 text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-text-primary">{tr('API 密钥管理', 'API Key Management')}</h3>
+                  <p className="text-[0.7rem] sm:text-xs md:text-sm leading-relaxed text-text-secondary">{tr('创建和管理您的 API 密钥，用于调用模型接口', 'Create and manage the API keys used to access model endpoints')}</p>
                 </div>
-                <button className="btn-primary w-full sm:w-auto justify-center rounded-full shadow-sm hover:shadow hover:-translate-y-0.5 transition-all px-6 py-2.5" onClick={openCreateKeyModal}>
-                  <i className="fas fa-plus mr-2" /> {tr('创建密钥', 'Create Key')}
+                <button className="btn-primary w-full sm:w-auto justify-center rounded-full shadow-sm hover:shadow hover:-translate-y-0.5 transition-all px-4 py-2 sm:px-6 sm:py-2.5 text-xs sm:text-sm" onClick={openCreateKeyModal}>
+                  <i className="fas fa-plus mr-1.5 sm:mr-2" /> {tr('创建密钥', 'Create Key')}
                 </button>
               </div>
               
               {apiKeys.length === 0 ? (
-                <div className="text-center py-16 sm:py-24 text-text-secondary bg-dark-light/10 rounded-[1.5rem] border border-dashed border-border/60">
-                  <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
-                    <i className="fas fa-key text-3xl text-text-secondary/40" />
+                <div className="rounded-xl sm:rounded-[1.125rem] md:rounded-[1.5rem] border border-dashed border-border/60 bg-dark-light/10 py-10 sm:py-12 md:py-24 text-center text-text-secondary">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6 shadow-sm">
+                    <i className="fas fa-key text-2xl sm:text-3xl text-text-secondary/40" />
                   </div>
-                  <p className="mb-6 text-lg text-text-primary font-medium">{tr('还没有 API 密钥', 'No API keys yet')}</p>
-                  <button className="btn-primary rounded-full shadow-sm hover:-translate-y-0.5 transition-all" onClick={openCreateKeyModal}>{tr('创建第一个密钥', 'Create your first key')}</button>
+                  <p className="mb-4 sm:mb-6 text-base sm:text-lg text-text-primary font-medium">{tr('还没有 API 密钥', 'No API keys yet')}</p>
+                  <button className="btn-primary rounded-full shadow-sm hover:-translate-y-0.5 transition-all text-xs sm:text-sm px-5 py-2 sm:px-6 sm:py-2.5" onClick={openCreateKeyModal}>{tr('创建第一个密钥', 'Create your first key')}</button>
                 </div>
               ) : (
-                <div className="space-y-6">
+                <div className="space-y-4 sm:space-y-6">
                   {apiKeys.map((key) => {
                     const isCopyingFullKey = copyingFullKeyId === key.id;
 
                     return (
-                    <div key={key.id} className="bg-white border border-border/80 rounded-[1.5rem] p-6 sm:p-8 hover:shadow-md hover:border-primary/20 transition-all duration-300">
+                    <div key={key.id} className="rounded-xl sm:rounded-[1.125rem] md:rounded-[1.5rem] border border-border/80 bg-white p-3 sm:p-4 md:p-8 transition-all duration-300 hover:border-primary/20 hover:shadow-md">
                       {/* 头部：名称和状态 */}
-                      <div className="flex flex-col sm:flex-row justify-between items-start gap-5 mb-6">
+                      <div className="mb-6 flex flex-col items-start justify-between gap-5 lg:flex-row">
                         <div className="flex items-start gap-4">
-                          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-lg ${key.status === 'active' ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'}`}>
+                          <div className={`flex h-10 w-10 items-center justify-center rounded-xl text-base sm:h-12 sm:w-12 sm:rounded-2xl sm:text-lg ${key.status === 'active' ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'}`}>
                             <i className="fas fa-key" />
                           </div>
                           <div>
                             <div className="flex items-center gap-3 flex-wrap mb-1.5">
-                              <span className="font-bold text-lg text-text-primary tracking-tight">{key.name}</span>
+                              <span className="text-base font-bold tracking-tight text-text-primary sm:text-lg">{key.name}</span>
                               <span className={`px-2.5 py-1 rounded-md text-[0.65rem] font-bold uppercase tracking-wider ${key.status === 'active' ? 'bg-success/10 text-success' : key.status === 'disabled' ? 'bg-danger/10 text-danger' : key.status === 'expired' ? 'bg-warning/10 text-warning' : 'bg-dark-light/50 text-text-secondary'}`}>
                                 {apiKeyStatusLabel(key.status)}
                               </span>
@@ -1258,17 +1258,17 @@ export default function DashboardClient({
                               {tr('创建于', 'Created')} {formatDate(key.created_at)} {key.expires_at && <span className="ml-2 pl-2 border-l border-border/60">{tr('过期时间', 'Expires')} {formatDate(key.expires_at)}</span>}
                             </div>
                             {key.remark && (
-                              <div className="text-text-secondary text-sm mt-3 leading-relaxed bg-dark-light/30 px-3 py-2 rounded-xl border border-border/50">
+                              <div className="mt-3 rounded-lg border border-border/50 bg-dark-light/30 px-3 py-2 text-xs leading-relaxed text-text-secondary sm:rounded-xl sm:text-sm">
                                 {key.remark}
                               </div>
                             )}
                           </div>
                         </div>
-                        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+                        <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 lg:flex lg:w-auto lg:flex-wrap">
                           <button 
                             onClick={() => { handleCopyFullKey(key.id); }} 
                             disabled={isCopyingFullKey}
-                            className="btn-secondary rounded-full text-xs py-2 px-4 flex-1 sm:flex-none justify-center disabled:cursor-not-allowed disabled:opacity-70 bg-white shadow-sm hover:border-primary/30 hover:text-primary transition-colors"
+                            className="btn-secondary justify-center rounded-full bg-white px-4 py-2 text-xs shadow-sm transition-colors hover:border-primary/30 hover:text-primary disabled:cursor-not-allowed disabled:opacity-70 sm:flex-none"
                             title={tr('复制密钥', 'Copy key')}
                           >
                             <i className={`fas ${isCopyingFullKey ? 'fa-spinner fa-spin' : 'fa-copy'} mr-1.5`} />
@@ -1276,7 +1276,7 @@ export default function DashboardClient({
                           </button>
                           <button 
                             onClick={() => handleEditKey(key)} 
-                            className="btn-secondary rounded-full text-xs py-2 px-4 flex-1 sm:flex-none justify-center bg-white shadow-sm hover:border-primary/30 hover:text-primary transition-colors"
+                            className="btn-secondary justify-center rounded-full bg-white px-4 py-2 text-xs shadow-sm transition-colors hover:border-primary/30 hover:text-primary sm:flex-none"
                             title={tr('编辑', 'Edit')}
                           >
                             <i className="fas fa-edit mr-1.5" />
@@ -1284,7 +1284,7 @@ export default function DashboardClient({
                           </button>
                           <button 
                             onClick={() => handleToggleKeyStatus(key)} 
-                            className={`btn-secondary rounded-full text-xs py-2 px-4 flex-1 sm:flex-none justify-center bg-white shadow-sm transition-colors ${key.status === 'active' ? 'hover:border-warning hover:text-warning hover:bg-warning/5' : 'hover:border-success hover:text-success hover:bg-success/5'}`}
+                            className={`btn-secondary justify-center rounded-full bg-white px-4 py-2 text-xs shadow-sm transition-colors sm:flex-none ${key.status === 'active' ? 'hover:border-warning hover:text-warning hover:bg-warning/5' : 'hover:border-success hover:text-success hover:bg-success/5'}`}
                             title={key.status === 'active' ? tr('禁用', 'Disable') : tr('启用', 'Enable')}
                           >
                             <i className={`fas ${key.status === 'active' ? 'fa-ban' : 'fa-check'} mr-1.5`} />
@@ -1292,7 +1292,7 @@ export default function DashboardClient({
                           </button>
                           <button 
                             onClick={() => handleDeleteKey(key.id, key.name)} 
-                            className="btn-secondary rounded-full text-xs py-2 px-4 flex-1 sm:flex-none justify-center bg-white shadow-sm hover:border-danger hover:text-danger hover:bg-danger/5 transition-colors"
+                            className="btn-secondary justify-center rounded-full bg-white px-4 py-2 text-xs shadow-sm transition-colors hover:border-danger hover:text-danger hover:bg-danger/5 sm:flex-none"
                             title={tr('删除', 'Delete')}
                           >
                             <i className="fas fa-trash mr-1.5" />
@@ -1302,9 +1302,9 @@ export default function DashboardClient({
                       </div>
 
                       {/* 密钥值 */}
-                      <div className="bg-dark-light/10 rounded-[1rem] p-4 mb-6 border border-border/50 shadow-inner">
-                        <div className="flex items-center justify-between gap-4">
-                          <code className="font-mono text-text-primary text-sm font-semibold tracking-wider">{key.key.substring(0, 20)}...{key.key.slice(-8)}</code>
+                      <div className="mb-5 rounded-[0.875rem] border border-border/50 bg-dark-light/10 p-3 shadow-inner sm:mb-6 sm:rounded-[1rem] sm:p-4">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                          <code className="font-mono text-text-primary text-xs font-semibold tracking-wider break-all sm:text-sm">{key.key.substring(0, 20)}...{key.key.slice(-8)}</code>
                           <button 
                             onClick={() => { handleCopyFullKey(key.id); }}
                             disabled={isCopyingFullKey}
@@ -1317,21 +1317,21 @@ export default function DashboardClient({
                       </div>
 
                       {/* 使用统计 */}
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-                        <div className="bg-white border border-border/60 rounded-[1rem] p-4 text-center shadow-sm">
-                          <div className="text-xl font-bold tracking-tight text-primary mb-1">{formatCurrency(key.spent_amount || key.used_quota)}</div>
+                      <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
+                        <div className="rounded-[0.875rem] border border-border/60 bg-white p-3 text-center shadow-sm sm:rounded-[1rem] sm:p-4">
+                          <div className="mb-1 text-base font-bold tracking-tight text-primary sm:text-xl">{formatCurrency(key.spent_amount || key.used_quota)}</div>
                           <div className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary">{tr('已用额度', 'Used Quota')}</div>
                         </div>
-                        <div className="bg-white border border-border/60 rounded-[1rem] p-4 text-center shadow-sm">
-                          <div className="text-xl font-bold tracking-tight text-success mb-1">{key.unlimited_quota ? '∞' : key.quota.toLocaleString()}</div>
+                        <div className="rounded-[0.875rem] border border-border/60 bg-white p-3 text-center shadow-sm sm:rounded-[1rem] sm:p-4">
+                          <div className="mb-1 text-base font-bold tracking-tight text-success sm:text-xl">{key.unlimited_quota ? '∞' : key.quota.toLocaleString()}</div>
                           <div className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary">{tr('总额度', 'Total Quota')}</div>
                         </div>
-                        <div className="bg-white border border-border/60 rounded-[1rem] p-4 text-center shadow-sm">
-                          <div className="text-xl font-bold tracking-tight text-warning mb-1">{key.unlimited_quota ? '∞' : (key.quota - key.used_quota).toLocaleString()}</div>
+                        <div className="rounded-[0.875rem] border border-border/60 bg-white p-3 text-center shadow-sm sm:rounded-[1rem] sm:p-4">
+                          <div className="mb-1 text-base font-bold tracking-tight text-warning sm:text-xl">{key.unlimited_quota ? '∞' : (key.quota - key.used_quota).toLocaleString()}</div>
                           <div className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary">{tr('剩余额度', 'Remaining')}</div>
                         </div>
-                        <div className="bg-white border border-border/60 rounded-[1rem] p-4 text-center shadow-sm">
-                          <div className="text-xl font-bold tracking-tight text-secondary mb-1">{key.models.length > 0 ? key.models.length : tr('全部', 'All')}</div>
+                        <div className="rounded-[0.875rem] border border-border/60 bg-white p-3 text-center shadow-sm sm:rounded-[1rem] sm:p-4">
+                          <div className="mb-1 text-base font-bold tracking-tight text-secondary sm:text-xl">{key.models.length > 0 ? key.models.length : tr('全部', 'All')}</div>
                           <div className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary">{tr('可用模型', 'Available Models')}</div>
                         </div>
                       </div>
@@ -1393,45 +1393,45 @@ export default function DashboardClient({
             </div>
 
             {/* 使用说明 */}
-            <div className="bg-white border border-border rounded-[2rem] p-6 sm:p-8 shadow-sm">
-              <h3 className="text-2xl font-bold tracking-tight text-text-primary mb-8">{tr('API 密钥使用说明', 'API Key Guide')}</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-6">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-bold text-xl flex-shrink-0 shadow-inner">1</div>
+            <div className="rounded-xl sm:rounded-[1.5rem] md:rounded-[2rem] border border-border bg-white p-3 sm:p-4 md:p-8 shadow-sm">
+              <h3 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-text-primary mb-5 sm:mb-6 md:mb-8">{tr('API 密钥使用说明', 'API Key Guide')}</h3>
+              <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2">
+                <div className="space-y-4 sm:space-y-6">
+                  <div className="flex items-start gap-3 sm:gap-4">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-bold text-lg sm:text-xl flex-shrink-0 shadow-inner">1</div>
                     <div>
-                      <div className="font-bold text-text-primary mb-1 tracking-tight">{tr('创建 API Key', 'Create an API key')}</div>
-                      <div className="text-text-secondary text-sm leading-relaxed">{tr('自动生成唯一密钥，作为开发者接入 API 的核心入口', 'Generate a unique key that serves as the main entry point for API access')}</div>
+                      <div className="font-bold text-text-primary mb-0.5 sm:mb-1 tracking-tight text-sm sm:text-base">{tr('创建 API Key', 'Create an API key')}</div>
+                      <div className="text-text-secondary text-xs sm:text-sm leading-relaxed">{tr('自动生成唯一密钥，作为开发者接入 API 的核心入口', 'Generate a unique key that serves as the main entry point for API access')}</div>
                     </div>
                   </div>
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-bold text-xl flex-shrink-0 shadow-inner">2</div>
+                  <div className="flex items-start gap-3 sm:gap-4">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-bold text-lg sm:text-xl flex-shrink-0 shadow-inner">2</div>
                     <div>
-                      <div className="font-bold text-text-primary mb-1 tracking-tight">{tr('撤销/禁用 Key', 'Revoke or disable keys')}</div>
-                      <div className="text-text-secondary text-sm leading-relaxed">{tr('用户可手动停用或设置过期时间，控制安全访问，防止泄露', 'Disable keys manually or set expiration dates to control access and reduce leakage risk')}</div>
+                      <div className="font-bold text-text-primary mb-0.5 sm:mb-1 tracking-tight text-sm sm:text-base">{tr('撤销/禁用 Key', 'Revoke or disable keys')}</div>
+                      <div className="text-text-secondary text-xs sm:text-sm leading-relaxed">{tr('用户可手动停用或设置过期时间，控制安全访问，防止泄露', 'Disable keys manually or set expiration dates to control access and reduce leakage risk')}</div>
                     </div>
                   </div>
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-bold text-xl flex-shrink-0 shadow-inner">3</div>
+                  <div className="flex items-start gap-3 sm:gap-4">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-bold text-lg sm:text-xl flex-shrink-0 shadow-inner">3</div>
                     <div>
-                      <div className="font-bold text-text-primary mb-1 tracking-tight">{tr('使用统计', 'Usage analytics')}</div>
-                      <div className="text-text-secondary text-sm leading-relaxed">{tr('查看请求次数、调用量，了解 Key 使用情况，成本透明', 'Review requests and token usage to understand cost and activity per key')}</div>
+                      <div className="font-bold text-text-primary mb-0.5 sm:mb-1 tracking-tight text-sm sm:text-base">{tr('使用统计', 'Usage analytics')}</div>
+                      <div className="text-text-secondary text-xs sm:text-sm leading-relaxed">{tr('查看请求次数、调用量，了解 Key 使用情况，成本透明', 'Review requests and token usage to understand cost and activity per key')}</div>
                     </div>
                   </div>
                 </div>
-                <div className="space-y-6">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center text-primary text-xl font-bold flex-shrink-0">4</div>
+                <div className="space-y-4 sm:space-y-6">
+                  <div className="flex items-start gap-3 sm:gap-4">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-primary/20 flex items-center justify-center text-primary text-lg sm:text-xl font-bold flex-shrink-0">4</div>
                     <div>
-                      <div className="font-bold text-text-primary mb-1 tracking-tight">{tr('权限绑定', 'Permission binding')}</div>
-                      <div className="text-text-secondary text-sm leading-relaxed">{tr('通过模型范围、IP 白名单和权限范围约束使用边界，并完整记录审计行为', 'Constrain usage by model range, IP allowlists, and permission scopes with a full audit trail')}</div>
+                      <div className="font-bold text-text-primary mb-0.5 sm:mb-1 tracking-tight text-sm sm:text-base">{tr('权限绑定', 'Permission binding')}</div>
+                      <div className="text-text-secondary text-xs sm:text-sm leading-relaxed">{tr('通过模型范围、IP 白名单和权限范围约束使用边界，并完整记录审计行为', 'Constrain usage by model range, IP allowlists, and permission scopes with a full audit trail')}</div>
                     </div>
                   </div>
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center text-primary text-xl font-bold flex-shrink-0">5</div>
+                  <div className="flex items-start gap-3 sm:gap-4">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-primary/20 flex items-center justify-center text-primary text-lg sm:text-xl font-bold flex-shrink-0">5</div>
                     <div>
-                      <div className="font-bold text-text-primary mb-1 tracking-tight">{tr('Key 命名与管理', 'Naming and organization')}</div>
-                      <div className="text-text-secondary text-sm leading-relaxed">{tr('给每个 Key 起别名、备注，提高管理效率，方便多 Key 场景', 'Use aliases and notes to organize keys more efficiently across multiple environments')}</div>
+                      <div className="font-bold text-text-primary mb-0.5 sm:mb-1 tracking-tight text-sm sm:text-base">{tr('Key 命名与管理', 'Naming and organization')}</div>
+                      <div className="text-text-secondary text-xs sm:text-sm leading-relaxed">{tr('给每个 Key 起别名、备注，提高管理效率，方便多 Key 场景', 'Use aliases and notes to organize keys more efficiently across multiple environments')}</div>
                     </div>
                   </div>
                 </div>
@@ -1441,105 +1441,129 @@ export default function DashboardClient({
         )}
 
         {activeTab === 'usage' && (
-          <div className="space-y-6 sm:space-y-8">
-            <div className="bg-white border border-border rounded-[2rem] p-6 sm:p-8 shadow-sm">
-              <div className="flex items-center justify-between gap-3 mb-6">
-                <h3 className="text-2xl font-bold tracking-tight text-text-primary">{tr('实时监控', 'Live Metrics')}</h3>
+          <div className="space-y-4 sm:space-y-6 md:space-y-8">
+            <div className="bg-white border border-border rounded-xl sm:rounded-[1.5rem] md:rounded-[2rem] p-4 sm:p-6 md:p-8 shadow-sm">
+              <div className="flex items-center justify-between gap-2 sm:gap-3 mb-4 sm:mb-6">
+                <h3 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-text-primary">{tr('实时监控', 'Live Metrics')}</h3>
                 {usageSyncing && (
-                  <span className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-primary/5 px-3 py-1 text-xs font-medium text-text-secondary">
-                    <span className="h-2 w-2 animate-pulse rounded-full bg-primary" />
+                  <span className="inline-flex items-center gap-1.5 sm:gap-2 rounded-full border border-border/70 bg-primary/5 px-2 py-0.5 sm:px-3 sm:py-1 text-[0.65rem] sm:text-xs font-medium text-text-secondary">
+                    <span className="h-1.5 w-1.5 sm:h-2 sm:w-2 animate-pulse rounded-full bg-primary" />
                     {tr('正在同步最新用量…', 'Syncing latest usage...')}
                   </span>
                 )}
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 sm:gap-6">{[
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-6">{[
                 { label: tr('请求数', 'Requests'), value: (usageStats?.request_count ?? usageLogs.length).toLocaleString(), unit: tr('当前可见日志', 'Visible logs') },
                 { label: tr('输入 Token', 'Input Tokens'), value: totalPromptTokens.toLocaleString(), unit: tr('当前可见日志', 'Visible logs') },
                 { label: tr('输出 Token', 'Output Tokens'), value: totalCompletionTokens.toLocaleString(), unit: tr('当前可见日志', 'Visible logs') },
                 { label: tr('平均每次请求 Token', 'Avg Tokens / Request'), value: averageTokensPerRequest.toLocaleString(), unit: '' },
                 { label: tr('涉及模型数', 'Models Touched'), value: uniqueModelsUsed.toLocaleString(), unit: '' },
               ].map((m) => (
-                <div key={m.label} className="text-center p-5 sm:p-6 bg-white border border-border/60 rounded-[1.5rem] shadow-sm hover:shadow-md transition-shadow group">
-                  <div className="text-2xl font-bold tracking-tight text-primary mb-1 group-hover:scale-105 transition-transform">{m.value}</div>
-                  <div className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary mb-1">{m.label}</div>
-                  {m.unit && <div className="text-[0.6rem] text-text-secondary/70 uppercase tracking-wider">{m.unit}</div>}
+                <div key={m.label} className="text-center p-4 sm:p-5 md:p-6 bg-white border border-border/60 rounded-xl sm:rounded-[1.5rem] shadow-sm hover:shadow-md transition-shadow group">
+                  <div className="text-xl sm:text-2xl md:text-2xl font-bold tracking-tight text-primary mb-0.5 sm:mb-1 group-hover:scale-105 transition-transform">{m.value}</div>
+                  <div className="text-[0.6rem] sm:text-[0.65rem] font-bold uppercase tracking-[0.16em] sm:tracking-[0.18em] text-text-secondary mb-0.5 sm:mb-1">{m.label}</div>
+                  {m.unit && <div className="text-[0.55rem] sm:text-[0.6rem] text-text-secondary/70 uppercase tracking-wider">{m.unit}</div>}
                 </div>
               ))}</div>
             </div>
-            <div className="bg-white border border-border rounded-[2rem] p-6 sm:p-8 shadow-sm">
-              <h3 className="text-2xl font-bold tracking-tight text-text-primary mb-6">{tr('请求日志', 'Request Logs')}</h3>
-              <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-                <table className="w-full min-w-[500px]">
-                  <thead>
-                    <tr className="border-b border-border/80">
-                      {[tr('时间', 'Time'), tr('模型', 'Model'), 'Input', 'Output', tr('API 密钥', 'API Key'), tr('状态', 'Status')].map(h => (
-                        <th key={h} className="text-left py-3 sm:py-4 px-3 sm:px-4 text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary">{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {usageLogs.length === 0 ? (
-                      <tr><td colSpan={6} className="text-center py-12 text-text-secondary text-sm">{tr('暂无记录', 'No records')}</td></tr>
-                    ) : usageLogs.map((log, i) => (
-                      <tr key={i} className="border-b border-border/50 hover:bg-primary/5 transition-colors">
-                        <td className="py-3 px-3 sm:px-4 text-sm font-medium text-text-primary">{formatDate(log.created_at)}</td>
-                        <td className="py-3 px-3 sm:px-4 text-sm font-medium text-text-primary">{log.model}</td>
-                        <td className="py-3 px-3 sm:px-4 text-sm text-text-secondary">{log.prompt_tokens?.toLocaleString()}</td>
-                        <td className="py-3 px-3 sm:px-4 text-sm text-text-secondary">{log.completion_tokens?.toLocaleString()}</td>
-                        <td className="py-3 px-3 sm:px-4 text-sm text-text-secondary">{log.api_key_name}</td>
-                        <td className="py-3 px-3 sm:px-4">
-                          <span
-                            className={`px-2.5 py-1 rounded-md text-[0.65rem] font-bold uppercase tracking-wider ${
-                              log.status === 'failed'
-                                ? 'bg-danger/10 text-danger'
-                                : 'bg-success/10 text-success'
-                            }`}
-                          >
-                            {log.status === 'failed' ? tr('失败', 'Failed') : tr('成功', 'Success')}
-                          </span>
-                        </td>
+            <div className="bg-white border border-border rounded-xl sm:rounded-[1.5rem] md:rounded-[2rem] p-4 sm:p-6 md:p-8 shadow-sm">
+              <h3 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-text-primary mb-4 sm:mb-6">{tr('请求日志', 'Request Logs')}</h3>
+              <div className="-mx-3 px-3 sm:mx-0 sm:px-0">
+                <div className="flex flex-col gap-2.5 sm:gap-3 md:hidden">
+                  {usageLogs.length === 0 ? (
+                    <div className="text-center py-10 sm:py-12 text-text-secondary text-xs sm:text-sm">{tr('暂无记录', 'No records')}</div>
+                  ) : usageLogs.map((log, i) => (
+                    <div key={i} className="bg-dark-light/5 border border-border/50 rounded-lg sm:rounded-xl p-3 sm:p-4 flex flex-col gap-1.5 sm:gap-2">
+                      <div className="flex justify-between items-center">
+                        <span className="font-semibold text-text-primary text-xs sm:text-sm">{log.model}</span>
+                        <span className={`px-1.5 py-0.5 sm:px-2 rounded text-[0.6rem] font-bold uppercase tracking-wider ${log.status === 'failed' ? 'bg-danger/10 text-danger' : 'bg-success/10 text-success'}`}>
+                          {log.status === 'failed' ? tr('失败', 'Failed') : tr('成功', 'Success')}
+                        </span>
+                      </div>
+                      <div className="text-[0.7rem] sm:text-xs text-text-secondary flex justify-between">
+                        <span>{formatDate(log.created_at)}</span>
+                        <span className="truncate ml-2 max-w-[120px]">{log.api_key_name}</span>
+                      </div>
+                      <div className="text-[0.7rem] sm:text-xs text-text-secondary flex justify-between mt-0.5 sm:mt-1 border-t border-border/50 pt-1.5 sm:pt-2">
+                        <span>In: {log.prompt_tokens?.toLocaleString() || 0}</span>
+                        <span>Out: {log.completion_tokens?.toLocaleString() || 0}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full min-w-[500px]">
+                    <thead>
+                      <tr className="border-b border-border/80">
+                        {[tr('时间', 'Time'), tr('模型', 'Model'), 'Input', 'Output', tr('API 密钥', 'API Key'), tr('状态', 'Status')].map(h => (
+                          <th key={h} className="text-left py-3 sm:py-4 px-3 sm:px-4 text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary">{h}</th>
+                        ))}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {usageLogs.length === 0 ? (
+                        <tr><td colSpan={6} className="text-center py-12 text-text-secondary text-sm">{tr('暂无记录', 'No records')}</td></tr>
+                      ) : usageLogs.map((log, i) => (
+                        <tr key={i} className="border-b border-border/50 hover:bg-primary/5 transition-colors">
+                          <td className="py-3 px-3 sm:px-4 text-sm font-medium text-text-primary">{formatDate(log.created_at)}</td>
+                          <td className="py-3 px-3 sm:px-4 text-sm font-medium text-text-primary">{log.model}</td>
+                          <td className="py-3 px-3 sm:px-4 text-sm text-text-secondary">{log.prompt_tokens?.toLocaleString()}</td>
+                          <td className="py-3 px-3 sm:px-4 text-sm text-text-secondary">{log.completion_tokens?.toLocaleString()}</td>
+                          <td className="py-3 px-3 sm:px-4 text-sm text-text-secondary">{log.api_key_name}</td>
+                          <td className="py-3 px-3 sm:px-4">
+                            <span
+                              className={`px-2.5 py-1 rounded-md text-[0.65rem] font-bold uppercase tracking-wider ${
+                                log.status === 'failed'
+                                  ? 'bg-danger/10 text-danger'
+                                  : 'bg-success/10 text-success'
+                              }`}
+                            >
+                              {log.status === 'failed' ? tr('失败', 'Failed') : tr('成功', 'Success')}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           </div>
         )}
 
         {activeTab === 'billing' && (
-          <div className="space-y-6 sm:space-y-8">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
-              <div className="bg-white border border-border rounded-[2rem] p-6 sm:p-8 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex justify-between items-start mb-4">
-                  <span className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary">{tr('组织余额', 'Org Balance')}</span>
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-primary/10 text-primary text-lg"><i className="fas fa-wallet" /></div>
+          <div className="space-y-4 sm:space-y-6 md:space-y-8">
+            <div className="grid grid-cols-1 gap-3 sm:gap-4 md:gap-6 sm:grid-cols-3">
+              <div className="rounded-xl sm:rounded-[1.5rem] md:rounded-[2rem] border border-border bg-white p-3 sm:p-4 md:p-8 shadow-sm transition-shadow hover:shadow-md">
+                <div className="flex justify-between items-start mb-3 sm:mb-4">
+                  <span className="text-[0.6rem] sm:text-[0.65rem] font-bold uppercase tracking-[0.16em] sm:tracking-[0.18em] text-text-secondary">{tr('组织余额', 'Org Balance')}</span>
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center bg-primary/10 text-primary text-base sm:text-lg"><i className="fas fa-wallet" /></div>
                 </div>
-                <div className="text-3xl font-bold tracking-tight text-primary mb-6">{formatCurrency(currentBalance)}</div>
-                <button onClick={() => setShowRechargeModal(true)} className="btn-primary w-full justify-center rounded-full shadow-sm hover:shadow hover:-translate-y-0.5 transition-all"><i className="fas fa-plus mr-2" />{tr('充值', 'Top Up')}</button>
+                <div className="text-2xl sm:text-3xl font-bold tracking-tight text-primary mb-4 sm:mb-6">{formatCurrency(currentBalance)}</div>
+                <button onClick={() => setShowRechargeModal(true)} className="btn-primary w-full justify-center rounded-full shadow-sm hover:shadow hover:-translate-y-0.5 transition-all text-xs sm:text-sm py-2 sm:py-2.5"><i className="fas fa-plus mr-1.5 sm:mr-2" />{tr('充值', 'Top Up')}</button>
               </div>
-              <div className="bg-white border border-border rounded-[2rem] p-6 sm:p-8 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex justify-between items-start mb-4">
-                  <span className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary">{tr('本月消耗', 'Monthly Spend')}</span>
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-warning/10 text-warning text-lg"><i className="fas fa-coins" /></div>
+              <div className="rounded-xl sm:rounded-[1.5rem] md:rounded-[2rem] border border-border bg-white p-3 sm:p-4 md:p-8 shadow-sm transition-shadow hover:shadow-md">
+                <div className="flex justify-between items-start mb-3 sm:mb-4">
+                  <span className="text-[0.6rem] sm:text-[0.65rem] font-bold uppercase tracking-[0.16em] sm:tracking-[0.18em] text-text-secondary">{tr('本月消耗', 'Monthly Spend')}</span>
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center bg-warning/10 text-warning text-base sm:text-lg"><i className="fas fa-coins" /></div>
                 </div>
-                <div className="text-3xl font-bold tracking-tight text-text-primary mb-2">{formatCurrency(currentMonthSpend)}</div>
-                <div className="text-xs font-medium text-text-secondary mt-2">{changePercentage === null ? tr('暂无上月对比数据', 'No comparison data for last month') : <>{tr('较上月', 'vs last month')} <span className={`px-2 py-0.5 rounded-md ${changePercentage <= 0 ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'} ml-1`}>{changePercentage > 0 ? '+' : ''}{changePercentage}%</span></>}</div>
+                <div className="text-2xl sm:text-3xl font-bold tracking-tight text-text-primary mb-1.5 sm:mb-2">{formatCurrency(currentMonthSpend)}</div>
+                <div className="text-[0.7rem] sm:text-xs font-medium text-text-secondary mt-1.5 sm:mt-2">{changePercentage === null ? tr('暂无上月对比数据', 'No comparison data for last month') : <>{tr('较上月', 'vs last month')} <span className={`px-1.5 py-0.5 sm:px-2 rounded-md ${changePercentage <= 0 ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'} ml-1`}>{changePercentage > 0 ? '+' : ''}{changePercentage}%</span></>}</div>
               </div>
-              <div className="bg-white border border-border rounded-[2rem] p-6 sm:p-8 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex justify-between items-start mb-4">
-                  <span className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary">{tr('预计可用', 'Estimated Coverage')}</span>
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-success/10 text-success text-lg"><i className="fas fa-calendar-check" /></div>
+              <div className="rounded-xl sm:rounded-[1.5rem] md:rounded-[2rem] border border-border bg-white p-3 sm:p-4 md:p-8 shadow-sm transition-shadow hover:shadow-md">
+                <div className="flex justify-between items-start mb-3 sm:mb-4">
+                  <span className="text-[0.6rem] sm:text-[0.65rem] font-bold uppercase tracking-[0.16em] sm:tracking-[0.18em] text-text-secondary">{tr('预计可用', 'Estimated Coverage')}</span>
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center bg-success/10 text-success text-base sm:text-lg"><i className="fas fa-calendar-check" /></div>
                 </div>
-                <div className="text-3xl font-bold tracking-tight text-text-primary mb-2">{estimatedAvailableDays === null ? '∞' : isZh ? `~${estimatedAvailableDays} 天` : `~${estimatedAvailableDays} days`}</div>
-                <div className="text-xs font-medium text-text-secondary mt-2">{tr('按近 30 天日均', 'Based on the last 30 days average of')} <span className="font-semibold text-text-primary">{formatCurrency(averageDailySpend)}</span> {tr('消耗', 'per day')}</div>
+                <div className="text-2xl sm:text-3xl font-bold tracking-tight text-text-primary mb-1.5 sm:mb-2">{estimatedAvailableDays === null ? '∞' : isZh ? `~${estimatedAvailableDays} 天` : `~${estimatedAvailableDays} days`}</div>
+                <div className="text-[0.7rem] sm:text-xs font-medium text-text-secondary mt-1.5 sm:mt-2">{tr('按近 30 天日均', 'Based on the last 30 days average of')} <span className="font-semibold text-text-primary">{formatCurrency(averageDailySpend)}</span> {tr('消耗', 'per day')}</div>
               </div>
             </div>
-            <div className="bg-white border border-border rounded-[2rem] p-6 sm:p-8 shadow-sm">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+            <div className="rounded-xl sm:rounded-[1.5rem] md:rounded-[2rem] border border-border bg-white p-3 sm:p-4 md:p-8 shadow-sm">
+              <div className="mb-4 sm:mb-6 md:mb-8 flex flex-col items-start justify-between gap-3 sm:gap-4 sm:flex-row sm:items-center">
                 <div>
-                  <h3 className="text-2xl font-bold tracking-tight text-text-primary mb-2">{tr('账单明细', 'Billing Details')}</h3>
-                  <p className="text-text-secondary text-sm leading-relaxed">{tr('当前基于调用与账务记录聚合展示，支付与充值流水会继续逐步完善。', 'This view is currently aggregated from usage and ledger records. Payment and top-up entries will continue to be refined.')}</p>
+                  <h3 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-text-primary mb-1.5 sm:mb-2">{tr('账单明细', 'Billing Details')}</h3>
+                  <p className="text-text-secondary text-[0.7rem] sm:text-sm leading-relaxed">{tr('当前基于调用与账务记录聚合展示，支付与充值流水会继续逐步完善。', 'This view is currently aggregated from usage and ledger records. Payment and top-up entries will continue to be refined.')}</p>
                   {usageSyncing && (
                     <p className="mt-3 inline-flex items-center gap-2 text-xs font-medium text-text-secondary">
                       <span className="h-2 w-2 animate-pulse rounded-full bg-primary" />
@@ -1548,47 +1572,35 @@ export default function DashboardClient({
                   )}
                 </div>
                 <button
-                  className="btn-secondary rounded-full shadow-sm text-sm w-full sm:w-auto justify-center px-6"
+                  className="btn-secondary rounded-full shadow-sm text-xs sm:text-sm w-full sm:w-auto justify-center px-4 sm:px-6 py-2 sm:py-2.5"
                   onClick={handleExportBilling}
                 >
-                  <i className="fas fa-download mr-2" />{tr('导出', 'Export')}
+                  <i className="fas fa-download mr-1.5 sm:mr-2" />{tr('导出', 'Export')}
                 </button>
               </div>
               {billingEntries.length === 0 ? (
-                <div className="text-center py-16 sm:py-24 text-text-secondary bg-dark-light/10 rounded-[1.5rem] border border-dashed border-border/60">
-                  <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm"><i className="fas fa-receipt text-3xl text-text-secondary/40" /></div>
-                  <p className="text-lg text-text-primary font-medium">{tr('暂无账单记录', 'No billing records')}</p>
+                <div className="text-center py-12 sm:py-16 md:py-24 text-text-secondary bg-dark-light/10 rounded-xl sm:rounded-[1.5rem] border border-dashed border-border/60">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6 shadow-sm"><i className="fas fa-receipt text-2xl sm:text-3xl text-text-secondary/40" /></div>
+                  <p className="text-base sm:text-lg text-text-primary font-medium">{tr('暂无账单记录', 'No billing records')}</p>
                 </div>
               ) : (
-                <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-                  <table className="w-full min-w-[640px]">
-                    <thead>
-                      <tr className="border-b border-border/80">
-                        {[tr('时间', 'Time'), tr('类型', 'Type'), tr('说明', 'Description'), tr('总 Token', 'Total Tokens'), tr('状态', 'Status'), tr('金额', 'Amount')].map((h) => (
-                          <th key={h} className="text-left py-3 sm:py-4 px-3 sm:px-4 text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary">{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {billingEntries.map((entry) => (
-                        <tr key={entry.id} className="border-b border-border/50 hover:bg-primary/5 transition-colors">
-                          <td className="py-3 px-3 sm:px-4 text-sm font-medium text-text-primary">{formatDate(entry.created_at)}</td>
-                          <td className="py-3 px-3 sm:px-4">
-                            <span className={`px-2.5 py-1 rounded-md text-[0.65rem] font-bold uppercase tracking-wider ${entry.type === 'recharge' ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}>
+                <div className="-mx-3 px-3 sm:mx-0 sm:px-0">
+                  <div className="flex flex-col gap-2.5 sm:gap-3 md:hidden">
+                    {billingEntries.map((entry) => (
+                      <div key={entry.id} className="bg-dark-light/5 border border-border/50 rounded-lg sm:rounded-xl p-3 sm:p-4 flex flex-col gap-1.5 sm:gap-2">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <span className={`px-1.5 py-0.5 sm:px-2 rounded text-[0.6rem] font-bold uppercase tracking-wider ${entry.type === 'recharge' ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}>
                               {entry.type === 'recharge' ? tr('充值', 'Recharge') : tr('消耗', 'Usage')}
                             </span>
-                          </td>
-                          <td className="py-3 px-3 sm:px-4 text-sm">
-                            <div className="font-semibold text-text-primary">{entry.type === 'recharge' ? entry.title : entry.model}</div>
-                            {entry.description ? (
-                              <div className="text-text-secondary text-xs mt-1">{entry.description}</div>
-                            ) : null}
-                            {entry.reference && <div className="text-text-secondary text-[0.65rem] font-mono mt-1 opacity-70">{entry.reference}</div>}
-                          </td>
-                          <td className="py-3 px-3 sm:px-4 text-sm text-text-secondary">{entry.total_tokens ? entry.total_tokens.toLocaleString() : '--'}</td>
-                          <td className="py-3 px-3 sm:px-4">
+                            <div className="font-semibold text-text-primary text-xs sm:text-sm mt-1">{entry.type === 'recharge' ? entry.title : entry.model}</div>
+                          </div>
+                          <div className="text-right">
+                            <div className={`font-semibold text-xs sm:text-sm ${entry.status === 'failed' ? 'text-danger' : entry.type === 'recharge' ? 'text-success' : 'text-warning'}`}>
+                              {formatBillingLineAmount(entry.amount, entry.type)}
+                            </div>
                             <span
-                              className={`px-2.5 py-1 rounded-md text-[0.65rem] font-bold uppercase tracking-wider ${
+                              className={`px-1.5 py-0.5 sm:px-2 rounded text-[0.6rem] font-bold uppercase tracking-wider inline-block mt-0.5 sm:mt-1 ${
                                 entry.status === 'failed'
                                   ? 'bg-danger/10 text-danger'
                                   : entry.type === 'recharge'
@@ -1602,54 +1614,101 @@ export default function DashboardClient({
                                   ? tr('已入账', 'Settled')
                                   : tr('成功', 'Success')}
                             </span>
-                          </td>
-                          <td className={`py-3 px-3 sm:px-4 text-sm font-bold ${entry.status === 'failed' ? 'text-danger' : entry.type === 'recharge' ? 'text-success' : 'text-warning'}`}>
-                            {formatBillingLineAmount(entry.amount, entry.type)}
-                          </td>
+                          </div>
+                        </div>
+                        {entry.description && <div className="text-[0.7rem] sm:text-xs text-text-secondary">{entry.description}</div>}
+                        <div className="text-[0.7rem] sm:text-xs text-text-secondary flex justify-between mt-0.5 sm:mt-1 border-t border-border/50 pt-1.5 sm:pt-2">
+                          <span>{formatDate(entry.created_at)}</span>
+                          {entry.total_tokens ? <span>Tokens: {entry.total_tokens.toLocaleString()}</span> : null}
+                        </div>
+                        {entry.reference && <div className="text-[0.6rem] sm:text-[0.65rem] font-mono text-text-secondary opacity-70 truncate">{entry.reference}</div>}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full min-w-[640px]">
+                      <thead>
+                        <tr className="border-b border-border/80">
+                          {[tr('时间', 'Time'), tr('类型', 'Type'), tr('说明', 'Description'), tr('总 Token', 'Total Tokens'), tr('状态', 'Status'), tr('金额', 'Amount')].map((h) => (
+                            <th key={h} className="text-left py-3 sm:py-4 px-3 sm:px-4 text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary">{h}</th>
+                          ))}
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {billingEntries.map((entry) => (
+                          <tr key={entry.id} className="border-b border-border/50 hover:bg-primary/5 transition-colors">
+                            <td className="py-3 px-3 sm:px-4 text-sm font-medium text-text-primary">{formatDate(entry.created_at)}</td>
+                            <td className="py-3 px-3 sm:px-4">
+                              <span className={`px-2.5 py-1 rounded-md text-[0.65rem] font-bold uppercase tracking-wider ${entry.type === 'recharge' ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}>
+                                {entry.type === 'recharge' ? tr('充值', 'Recharge') : tr('消耗', 'Usage')}
+                              </span>
+                            </td>
+                            <td className="py-3 px-3 sm:px-4 text-sm">
+                              <div className="font-semibold text-text-primary">{entry.type === 'recharge' ? entry.title : entry.model}</div>
+                              {entry.description ? (
+                                <div className="text-text-secondary text-xs mt-1">{entry.description}</div>
+                              ) : null}
+                              {entry.reference && <div className="text-text-secondary text-[0.65rem] font-mono mt-1 opacity-70">{entry.reference}</div>}
+                            </td>
+                            <td className="py-3 px-3 sm:px-4 text-sm text-text-secondary">{entry.total_tokens ? entry.total_tokens.toLocaleString() : '--'}</td>
+                            <td className="py-3 px-3 sm:px-4">
+                              <span
+                                className={`px-2.5 py-1 rounded-md text-[0.65rem] font-bold uppercase tracking-wider ${
+                                  entry.status === 'failed'
+                                    ? 'bg-danger/10 text-danger'
+                                    : entry.type === 'recharge'
+                                      ? 'bg-success/10 text-success'
+                                      : 'bg-warning/10 text-warning'
+                                }`}
+                              >
+                                {entry.status === 'failed'
+                                  ? tr('失败', 'Failed')
+                                  : entry.type === 'recharge'
+                                    ? tr('已入账', 'Settled')
+                                    : tr('成功', 'Success')}
+                              </span>
+                            </td>
+                            <td className={`py-3 px-3 sm:px-4 text-sm font-bold ${entry.status === 'failed' ? 'text-danger' : entry.type === 'recharge' ? 'text-success' : 'text-warning'}`}>
+                              {formatBillingLineAmount(entry.amount, entry.type)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               )}
             </div>
-            <div className="bg-white border border-border rounded-[2rem] p-6 sm:p-8 shadow-sm">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+            <div className="rounded-xl sm:rounded-[1.5rem] md:rounded-[2rem] border border-border bg-white p-3 sm:p-4 md:p-8 shadow-sm">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
                 <div>
-                  <h3 className="text-2xl font-bold tracking-tight text-text-primary mb-2">{tr('充值订单', 'Top-Up Orders')}</h3>
-                  <p className="text-text-secondary text-sm leading-relaxed">{tr('支付方式按产品文档收敛为国内与国际两组渠道，当前阶段先完成下单与记录。', 'Payment methods are currently grouped into domestic and international rails, with order creation and recording implemented first.')}</p>
-                  <p className="text-text-secondary text-sm leading-relaxed mt-1">{tr('确认入账后会写入账务流水，并更新可用额度。', 'After confirmation, the recharge will be written to the billing ledger and update the available balance.')}</p>
+                  <h3 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-text-primary mb-1.5 sm:mb-2">{tr('充值订单', 'Top-Up Orders')}</h3>
+                  <p className="text-text-secondary text-[0.7rem] sm:text-sm leading-relaxed">{tr('支付方式按产品文档收敛为国内与国际两组渠道，当前阶段先完成下单与记录。', 'Payment methods are currently grouped into domestic and international rails, with order creation and recording implemented first.')}</p>
+                  <p className="text-text-secondary text-[0.7rem] sm:text-sm leading-relaxed mt-0.5 sm:mt-1">{tr('确认入账后会写入账务流水，并更新可用额度。', 'After confirmation, the recharge will be written to the billing ledger and update the available balance.')}</p>
                 </div>
               </div>
               {paymentOrders.length === 0 ? (
-                <div className="text-center py-16 sm:py-24 text-text-secondary bg-dark-light/10 rounded-[1.5rem] border border-dashed border-border/60">
-                  <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm"><i className="fas fa-credit-card text-3xl text-text-secondary/40" /></div>
-                  <p className="text-lg text-text-primary font-medium">{tr('暂无充值订单', 'No top-up orders')}</p>
+                <div className="text-center py-12 sm:py-16 md:py-24 text-text-secondary bg-dark-light/10 rounded-xl sm:rounded-[1.5rem] border border-dashed border-border/60">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6 shadow-sm"><i className="fas fa-credit-card text-2xl sm:text-3xl text-text-secondary/40" /></div>
+                  <p className="text-base sm:text-lg text-text-primary font-medium">{tr('暂无充值订单', 'No top-up orders')}</p>
                 </div>
               ) : (
-                <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-                  <table className="w-full min-w-[720px]">
-                    <thead>
-                      <tr className="border-b border-border/80">
-                        {[tr('时间', 'Time'), tr('支付方式', 'Payment Method'), tr('区域', 'Region'), tr('金额', 'Amount'), tr('状态', 'Status'), tr('订单号', 'Order ID'), tr('操作', 'Action')].map((h) => (
-                          <th key={h} className="text-left py-3 sm:py-4 px-3 sm:px-4 text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary">{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {paymentOrders.map((order) => (
-                        <tr key={order.id} className="border-b border-border/50 hover:bg-primary/5 transition-colors">
-                          <td className="py-3 px-3 sm:px-4 text-sm font-medium text-text-primary">{formatDate(order.created_at)}</td>
-                          <td className="py-3 px-3 sm:px-4 text-sm text-text-secondary">
-                            <span className="flex items-center gap-2">
-                              <i className={`fas fa-${order.payment_method === 'alipay' ? 'alipay text-[#1677FF]' : order.payment_method === 'wechat_pay' ? 'weixin text-[#09B908]' : 'credit-card text-primary'}`} />
-                              {getPaymentMethodLabel(order.payment_method)}
+                <div className="-mx-3 px-3 sm:mx-0 sm:px-0">
+                  <div className="flex flex-col gap-2.5 sm:gap-3 md:hidden">
+                    {paymentOrders.map((order) => (
+                      <div key={order.id} className="bg-dark-light/5 border border-border/50 rounded-xl p-4 flex flex-col gap-2">
+                        <div className="flex justify-between items-start">
+                          <div className="flex flex-col">
+                            <span className="font-semibold text-text-primary text-sm">
+                              {order.currency} {order.amount.toFixed(2)}
                             </span>
-                          </td>
-                          <td className="py-3 px-3 sm:px-4 text-sm text-text-secondary">{paymentRegionLabel(order.payment_region)}</td>
-                          <td className="py-3 px-3 sm:px-4 text-sm font-semibold text-text-primary">{order.currency} {order.amount.toFixed(2)}</td>
-                          <td className="py-3 px-3 sm:px-4">
-                            <span className={`px-2.5 py-1 rounded-md text-[0.65rem] font-bold uppercase tracking-wider ${
+                            <span className="text-xs text-text-secondary mt-1 flex items-center gap-1">
+                              <i className={`fas fa-${order.payment_method === 'alipay' ? 'alipay text-[#1677FF]' : order.payment_method === 'wechat_pay' ? 'weixin text-[#09B908]' : 'credit-card text-primary'}`} />
+                              {getPaymentMethodLabel(order.payment_method)} ({paymentRegionLabel(order.payment_region)})
+                            </span>
+                          </div>
+                          <div className="text-right">
+                            <span className={`px-2 py-0.5 rounded text-[0.6rem] font-bold uppercase tracking-wider inline-block ${
                               order.status === 'paid'
                                 ? 'bg-success/10 text-success'
                                 : order.status === 'pending'
@@ -1658,26 +1717,81 @@ export default function DashboardClient({
                             }`}>
                               {paymentStatusLabel(order.status)}
                             </span>
-                          </td>
-                          <td className="py-3 px-3 sm:px-4 text-xs font-mono text-text-secondary opacity-80">{order.checkout_reference}</td>
-                          <td className="py-3 px-3 sm:px-4">
-                            {order.status === 'pending' ? (
-                              <button
-                                onClick={() => handleConfirmPaymentOrder(order.id)}
-                                className="btn-secondary text-xs py-1.5 px-4 rounded-full shadow-sm hover:border-success hover:text-success hover:bg-success/5 transition-colors"
-                              >
-                                {tr('确认入账', 'Confirm credit')}
-                              </button>
-                            ) : (
-                              <span className="text-[0.65rem] font-bold uppercase tracking-wider text-text-secondary">
-                                {order.fulfillment_status === 'applied' ? tr('已同步额度', 'Quota synced') : tr('已处理', 'Processed')}
-                              </span>
-                            )}
-                          </td>
+                            <div className="mt-2">
+                              {order.status === 'pending' ? (
+                                <button
+                                  onClick={() => handleConfirmPaymentOrder(order.id)}
+                                  className="btn-secondary text-xs py-1 px-3 rounded-full shadow-sm hover:border-success hover:text-success hover:bg-success/5 transition-colors"
+                                >
+                                  {tr('确认入账', 'Confirm credit')}
+                                </button>
+                              ) : (
+                                <span className="text-[0.65rem] font-bold uppercase tracking-wider text-text-secondary">
+                                  {order.fulfillment_status === 'applied' ? tr('已同步额度', 'Quota synced') : tr('已处理', 'Processed')}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-xs text-text-secondary flex justify-between mt-1 border-t border-border/50 pt-2">
+                          <span>{formatDate(order.created_at)}</span>
+                          <span className="font-mono opacity-80 truncate ml-2 max-w-[120px]">{order.checkout_reference}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full min-w-[720px]">
+                      <thead>
+                        <tr className="border-b border-border/80">
+                          {[tr('时间', 'Time'), tr('支付方式', 'Payment Method'), tr('区域', 'Region'), tr('金额', 'Amount'), tr('状态', 'Status'), tr('订单号', 'Order ID'), tr('操作', 'Action')].map((h) => (
+                            <th key={h} className="text-left py-3 sm:py-4 px-3 sm:px-4 text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary">{h}</th>
+                          ))}
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {paymentOrders.map((order) => (
+                          <tr key={order.id} className="border-b border-border/50 hover:bg-primary/5 transition-colors">
+                            <td className="py-3 px-3 sm:px-4 text-sm font-medium text-text-primary">{formatDate(order.created_at)}</td>
+                            <td className="py-3 px-3 sm:px-4 text-sm text-text-secondary">
+                              <span className="flex items-center gap-2">
+                                <i className={`fas fa-${order.payment_method === 'alipay' ? 'alipay text-[#1677FF]' : order.payment_method === 'wechat_pay' ? 'weixin text-[#09B908]' : 'credit-card text-primary'}`} />
+                                {getPaymentMethodLabel(order.payment_method)}
+                              </span>
+                            </td>
+                            <td className="py-3 px-3 sm:px-4 text-sm text-text-secondary">{paymentRegionLabel(order.payment_region)}</td>
+                            <td className="py-3 px-3 sm:px-4 text-sm font-semibold text-text-primary">{order.currency} {order.amount.toFixed(2)}</td>
+                            <td className="py-3 px-3 sm:px-4">
+                              <span className={`px-2.5 py-1 rounded-md text-[0.65rem] font-bold uppercase tracking-wider ${
+                                order.status === 'paid'
+                                  ? 'bg-success/10 text-success'
+                                  : order.status === 'pending'
+                                    ? 'bg-warning/10 text-warning'
+                                    : 'bg-danger/10 text-danger'
+                              }`}>
+                                {paymentStatusLabel(order.status)}
+                              </span>
+                            </td>
+                            <td className="py-3 px-3 sm:px-4 text-xs font-mono text-text-secondary opacity-80">{order.checkout_reference}</td>
+                            <td className="py-3 px-3 sm:px-4">
+                              {order.status === 'pending' ? (
+                                <button
+                                  onClick={() => handleConfirmPaymentOrder(order.id)}
+                                  className="btn-secondary text-xs py-1.5 px-4 rounded-full shadow-sm hover:border-success hover:text-success hover:bg-success/5 transition-colors"
+                                >
+                                  {tr('确认入账', 'Confirm credit')}
+                                </button>
+                              ) : (
+                                <span className="text-[0.65rem] font-bold uppercase tracking-wider text-text-secondary">
+                                  {order.fulfillment_status === 'applied' ? tr('已同步额度', 'Quota synced') : tr('已处理', 'Processed')}
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               )}
             </div>
@@ -1685,28 +1799,28 @@ export default function DashboardClient({
         )}
 
         {activeTab === 'team' && (
-          <div className="space-y-4 sm:space-y-6">
+          <div className="space-y-3 sm:space-y-4 md:space-y-6">
             {teams.length === 0 && !teamLoading && (
-              <div className="editorial-panel p-8 text-center">
-                <i className="fas fa-users text-4xl text-text-secondary opacity-50 mb-4" />
-                <h3 className="text-lg font-semibold mb-2">{tr('还没有团队', 'No teams yet')}</h3>
-                <p className="text-text-secondary text-sm mb-4">{tr('创建一个团队来开始协作', 'Create a team to start collaborating')}</p>
-                <button onClick={() => setShowCreateTeamModal(true)} className="btn-primary">
-                  <i className="fas fa-plus mr-2" />{tr('创建团队', 'Create Team')}
+              <div className="editorial-panel p-4 sm:p-6 md:p-8 text-center">
+                <i className="fas fa-users text-2xl sm:text-3xl md:text-4xl text-text-secondary opacity-50 mb-2.5 sm:mb-3 md:mb-4" />
+                <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-1.5 sm:mb-2">{tr('还没有团队', 'No teams yet')}</h3>
+                <p className="text-text-secondary text-[0.7rem] sm:text-xs md:text-sm mb-2.5 sm:mb-3 md:mb-4">{tr('创建一个团队来开始协作', 'Create a team to start collaborating')}</p>
+                <button onClick={() => setShowCreateTeamModal(true)} className="btn-primary text-xs sm:text-sm px-4 py-1.5 sm:px-5 sm:py-2 md:px-6 md:py-2.5">
+                  <i className="fas fa-plus mr-1.5 sm:mr-2" />{tr('创建团队', 'Create Team')}
                 </button>
               </div>
             )}
 
             {teamLoading && !currentTeam && (
-              <div className="editorial-panel p-8 text-center">
-                <i className="fas fa-spinner fa-spin text-2xl text-primary mb-4" />
-                <p className="text-text-secondary">{tr('加载中...', 'Loading...')}</p>
+              <div className="editorial-panel p-4 sm:p-5 md:p-6 lg:p-8 text-center">
+                <i className="fas fa-spinner fa-spin text-lg sm:text-xl md:text-2xl text-primary mb-2.5 sm:mb-3 md:mb-4" />
+                <p className="text-text-secondary text-[0.7rem] sm:text-xs md:text-sm">{tr('加载中...', 'Loading...')}</p>
               </div>
             )}
 
             {currentTeam && (
               <>
-                <div className="space-y-6">
+                <div className="space-y-3 sm:space-y-4 md:space-y-6">
                   <TeamDirectoryPanel
                     teams={teams}
                     currentTeam={currentTeam}
@@ -1717,31 +1831,31 @@ export default function DashboardClient({
 
                   <TeamInfoCard team={currentTeam} userRole={currentUserRole} onEdit={() => setShowTeamSettingsModal(true)} />
 
-                  <div className="editorial-panel p-5 sm:p-6">
-                    <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+                  <div className="editorial-panel p-3 sm:p-4 md:p-5 lg:p-6">
+                    <div className="flex flex-col gap-3 sm:gap-4 md:gap-5 xl:flex-row xl:items-start xl:justify-between">
                       <div className="max-w-2xl">
                         <div className="eyebrow">{tr('团队概览', 'Team Overview')}</div>
-                        <h3 className="mt-3 text-xl font-semibold">{tr('管理成员、邀请和角色权限', 'Manage members, invitations, and roles')}</h3>
-                        <p className="mt-2 text-sm leading-7 text-text-secondary">
+                        <h3 className="mt-1.5 sm:mt-2 md:mt-3 text-base sm:text-lg md:text-xl font-semibold">{tr('管理成员、邀请和角色权限', 'Manage members, invitations, and roles')}</h3>
+                        <p className="mt-1.5 sm:mt-2 text-[0.7rem] sm:text-xs md:text-sm leading-5 sm:leading-6 md:leading-7 text-text-secondary">
                           {tr('在这里查看团队状态，并处理成员、邀请和权限相关操作。', 'Review team status and manage members, invitations, and permissions here.')}
                         </p>
                       </div>
 
-                      <div className="grid gap-3 sm:grid-cols-2 xl:min-w-[440px]">
+                      <div className="grid gap-2 sm:gap-2.5 md:gap-3 grid-cols-2 sm:grid-cols-2 xl:min-w-[400px] 2xl:min-w-[440px]">
                         {[
                           { label: tr('成员', 'Members'), value: teamMemberCount, icon: 'fa-users', tone: 'text-primary bg-primary/12' },
                           { label: tr('管理员', 'Admins'), value: teamAdmins, icon: 'fa-user-shield', tone: 'text-warning bg-warning/12' },
                           { label: tr('待处理邀请', 'Pending'), value: pendingInvites, icon: 'fa-envelope', tone: 'text-[var(--page-accent-deep)] bg-[rgba(33,93,89,0.12)]' },
                           { label: tr('团队状态', 'Status'), value: tr('正常', 'Active'), icon: 'fa-diagram-project', tone: 'text-success bg-success/12' },
                         ].map((item) => (
-                          <div key={item.label} className="rounded-[20px] border border-border bg-white/72 px-4 py-4">
-                            <div className="flex items-center gap-3">
-                              <div className={`flex h-10 w-10 items-center justify-center rounded-[14px] ${item.tone}`}>
-                                <i className={`fas ${item.icon}`} />
+                          <div key={item.label} className="rounded-lg sm:rounded-xl md:rounded-[1.125rem] border border-border bg-white/72 px-2.5 py-2.5 sm:px-3 sm:py-3 md:px-4 md:py-4">
+                            <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3">
+                              <div className={`flex h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 items-center justify-center rounded-lg sm:rounded-xl ${item.tone}`}>
+                                <i className={`fas ${item.icon} text-xs sm:text-sm md:text-base`} />
                               </div>
                               <div className="min-w-0">
-                                <div className="text-lg font-semibold leading-none">{item.value}</div>
-                                <div className="mt-1 text-[11px] uppercase tracking-[0.16em] text-text-secondary">{item.label}</div>
+                                <div className="text-sm sm:text-base md:text-lg font-semibold leading-none">{item.value}</div>
+                                <div className="mt-0.5 sm:mt-1 text-[0.6rem] sm:text-[0.625rem] md:text-[11px] uppercase tracking-[0.12em] sm:tracking-[0.14em] md:tracking-[0.16em] text-text-secondary">{item.label}</div>
                               </div>
                             </div>
                           </div>
@@ -1749,27 +1863,27 @@ export default function DashboardClient({
                       </div>
                     </div>
 
-                    <div className="mt-5 flex flex-wrap gap-3 border-t border-border pt-5">
+                    <div className="mt-3 sm:mt-4 md:mt-5 flex flex-col gap-1.5 sm:gap-2 md:gap-3 border-t border-border pt-3 sm:pt-4 md:pt-5 sm:flex-row sm:flex-wrap">
                       <button
                         onClick={() => setShowTeamSettingsModal(true)}
-                        className="btn-primary text-sm py-2.5 px-5"
+                        className="btn-primary w-full justify-center px-4 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm sm:w-auto"
                       >
-                        <i className="fas fa-pen-to-square mr-2" />
+                        <i className="fas fa-pen-to-square mr-1.5 sm:mr-2" />
                         {tr('编辑团队', 'Edit Team')}
                       </button>
                       {currentUserRole !== 'owner' && (
                         <button
                           onClick={handleLeaveTeam}
-                          className="btn-secondary text-sm py-2.5 px-5"
+                          className="btn-secondary w-full justify-center px-4 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm sm:w-auto"
                         >
-                          <i className="fas fa-right-from-bracket mr-2" />
+                          <i className="fas fa-right-from-bracket mr-1.5 sm:mr-2" />
                           {tr('退出团队', 'Leave Team')}
                         </button>
                       )}
                       {currentUserRole === 'owner' && (
                         <>
-                          <button onClick={() => setShowTransferOwnerModal(true)} className="btn-secondary text-sm py-2.5 px-5">
-                            <i className="fas fa-exchange-alt mr-2" />
+                          <button onClick={() => setShowTransferOwnerModal(true)} className="btn-secondary w-full justify-center px-4 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm sm:w-auto">
+                            <i className="fas fa-exchange-alt mr-1.5 sm:mr-2" />
                             {tr('转让所有权', 'Transfer Ownership')}
                           </button>
                           <button
@@ -1791,9 +1905,9 @@ export default function DashboardClient({
                                 dispatch(showNotification({ message: getErrorMessage(error, tr('删除团队失败', 'Failed to delete team')), type: 'error' }));
                               }
                             }}
-                            className="btn-secondary border-danger/40 text-danger hover:bg-danger/10 text-sm py-2.5 px-5"
+                            className="btn-secondary w-full justify-center border-danger/40 px-4 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm text-danger hover:bg-danger/10 sm:w-auto"
                           >
-                            <i className="fas fa-trash mr-2" />
+                            <i className="fas fa-trash mr-1.5 sm:mr-2" />
                             {tr('删除团队', 'Delete Team')}
                           </button>
                         </>
@@ -1802,8 +1916,8 @@ export default function DashboardClient({
                   </div>
                 </div>
 
-                <div className="mt-6">
-                  <div className="flex gap-2 overflow-x-auto pb-0 -mx-4 px-4 sm:mx-0 sm:px-0 mb-6 scrollbar-hide border-b border-border">
+                <div className="mt-4 sm:mt-6">
+                  <div className="-mx-3 mb-4 sm:mb-6 flex gap-1.5 sm:gap-2 overflow-x-auto border-b border-border px-3 pb-0 sm:mx-0 sm:px-0 scrollbar-hide">
                     {([
                       { id: 'members', label: tr('成员与角色', 'Members & Roles'), icon: 'fa-users' },
                       ...(canManageTeam ? [{ id: 'applications', label: tr('邀请与申请', 'Invites & Apps'), icon: 'fa-user-plus' }] : []),
@@ -1813,17 +1927,17 @@ export default function DashboardClient({
                       <button
                         key={tab.id}
                         onClick={() => setTeamActiveTab(tab.id)}
-                        className={`px-4 py-3 font-medium whitespace-nowrap transition-all text-sm sm:text-base flex items-center gap-2 border-b-2 -mb-[1px] ${
+                        className={`px-3 py-2 sm:px-4 sm:py-3 font-medium whitespace-nowrap transition-all text-xs sm:text-sm md:text-base flex items-center gap-1.5 sm:gap-2 border-b-2 -mb-[1px] ${
                           teamActiveTab === tab.id ? 'border-primary text-primary' : 'border-transparent text-text-secondary hover:text-text-primary hover:border-border'
                         }`}
                       >
-                        <i className={`fas ${tab.icon}`} />
+                        <i className={`fas ${tab.icon} text-[0.7rem] sm:text-sm`} />
                         {tab.label}
                       </button>
                     ))}
                   </div>
 
-                  <div className="space-y-6">
+                  <div className="space-y-4 sm:space-y-6">
                     {teamActiveTab === 'members' && (
                       <MemberList
                         members={members}
@@ -1873,25 +1987,25 @@ export default function DashboardClient({
                     )}
 
                     {teamActiveTab === 'settings' && (
-                      <div className="editorial-panel p-5 sm:p-6">
-                        <div className="eyebrow">{tr('权限矩阵', 'Permission Matrix')}</div>
-                        <h3 className="mt-3 text-xl font-semibold">{tr('角色权限分配', 'Role Permissions')}</h3>
-                        <p className="mt-2 text-sm leading-7 text-text-secondary">
+                      <div className="editorial-panel p-3 sm:p-4 md:p-6">
+                        <div className="eyebrow text-[0.6rem] sm:text-[0.65rem]">{tr('权限矩阵', 'Permission Matrix')}</div>
+                        <h3 className="mt-2 sm:mt-3 text-base sm:text-lg md:text-xl font-semibold">{tr('角色权限分配', 'Role Permissions')}</h3>
+                        <p className="mt-1.5 sm:mt-2 text-[0.7rem] sm:text-xs md:text-sm leading-6 sm:leading-7 text-text-secondary">
                           {tr('以下是各角色在团队内所拥有的操作权限。', 'The following is a breakdown of permissions granted to each role within the team.')}
                         </p>
-                        <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="mt-4 sm:mt-5 grid grid-cols-1 gap-2.5 sm:gap-3 md:gap-4 md:grid-cols-2">
                           {teamPermissionRows.map((perm) => (
-                            <div key={perm.name} className="rounded-[20px] border border-border bg-white/72 px-4 py-4">
-                              <div className="flex flex-col gap-3">
+                            <div key={perm.name} className="rounded-xl sm:rounded-[1.125rem] md:rounded-[1.25rem] border border-border bg-white/72 px-3 py-3 sm:px-4 sm:py-4">
+                              <div className="flex flex-col gap-2 sm:gap-2.5 md:gap-3">
                                 <div>
-                                  <div className="text-sm font-medium">{perm.name}</div>
-                                  <div className="mt-1 text-xs leading-6 text-text-secondary">{perm.desc}</div>
+                                  <div className="text-xs sm:text-sm font-medium">{perm.name}</div>
+                                  <div className="mt-0.5 sm:mt-1 text-[0.7rem] sm:text-xs leading-5 sm:leading-6 text-text-secondary">{perm.desc}</div>
                                 </div>
-                                <div className="flex flex-wrap gap-2">
-                                  {perm.owner && <span className="rounded-full bg-primary/18 px-3 py-1 text-xs font-medium text-primary">Owner</span>}
-                                  {perm.admin && <span className="rounded-full bg-warning/18 px-3 py-1 text-xs font-medium text-warning">Admin</span>}
-                                  {perm.member && <span className="rounded-full bg-success/18 px-3 py-1 text-xs font-medium text-success">Member</span>}
-                                  {perm.guest && <span className="rounded-full bg-secondary/18 px-3 py-1 text-xs font-medium text-secondary">Guest</span>}
+                                <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                                  {perm.owner && <span className="rounded-full bg-primary/18 px-2 py-0.5 sm:px-2.5 sm:py-1 text-[0.65rem] sm:text-xs font-medium text-primary">Owner</span>}
+                                  {perm.admin && <span className="rounded-full bg-warning/18 px-2 py-0.5 sm:px-2.5 sm:py-1 text-[0.65rem] sm:text-xs font-medium text-warning">Admin</span>}
+                                  {perm.member && <span className="rounded-full bg-success/18 px-2 py-0.5 sm:px-2.5 sm:py-1 text-[0.65rem] sm:text-xs font-medium text-success">Member</span>}
+                                  {perm.guest && <span className="rounded-full bg-secondary/18 px-2 py-0.5 sm:px-2.5 sm:py-1 text-[0.65rem] sm:text-xs font-medium text-secondary">Guest</span>}
                                 </div>
                               </div>
                             </div>
@@ -1907,15 +2021,15 @@ export default function DashboardClient({
         )}
 
         {activeTab === 'profile' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+          <div className="grid grid-cols-1 gap-4 sm:gap-6 md:gap-8 lg:grid-cols-3">
             {/* 个人信息 */}
-            <div className="lg:col-span-2 space-y-6 lg:space-y-8">
-              <div className="bg-white border border-border rounded-[2rem] p-6 sm:p-8 shadow-sm">
-                <h3 className="text-2xl font-bold tracking-tight text-text-primary mb-6">{tr('个人信息', 'Profile')}</h3>
+            <div className="lg:col-span-2 space-y-4 sm:space-y-6 md:space-y-8">
+              <div className="rounded-xl sm:rounded-[1.5rem] md:rounded-[2rem] border border-border bg-white p-3 sm:p-4 md:p-8 shadow-sm">
+                <h3 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-text-primary mb-4 sm:mb-6">{tr('个人信息', 'Profile')}</h3>
                 <form onSubmit={handleUpdateProfile}>
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 mb-8">
+                  <div className="mb-6 sm:mb-8 flex flex-col items-start gap-4 sm:gap-5 sm:flex-row sm:items-center sm:gap-6">
                     <div className="relative group cursor-pointer" onClick={() => setShowAvatarModal(true)}>
-                      <div className="relative w-24 h-24 rounded-[2rem] bg-gradient-to-br from-primary to-secondary flex items-center justify-center overflow-hidden text-white text-3xl font-bold shadow-md group-hover:shadow-lg transition-all">
+                      <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-[1.5rem] sm:rounded-[2rem] bg-gradient-to-br from-primary to-secondary flex items-center justify-center overflow-hidden text-white text-2xl sm:text-3xl font-bold shadow-md group-hover:shadow-lg transition-all">
                         {avatarImageUrl ? (
                           // Show uploaded/OAuth avatar when available.
                           <Image src={avatarImageUrl} alt={profileDisplayName} fill sizes="96px" className="object-cover" />
@@ -1923,34 +2037,34 @@ export default function DashboardClient({
                           profileData.avatar
                         )}
                       </div>
-                      <div className="absolute inset-0 bg-black/40 rounded-[2rem] opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                        <i className="fas fa-camera text-white text-xl" />
+                      <div className="absolute inset-0 bg-black/40 rounded-[1.5rem] sm:rounded-[2rem] opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                        <i className="fas fa-camera text-white text-lg sm:text-xl" />
                       </div>
-                      <button type="button" className="absolute -bottom-2 -right-2 w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white text-xs shadow-md hover:scale-110 transition-transform">
+                      <button type="button" className="absolute -bottom-1.5 -right-1.5 sm:-bottom-2 sm:-right-2 w-7 h-7 sm:w-8 sm:h-8 bg-primary rounded-full flex items-center justify-center text-white text-[0.65rem] sm:text-xs shadow-md hover:scale-110 transition-transform">
                         <i className="fas fa-pen" />
                       </button>
                     </div>
                     <div className="flex-1">
-                      <h4 className="text-xl font-bold text-text-primary tracking-tight">{profileDisplayName}</h4>
-                      <p className="text-text-secondary text-sm mt-1">{currentUser?.email}</p>
-                      <p className="inline-block px-3 py-1 bg-dark-light/50 rounded-lg text-text-secondary text-xs mt-3 font-medium border border-border/50">{tr('注册于', 'Joined')} {formatDate(currentUser?.created_at || new Date().toISOString())}</p>
+                      <h4 className="text-lg sm:text-xl font-bold text-text-primary tracking-tight">{profileDisplayName}</h4>
+                      <p className="text-text-secondary text-xs sm:text-sm mt-0.5 sm:mt-1">{currentUser?.email}</p>
+                      <p className="inline-block px-2.5 py-1 sm:px-3 bg-dark-light/50 rounded-lg text-text-secondary text-[0.65rem] sm:text-xs mt-2 sm:mt-3 font-medium border border-border/50">{tr('注册于', 'Joined')} {formatDate(currentUser?.created_at || new Date().toISOString())}</p>
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-8">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 mb-6 sm:mb-8">
                     <div>
-                      <label className="block text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary mb-2">{tr('昵称', 'Nickname')}</label>
-                      <input type="text" className="form-control bg-dark-light/30 border-transparent focus:bg-white" value={profileData.nickname} onChange={e => setProfileData({...profileData, nickname: e.target.value})} placeholder={tr('设置昵称', 'Set a nickname')} />
+                      <label className="block text-[0.6rem] sm:text-[0.65rem] font-bold uppercase tracking-[0.16em] sm:tracking-[0.18em] text-text-secondary mb-1.5 sm:mb-2">{tr('昵称', 'Nickname')}</label>
+                      <input type="text" className="form-control bg-dark-light/30 border-transparent focus:bg-white text-sm" value={profileData.nickname} onChange={e => setProfileData({...profileData, nickname: e.target.value})} placeholder={tr('设置昵称', 'Set a nickname')} />
                     </div>
                     <div>
-                      <label className="block text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary mb-2">{tr('邮箱', 'Email')}</label>
-                      <input type="email" className="form-control bg-dark-light/50 border-transparent opacity-70 cursor-not-allowed" value={currentUser?.email || ''} disabled />
+                      <label className="block text-[0.6rem] sm:text-[0.65rem] font-bold uppercase tracking-[0.16em] sm:tracking-[0.18em] text-text-secondary mb-1.5 sm:mb-2">{tr('邮箱', 'Email')}</label>
+                      <input type="email" className="form-control bg-dark-light/50 border-transparent opacity-70 cursor-not-allowed text-sm" value={currentUser?.email || ''} disabled />
                     </div>
                     <div>
-                      <label className="block text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary mb-2">{tr('手机号状态', 'Phone Status')}</label>
-                      <input type="text" className="form-control bg-dark-light/50 border-transparent opacity-70 cursor-not-allowed" value={currentUser?.phone ? `${currentUser.phone}${currentUser.phone_verified_at ? ` · ${tr('已验证', 'Verified')}` : ` · ${tr('未验证', 'Unverified')}`}` : tr('未绑定', 'Not bound')} disabled />
+                      <label className="block text-[0.6rem] sm:text-[0.65rem] font-bold uppercase tracking-[0.16em] sm:tracking-[0.18em] text-text-secondary mb-1.5 sm:mb-2">{tr('手机号状态', 'Phone Status')}</label>
+                      <input type="text" className="form-control bg-dark-light/50 border-transparent opacity-70 cursor-not-allowed text-sm" value={currentUser?.phone ? `${currentUser.phone}${currentUser.phone_verified_at ? ` · ${tr('已验证', 'Verified')}` : ` · ${tr('未验证', 'Unverified')}`}` : tr('未绑定', 'Not bound')} disabled />
                     </div>
                     <div>
-                      <label className="block text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary mb-2">{tr('用户 ID', 'User ID')}</label>
+                      <label className="block text-[0.6rem] sm:text-[0.65rem] font-bold uppercase tracking-[0.16em] sm:tracking-[0.18em] text-text-secondary mb-1.5 sm:mb-2">{tr('用户 ID', 'User ID')}</label>
                       <input type="text" className="form-control bg-dark-light/50 border-transparent opacity-70 cursor-not-allowed font-mono text-sm" value={currentUser?.id || ''} disabled />
                     </div>
                   </div>
@@ -1959,18 +2073,18 @@ export default function DashboardClient({
               </div>
 
               {/* 安全设置 */}
-              <div className="space-y-6 lg:space-y-8">
-                <div className="bg-white border border-border rounded-[2rem] p-6 sm:p-8 shadow-sm">
-                  <h3 className="text-2xl font-bold tracking-tight text-text-primary mb-6">{tr('安全设置', 'Security')}</h3>
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-5 bg-dark-light/20 border border-border/50 rounded-[1.5rem]">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary text-xl"><i className="fas fa-lock" /></div>
+              <div className="space-y-4 sm:space-y-6 lg:space-y-8">
+                <div className="rounded-xl sm:rounded-[1.5rem] md:rounded-[2rem] border border-border bg-white p-3 sm:p-4 md:p-8 shadow-sm">
+                  <h3 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-text-primary mb-4 sm:mb-6">{tr('安全设置', 'Security')}</h3>
+                  <div className="flex flex-col items-start gap-3 sm:gap-4 rounded-xl sm:rounded-[1.125rem] md:rounded-[1.25rem] border border-border/50 bg-dark-light/20 p-3 sm:p-4 md:p-5 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-2.5 sm:gap-3 md:gap-4">
+                      <div className="w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 rounded-xl sm:rounded-[1.125rem] md:rounded-2xl bg-primary/10 flex items-center justify-center text-primary text-base sm:text-lg md:text-xl"><i className="fas fa-lock" /></div>
                       <div>
-                        <div className="font-bold text-text-primary tracking-tight">{tr('登录密码', 'Password')}</div>
-                        <div className="text-text-secondary text-sm mt-0.5">{tr('定期修改密码可提升账号安全性', 'Updating your password regularly improves account security')}</div>
+                        <div className="font-bold text-text-primary tracking-tight text-sm sm:text-base">{tr('登录密码', 'Password')}</div>
+                        <div className="text-text-secondary text-[0.7rem] sm:text-xs md:text-sm mt-0.5">{tr('定期修改密码可提升账号安全性', 'Updating your password regularly improves account security')}</div>
                       </div>
                     </div>
-                    <button onClick={() => setShowPasswordModal(true)} className="btn-secondary rounded-full shadow-sm text-sm w-full sm:w-auto justify-center px-5">{tr('修改密码', 'Change Password')}</button>
+                    <button onClick={() => setShowPasswordModal(true)} className="btn-secondary w-full justify-center rounded-full px-4 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm shadow-sm sm:w-auto">{tr('修改密码', 'Change Password')}</button>
                   </div>
                 </div>
 
@@ -1991,52 +2105,52 @@ export default function DashboardClient({
             </div>
 
             {/* 使用统计 */}
-            <div className="space-y-6 lg:space-y-8">
-              <div className="bg-white border border-border rounded-[2rem] p-6 sm:p-8 shadow-sm">
-                <h3 className="text-xl font-bold tracking-tight text-text-primary mb-6">{tr('使用统计', 'Usage Summary')}</h3>
-                <div className="space-y-5">
-                  <div className="flex justify-between items-center pb-4 border-b border-border/50">
-                    <span className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary">{tr('总请求数', 'Total Requests')}</span>
-                    <span className="font-bold text-text-primary">{monthlyRequests.toLocaleString()}</span>
+            <div className="space-y-4 sm:space-y-6 lg:space-y-8">
+              <div className="rounded-xl sm:rounded-[1.5rem] md:rounded-[2rem] border border-border bg-white p-3 sm:p-4 md:p-8 shadow-sm">
+                <h3 className="text-base sm:text-lg md:text-xl font-bold tracking-tight text-text-primary mb-4 sm:mb-6">{tr('使用统计', 'Usage Summary')}</h3>
+                <div className="space-y-4 sm:space-y-5">
+                  <div className="flex justify-between items-center pb-3 sm:pb-4 border-b border-border/50">
+                    <span className="text-[0.6rem] sm:text-[0.65rem] font-bold uppercase tracking-[0.16em] sm:tracking-[0.18em] text-text-secondary">{tr('总请求数', 'Total Requests')}</span>
+                    <span className="text-sm sm:text-base font-bold text-text-primary">{monthlyRequests.toLocaleString()}</span>
                   </div>
-                  <div className="flex justify-between items-center pb-4 border-b border-border/50">
-                    <span className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary">{tr('活跃天数', 'Active Days')}</span>
-                    <span className="font-bold text-text-primary">{isZh ? `${activeDays} 天` : `${activeDays} days`}</span>
+                  <div className="flex justify-between items-center pb-3 sm:pb-4 border-b border-border/50">
+                    <span className="text-[0.6rem] sm:text-[0.65rem] font-bold uppercase tracking-[0.16em] sm:tracking-[0.18em] text-text-secondary">{tr('活跃天数', 'Active Days')}</span>
+                    <span className="text-sm sm:text-base font-bold text-text-primary">{isZh ? `${activeDays} 天` : `${activeDays} days`}</span>
                   </div>
-                  <div className="flex justify-between items-center pb-4 border-b border-border/50">
-                    <span className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary">{tr('最后活跃', 'Last Active')}</span>
-                    <span className="font-bold text-text-primary">{lastActiveLabel}</span>
+                  <div className="flex justify-between items-center pb-3 sm:pb-4 border-b border-border/50">
+                    <span className="text-[0.6rem] sm:text-[0.65rem] font-bold uppercase tracking-[0.16em] sm:tracking-[0.18em] text-text-secondary">{tr('最后活跃', 'Last Active')}</span>
+                    <span className="text-sm sm:text-base font-bold text-text-primary">{lastActiveLabel}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary">{tr('API 密钥数', 'API Keys')}</span>
-                    <span className="font-bold text-text-primary">{activeKeys.length}</span>
+                    <span className="text-[0.6rem] sm:text-[0.65rem] font-bold uppercase tracking-[0.16em] sm:tracking-[0.18em] text-text-secondary">{tr('API 密钥数', 'API Keys')}</span>
+                    <span className="text-sm sm:text-base font-bold text-text-primary">{activeKeys.length}</span>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white border border-border rounded-[2rem] p-6 sm:p-8 shadow-sm">
-                <h3 className="text-xl font-bold tracking-tight text-text-primary mb-6">{tr('账户状态', 'Account Status')}</h3>
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3 p-3 bg-success/5 border border-success/10 rounded-xl">
-                    <i className="fas fa-check-circle text-success text-lg" />
-                    <span className="text-sm font-medium text-text-primary">{tr('邮箱已验证', 'Email verified')}</span>
+              <div className="rounded-xl sm:rounded-[1.5rem] md:rounded-[2rem] border border-border bg-white p-3 sm:p-4 md:p-8 shadow-sm">
+                <h3 className="text-base sm:text-lg md:text-xl font-bold tracking-tight text-text-primary mb-4 sm:mb-6">{tr('账户状态', 'Account Status')}</h3>
+                <div className="space-y-3 sm:space-y-4">
+                  <div className="flex items-center gap-2.5 sm:gap-3 p-2.5 sm:p-3 bg-success/5 border border-success/10 rounded-lg sm:rounded-xl">
+                    <i className="fas fa-check-circle text-success text-base sm:text-lg" />
+                    <span className="text-xs sm:text-sm font-medium text-text-primary">{tr('邮箱已验证', 'Email verified')}</span>
                   </div>
-                  <div className={`flex items-center gap-3 p-3 rounded-xl border ${currentUser?.phone_verified_at ? 'bg-success/5 border-success/10' : 'bg-dark-light/20 border-border/50'}`}>
-                    <i className={`fas ${currentUser?.phone_verified_at ? 'fa-check-circle text-success' : 'fa-times-circle text-text-secondary/50'} text-lg`} />
-                    <span className={`text-sm font-medium ${currentUser?.phone_verified_at ? 'text-text-primary' : 'text-text-secondary'}`}>{currentUser?.phone_verified_at ? tr('手机已验证', 'Phone verified') : tr('手机未验证', 'Phone not verified')}</span>
+                  <div className={`flex items-center gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded-lg sm:rounded-xl border ${currentUser?.phone_verified_at ? 'bg-success/5 border-success/10' : 'bg-dark-light/20 border-border/50'}`}>
+                    <i className={`fas ${currentUser?.phone_verified_at ? 'fa-check-circle text-success' : 'fa-times-circle text-text-secondary/50'} text-base sm:text-lg`} />
+                    <span className={`text-xs sm:text-sm font-medium ${currentUser?.phone_verified_at ? 'text-text-primary' : 'text-text-secondary'}`}>{currentUser?.phone_verified_at ? tr('手机已验证', 'Phone verified') : tr('手机未验证', 'Phone not verified')}</span>
                   </div>
-                  <div className={`flex items-center gap-3 p-3 rounded-xl border ${currentUser?.two_factor_enabled ? 'bg-success/5 border-success/10' : 'bg-dark-light/20 border-border/50'}`}>
-                    <i className={`fas ${currentUser?.two_factor_enabled ? 'fa-check-circle text-success' : 'fa-times-circle text-text-secondary/50'} text-lg`} />
-                    <span className={`text-sm font-medium ${currentUser?.two_factor_enabled ? 'text-text-primary' : 'text-text-secondary'}`}>{currentUser?.two_factor_enabled ? tr('双因素认证已开启', 'Two-factor authentication enabled') : tr('双因素认证未开启', 'Two-factor authentication disabled')}</span>
+                  <div className={`flex items-center gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded-lg sm:rounded-xl border ${currentUser?.two_factor_enabled ? 'bg-success/5 border-success/10' : 'bg-dark-light/20 border-border/50'}`}>
+                    <i className={`fas ${currentUser?.two_factor_enabled ? 'fa-check-circle text-success' : 'fa-times-circle text-text-secondary/50'} text-base sm:text-lg`} />
+                    <span className={`text-xs sm:text-sm font-medium ${currentUser?.two_factor_enabled ? 'text-text-primary' : 'text-text-secondary'}`}>{currentUser?.two_factor_enabled ? tr('双因素认证已开启', 'Two-factor authentication enabled') : tr('双因素认证未开启', 'Two-factor authentication disabled')}</span>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-danger/5 border border-danger/20 rounded-[2rem] p-6 sm:p-8 shadow-sm">
-                <h3 className="text-xl font-bold tracking-tight text-danger mb-3">{tr('危险操作', 'Danger Zone')}</h3>
-                <p className="text-text-secondary text-sm leading-relaxed mb-6">{tr('删除账户后，所有数据将无法恢复', 'Deleting the account will permanently remove all data')}</p>
-                <button onClick={handleDeleteAccount} className="btn-secondary text-danger border-danger/30 bg-white hover:bg-danger/10 hover:border-danger/50 w-full justify-center text-sm rounded-full shadow-sm py-2.5 transition-colors">
-                  <i className="fas fa-trash mr-2" />{tr('删除账户', 'Delete Account')}
+              <div className="rounded-xl sm:rounded-[1.5rem] md:rounded-[2rem] border border-danger/20 bg-danger/5 p-3 sm:p-4 md:p-8 shadow-sm">
+                <h3 className="text-base sm:text-lg md:text-xl font-bold tracking-tight text-danger mb-2 sm:mb-3">{tr('危险操作', 'Danger Zone')}</h3>
+                <p className="text-text-secondary text-xs sm:text-sm leading-relaxed mb-4 sm:mb-6">{tr('删除账户后，所有数据将无法恢复', 'Deleting the account will permanently remove all data')}</p>
+                <button onClick={handleDeleteAccount} className="btn-secondary text-danger border-danger/30 bg-white hover:bg-danger/10 hover:border-danger/50 w-full justify-center text-xs sm:text-sm rounded-full shadow-sm py-2 sm:py-2.5 transition-colors">
+                  <i className="fas fa-trash mr-1.5 sm:mr-2" />{tr('删除账户', 'Delete Account')}
                 </button>
               </div>
             </div>
@@ -2091,7 +2205,7 @@ export default function DashboardClient({
                     </button>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm text-text-secondary mb-2">{tr('状态', 'Status')}</label>
                     <EditorialSelect value={editKeyStatus} onChange={(value) => setEditKeyStatus(value as 'active' | 'disabled')} options={[{ value: 'active', label: tr('活跃', 'Active') }, { value: 'disabled', label: tr('已禁用', 'Disabled') }]} />

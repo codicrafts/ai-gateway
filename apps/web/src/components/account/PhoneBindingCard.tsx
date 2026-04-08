@@ -87,15 +87,15 @@ export default function PhoneBindingCard({
   };
 
   return (
-    <div className="rounded-[26px] border border-border bg-white/80 p-5 shadow-soft">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div className="flex items-start gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-[16px] bg-warning/18 text-warning">
-            <i className="fas fa-mobile-screen-button text-sm" />
+    <div className="rounded-xl sm:rounded-[1.125rem] md:rounded-[1.25rem] border border-border bg-white/80 p-3 sm:p-4 md:p-5 shadow-soft">
+      <div className="flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="flex items-start gap-2.5 sm:gap-3">
+          <div className="flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-xl sm:rounded-[1.125rem] bg-warning/18 text-warning">
+            <i className="fas fa-mobile-screen-button text-xs sm:text-sm" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold">{tr('手机号绑定', 'Phone Binding')}</h3>
-            <p className="mt-1 text-sm leading-7 text-text-secondary">
+            <h3 className="text-base sm:text-lg font-semibold">{tr('手机号绑定', 'Phone Binding')}</h3>
+            <p className="mt-0.5 sm:mt-1 text-[0.7rem] sm:text-xs md:text-sm leading-5 sm:leading-6 md:leading-7 text-text-secondary">
               {isBound
                 ? tr('已绑定手机号，可用于账号验证与找回。', 'A verified phone number is available for recovery and verification.')
                 : tr('绑定手机号后，可用于安全验证和账号恢复。', 'Bind a phone number for account recovery and security verification.')}
@@ -107,19 +107,19 @@ export default function PhoneBindingCard({
           <button
             type="button"
             onClick={() => setEditing(true)}
-            className="btn-secondary text-sm py-2.5 px-4"
+            className="btn-secondary w-full justify-center rounded-full px-4 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm shadow-sm sm:w-auto"
           >
-            <i className="fas fa-sim-card mr-2" />
+            <i className="fas fa-sim-card mr-1.5 sm:mr-2" />
             {isBound ? tr('更换手机号', 'Change Phone') : tr('开始绑定', 'Bind Phone')}
           </button>
         ) : (
-          <button type="button" onClick={resetFlow} className="btn-secondary text-sm py-2.5 px-4">
+          <button type="button" onClick={resetFlow} className="btn-secondary w-full justify-center rounded-full px-4 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm shadow-sm sm:w-auto">
             {tr('取消', 'Cancel')}
           </button>
         )}
       </div>
 
-      <div className="mt-5 rounded-[20px] border border-border bg-[rgba(255,248,238,0.72)] p-4">
+      <div className="mt-4 sm:mt-5 rounded-lg sm:rounded-xl border border-border bg-[rgba(255,248,238,0.72)] p-3 sm:p-4">
         <div className="text-xs uppercase tracking-[0.18em] text-text-secondary">
           {tr('当前状态', 'Current Status')}
         </div>
@@ -134,8 +134,8 @@ export default function PhoneBindingCard({
       </div>
 
       {editing && (
-        <div className="mt-5 space-y-4 rounded-[24px] border border-border bg-white/72 p-4">
-          <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+        <div className="mt-4 sm:mt-5 space-y-3 sm:space-y-4 rounded-lg sm:rounded-xl border border-border bg-white/72 p-3 sm:p-4">
+          <div className="grid gap-3 sm:gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
             <div>
               <label className="mb-2 block text-sm text-text-secondary">{tr('手机号', 'Phone Number')}</label>
               <input
@@ -158,7 +158,7 @@ export default function PhoneBindingCard({
           </div>
 
           {(expiresAt || debugCode) && (
-            <div className="rounded-[18px] border border-border bg-[rgba(169,75,43,0.06)] p-3 text-sm text-text-secondary">
+            <div className="rounded-lg sm:rounded-xl border border-border bg-[rgba(169,75,43,0.06)] p-2.5 sm:p-3 text-xs sm:text-sm text-text-secondary">
               {expiresAt && (
                 <div>{tr('验证码有效期至：', 'Code valid until: ')}{new Date(expiresAt).toLocaleString(locale === 'zh' ? 'zh-CN' : 'en-US')}</div>
               )}

@@ -7,7 +7,7 @@ export default function Footer() {
   return (
     <footer className="border-t border-border/80 bg-[#201815] pt-16 pb-6 text-[#f3e5d1]">
       <div className="section-shell">
-        <div className="mb-12 grid gap-10 lg:grid-cols-[1.3fr_repeat(3,minmax(0,1fr))]">
+        <div className="mb-12 grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.3fr_repeat(3,minmax(0,1fr))]">
           <div className="max-w-sm">
             <div className="mb-4 text-[0.7rem] uppercase tracking-[0.28em] text-[#d7bea1]">{t.brand.bureau}</div>
             <div className="font-serif text-4xl italic tracking-[-0.05em]">{t.brand.name}</div>

@@ -5,6 +5,8 @@ import { getAuthAudienceFromHeaders } from '@/lib/auth-region';
 import { getDashboardPageBootstrap } from '@/services/dashboard/dashboard-page-bootstrap.service';
 import { resolveRequestedTeamId, type DashboardRouteSearchParams } from '../route-utils';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: '用量统计 | MeshRouter',
   description: '查看组织 API 请求日志、Token 消耗和模型使用分布。',

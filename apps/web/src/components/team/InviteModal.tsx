@@ -160,12 +160,12 @@ export default function InviteModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
       onClick={handleBackdropClick}
     >
-      <div className="bg-dark border border-border rounded-xl w-full max-w-md mx-4 shadow-xl">
+      <div className="bg-white border border-border rounded-[2rem] shadow-xl p-6 sm:p-8 w-full max-w-md max-h-[90vh] overflow-y-auto custom-scrollbar">
         {/* 头部 */}
-        <div className="flex items-center justify-between p-4 border-b border-border">
+        <div className="flex items-center justify-between pb-4 border-b border-border mb-4">
           <h3 className="text-lg font-semibold flex items-center gap-2">
             <i className="fas fa-user-plus text-primary" />
             {text.title}
@@ -180,7 +180,7 @@ export default function InviteModal({
         </div>
 
         {/* 表单 */}
-        <form onSubmit={handleSubmit} className="p-4 space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           {/* 邮箱输入 */}
           <div>
             <label className="block text-sm font-medium mb-2">
@@ -195,7 +195,7 @@ export default function InviteModal({
                 onBlur={() => email && validateEmail(email)}
                 placeholder={text.emailPlaceholder}
                 disabled={loading}
-                className={`w-full pl-10 pr-4 py-2.5 bg-dark border rounded-lg text-sm focus:outline-none transition-colors disabled:opacity-50 ${
+                className={`w-full pl-10 pr-4 py-2.5 bg-white border rounded-lg text-sm text-text-primary focus:outline-none transition-colors disabled:opacity-50 ${
                   emailError
                     ? 'border-error focus:border-error'
                     : 'border-border focus:border-primary'
@@ -222,7 +222,7 @@ export default function InviteModal({
                 onChange={(value) => setRole(value as Exclude<TeamRole, 'owner'>)}
                 disabled={loading}
                 options={availableRoles}
-                buttonClassName="pl-10 bg-dark"
+                buttonClassName="pl-10 bg-white text-text-primary"
                 menuClassName="z-[10000]"
               />
             </div>

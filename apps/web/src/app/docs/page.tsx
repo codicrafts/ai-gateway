@@ -5,6 +5,8 @@ import DocsPageClient from '@/components/docs/DocsPageClient';
 import { getDocsReference, type DocsReference } from '@/services/docs/docs-reference.service';
 import { getAuthAudienceFromHeaders } from '@/lib/auth-region';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = buildPageMetadata({
   title: 'Documentation',
   description: 'OpenAI-compatible API documentation, model matrix, endpoint references, and usage guidance.',

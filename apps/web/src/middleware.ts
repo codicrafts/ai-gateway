@@ -63,6 +63,7 @@ export async function middleware(request: NextRequest) {
     path: "/",
     sameSite: "lax",
     secure: request.nextUrl.protocol === "https:",
+    maxAge: 60 * 60 * 24 * 30,
   });
 
   return response;

@@ -6,6 +6,8 @@ import { listModelCatalog } from '@/services/catalog/model-catalog.service';
 import { getPricingReference } from '@/services/pricing/pricing-reference.service';
 import { getAuthAudienceFromHeaders } from '@/lib/auth-region';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = buildPageMetadata({
   title: 'Pricing',
   description: 'Review reference pricing, model cost ranges, and enterprise buying paths for MeshRouter.',

@@ -107,12 +107,12 @@ export default function AuditLogList({
   const paginatedLogs = filteredLogs.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   return (
-    <div className="editorial-panel p-5 sm:p-6">
-      <div className="flex flex-col gap-4 border-b border-border pb-5 sm:flex-row sm:items-center sm:justify-between">
+    <div className="editorial-panel p-4 sm:p-6">
+      <div className="flex flex-col gap-4 border-b border-border pb-4 sm:pb-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="eyebrow">{isZh ? '团队审计' : 'Team Audit'}</div>
-          <h3 className="mt-3 text-xl font-semibold">{text.title}</h3>
-          <p className="mt-2 text-sm leading-7 text-text-secondary">
+          <h3 className="mt-3 text-lg font-semibold sm:text-xl">{text.title}</h3>
+          <p className="mt-2 text-sm leading-6 text-text-secondary sm:leading-7">
             {isZh
               ? '关键成员变更、权限调整和团队操作都会记录在这里，便于交付、复盘和权限核对。'
               : 'Key member changes, permission updates, and team actions are recorded here for delivery review and access verification.'}
@@ -126,7 +126,7 @@ export default function AuditLogList({
         )}
       </div>
 
-      <div className="mt-5 grid gap-3 xl:grid-cols-[repeat(2,minmax(0,1fr))_240px]">
+      <div className="mt-4 grid gap-3 sm:mt-5 xl:grid-cols-[repeat(2,minmax(0,1fr))_240px]">
         <div>
           <label className="mb-1 block text-xs text-text-secondary">{text.startDate}</label>
           <input
@@ -205,7 +205,7 @@ export default function AuditLogList({
         </div>
       </div>
 
-      <div className="mt-5 space-y-3">
+      <div className="mt-4 space-y-3 sm:mt-5">
         {filteredLogs.length === 0 ? (
           <div className="rounded-[22px] border border-dashed border-border bg-white/45 py-10 text-center text-text-secondary">
             <i className="fas fa-clipboard-list mb-2 text-3xl opacity-50" />
@@ -225,7 +225,7 @@ export default function AuditLogList({
         )}
       </div>
 
-      <div className="mt-5 flex flex-col gap-3 border-t border-border pt-4 text-sm text-text-secondary sm:flex-row sm:items-center sm:justify-between">
+      <div className="mt-4 flex flex-col gap-3 border-t border-border pt-4 text-sm text-text-secondary sm:mt-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
           {text.total} {filteredLogs.length} {text.records}
         </div>

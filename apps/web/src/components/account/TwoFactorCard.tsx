@@ -116,15 +116,15 @@ export default function TwoFactorCard({
   };
 
   return (
-    <div className="rounded-[26px] border border-border bg-white/80 p-5 shadow-soft">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div className="flex items-start gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-[16px] bg-success/18 text-success">
-            <i className="fas fa-shield-halved text-sm" />
+    <div className="rounded-xl sm:rounded-[1.125rem] md:rounded-[1.25rem] border border-border bg-white/80 p-3 sm:p-4 md:p-5 shadow-soft">
+      <div className="flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="flex items-start gap-2.5 sm:gap-3">
+          <div className="flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-xl sm:rounded-[1.125rem] bg-success/18 text-success">
+            <i className="fas fa-shield-halved text-xs sm:text-sm" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold">{tr('双因素认证', 'Two-Factor Authentication')}</h3>
-            <p className="mt-1 text-sm leading-7 text-text-secondary">
+            <h3 className="text-base sm:text-lg font-semibold">{tr('双因素认证', 'Two-Factor Authentication')}</h3>
+            <p className="mt-0.5 sm:mt-1 text-[0.7rem] sm:text-xs md:text-sm leading-5 sm:leading-6 md:leading-7 text-text-secondary">
               {currentUser?.two_factor_enabled
                 ? tr('已启用登录二次校验，可通过验证码或恢复码完成验证。', 'Sign-in verification is enabled with TOTP codes and recovery codes.')
                 : tr('为账号增加第二层验证，降低凭据泄露风险。', 'Add a second verification layer to reduce credential risk.')}
@@ -133,18 +133,18 @@ export default function TwoFactorCard({
         </div>
 
         {!currentUser?.two_factor_enabled ? (
-          <button type="button" onClick={handleStartSetup} disabled={loading} className="btn-primary text-sm py-2.5 px-4 disabled:opacity-50">
-            <i className={`fas ${loading && !setup ? 'fa-spinner fa-spin' : 'fa-shield-alt'} mr-2`} />
+          <button type="button" onClick={handleStartSetup} disabled={loading} className="btn-primary w-full justify-center rounded-full px-4 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm shadow-sm sm:w-auto disabled:opacity-50">
+            <i className={`fas ${loading && !setup ? 'fa-spinner fa-spin' : 'fa-shield-alt'} mr-1.5 sm:mr-2`} />
             {tr('开始设置', 'Start Setup')}
           </button>
         ) : (
-          <span className="rounded-full bg-success/18 px-4 py-2 text-sm font-medium text-success">
+          <span className="rounded-full bg-success/18 px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium text-success">
             {tr('已启用', 'Enabled')}
           </span>
         )}
       </div>
 
-      <div className="mt-5 rounded-[20px] border border-border bg-[rgba(255,248,238,0.72)] p-4">
+      <div className="mt-4 sm:mt-5 rounded-lg sm:rounded-xl border border-border bg-[rgba(255,248,238,0.72)] p-3 sm:p-4">
         <div className="text-xs uppercase tracking-[0.18em] text-text-secondary">
           {tr('安全状态', 'Security Status')}
         </div>
@@ -157,30 +157,30 @@ export default function TwoFactorCard({
       </div>
 
       {!currentUser?.two_factor_enabled && setup && (
-        <div className="mt-5 space-y-4 rounded-[24px] border border-border bg-white/72 p-4">
-          <div className="rounded-[18px] border border-border bg-[rgba(169,75,43,0.06)] p-3">
-            <div className="text-xs uppercase tracking-[0.18em] text-text-secondary">{tr('手动录入密钥', 'Manual Secret')}</div>
-            <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <code className="break-all rounded-[14px] bg-white/80 px-3 py-2 text-sm text-primary">{setup.secret}</code>
+        <div className="mt-4 sm:mt-5 space-y-3 sm:space-y-4 rounded-lg sm:rounded-xl border border-border bg-white/72 p-3 sm:p-4">
+          <div className="rounded-lg sm:rounded-xl border border-border bg-[rgba(169,75,43,0.06)] p-2.5 sm:p-3">
+            <div className="text-[0.65rem] sm:text-xs uppercase tracking-[0.16em] sm:tracking-[0.18em] text-text-secondary">{tr('手动录入密钥', 'Manual Secret')}</div>
+            <div className="mt-2 flex flex-col gap-2.5 sm:gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <code className="break-all rounded-lg bg-white/80 px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm text-primary">{setup.secret}</code>
               <button
                 type="button"
-                className="btn-secondary text-sm py-2 px-4"
+                className="btn-secondary w-full justify-center rounded-full px-4 py-2 text-xs sm:text-sm shadow-sm sm:w-auto"
                 onClick={() => {
                   copyToClipboard(setup.secret);
                   onNotify(tr('密钥已复制', 'Secret copied'));
                 }}
               >
-                <i className="fas fa-copy mr-2" />
+                <i className="fas fa-copy mr-1.5 sm:mr-2" />
                 {tr('复制密钥', 'Copy Secret')}
               </button>
             </div>
-            <p className="mt-3 text-sm leading-7 text-text-secondary">
+            <p className="mt-2.5 sm:mt-3 text-[0.7rem] sm:text-xs md:text-sm leading-5 sm:leading-6 md:leading-7 text-text-secondary">
               {tr('将以上密钥录入到 Google Authenticator、1Password 或其他支持 TOTP 的验证器中。', 'Add this secret to Google Authenticator, 1Password, or any TOTP-compatible authenticator.')}
             </p>
           </div>
 
           <div>
-            <label className="mb-2 block text-sm text-text-secondary">{tr('验证码', 'Verification Code')}</label>
+            <label className="mb-1.5 sm:mb-2 block text-xs sm:text-sm text-text-secondary">{tr('验证码', 'Verification Code')}</label>
             <input
               type="text"
               className="form-control"
@@ -190,12 +190,12 @@ export default function TwoFactorCard({
             />
           </div>
 
-          <div className="flex flex-wrap gap-3">
-            <button type="button" onClick={handleEnable} disabled={!totpCode.trim() || loading} className="btn-primary py-2.5 px-5 disabled:opacity-50">
-              <i className={`fas ${loading ? 'fa-spinner fa-spin' : 'fa-check'} mr-2`} />
+          <div className="flex flex-wrap gap-2.5 sm:gap-3">
+            <button type="button" onClick={handleEnable} disabled={!totpCode.trim() || loading} className="btn-primary rounded-full px-4 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm shadow-sm disabled:opacity-50">
+              <i className={`fas ${loading ? 'fa-spinner fa-spin' : 'fa-check'} mr-1.5 sm:mr-2`} />
               {tr('启用双因素认证', 'Enable 2FA')}
             </button>
-            <button type="button" onClick={() => setSetup(null)} className="btn-secondary py-2.5 px-5">
+            <button type="button" onClick={() => setSetup(null)} className="btn-secondary rounded-full px-4 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm shadow-sm">
               {tr('取消设置', 'Cancel Setup')}
             </button>
           </div>
@@ -203,10 +203,10 @@ export default function TwoFactorCard({
       )}
 
       {currentUser?.two_factor_enabled && (
-        <div className="mt-5 space-y-4 rounded-[24px] border border-border bg-white/72 p-4">
-          <div className="grid gap-4 md:grid-cols-2">
+        <div className="mt-4 sm:mt-5 space-y-3 sm:space-y-4 rounded-lg sm:rounded-xl border border-border bg-white/72 p-3 sm:p-4">
+          <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
             <div>
-              <label className="mb-2 block text-sm text-text-secondary">{tr('验证码', 'Authenticator Code')}</label>
+              <label className="mb-1.5 sm:mb-2 block text-xs sm:text-sm text-text-secondary">{tr('验证码', 'Authenticator Code')}</label>
               <input
                 type="text"
                 className="form-control"
@@ -216,7 +216,7 @@ export default function TwoFactorCard({
               />
             </div>
             <div>
-              <label className="mb-2 block text-sm text-text-secondary">{tr('恢复码', 'Recovery Code')}</label>
+              <label className="mb-1.5 sm:mb-2 block text-xs sm:text-sm text-text-secondary">{tr('恢复码', 'Recovery Code')}</label>
               <input
                 type="text"
                 className="form-control"
@@ -231,38 +231,38 @@ export default function TwoFactorCard({
             type="button"
             onClick={handleDisable}
             disabled={(!disableCode.trim() && !disableRecoveryCode.trim()) || loading}
-            className="btn-secondary border-danger/40 text-danger hover:bg-danger/10 py-2.5 px-5 disabled:opacity-50"
+            className="btn-secondary border-danger/40 text-danger hover:bg-danger/10 rounded-full px-4 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm shadow-sm disabled:opacity-50"
           >
-            <i className={`fas ${loading ? 'fa-spinner fa-spin' : 'fa-shield-virus'} mr-2`} />
+            <i className={`fas ${loading ? 'fa-spinner fa-spin' : 'fa-shield-virus'} mr-1.5 sm:mr-2`} />
             {tr('关闭双因素认证', 'Disable 2FA')}
           </button>
         </div>
       )}
 
       {recoveryCodes.length > 0 && (
-        <div className="mt-5 rounded-[24px] border border-border bg-[rgba(33,93,89,0.08)] p-4">
-          <div className="flex items-center justify-between gap-3">
+        <div className="mt-4 sm:mt-5 rounded-lg sm:rounded-xl border border-border bg-[rgba(33,93,89,0.08)] p-3 sm:p-4">
+          <div className="flex items-center justify-between gap-2.5 sm:gap-3">
             <div>
-              <div className="text-sm font-semibold">{tr('恢复码', 'Recovery Codes')}</div>
-              <p className="mt-1 text-sm leading-7 text-text-secondary">
+              <div className="text-xs sm:text-sm font-semibold">{tr('恢复码', 'Recovery Codes')}</div>
+              <p className="mt-0.5 sm:mt-1 text-[0.7rem] sm:text-xs md:text-sm leading-5 sm:leading-6 md:leading-7 text-text-secondary">
                 {tr('请立即保存以下恢复码。这些代码只会显示一次。', 'Save these recovery codes now. They are shown only once.')}
               </p>
             </div>
             <button
               type="button"
-              className="btn-secondary text-sm py-2 px-4"
+              className="btn-secondary w-full justify-center rounded-full px-4 py-2 text-xs sm:text-sm shadow-sm sm:w-auto"
               onClick={() => {
                 copyToClipboard(recoveryCodes.join('\n'));
                 onNotify(tr('恢复码已复制', 'Recovery codes copied'));
               }}
             >
-              <i className="fas fa-copy mr-2" />
+              <i className="fas fa-copy mr-1.5 sm:mr-2" />
               {tr('复制全部', 'Copy All')}
             </button>
           </div>
-          <div className="mt-4 grid gap-2 sm:grid-cols-2">
+          <div className="mt-3 sm:mt-4 grid gap-1.5 sm:gap-2 sm:grid-cols-2">
             {recoveryCodes.map((item) => (
-              <div key={item} className="rounded-[16px] border border-border bg-white/80 px-3 py-2 font-mono text-sm text-text-primary">
+              <div key={item} className="rounded-lg border border-border bg-white/80 px-2.5 py-1.5 sm:px-3 sm:py-2 font-mono text-xs sm:text-sm text-text-primary">
                 {item}
               </div>
             ))}

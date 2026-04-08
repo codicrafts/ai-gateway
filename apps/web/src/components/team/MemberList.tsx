@@ -110,39 +110,39 @@ export default function MemberList({
   });
 
   return (
-    <div className="editorial-panel p-5 sm:p-6">
-      <div className="flex flex-col gap-4 border-b border-border pb-5 lg:flex-row lg:items-start lg:justify-between">
+    <div className="editorial-panel p-3 sm:p-4 md:p-6">
+      <div className="flex flex-col gap-3 sm:gap-4 border-b border-border pb-3 sm:pb-4 md:pb-5 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <div className="eyebrow">{locale === 'zh' ? '团队成员' : 'Team Members'}</div>
-          <h3 className="mt-3 text-xl font-semibold">{text.title}</h3>
-          <p className="mt-2 text-sm leading-7 text-text-secondary">
+          <h3 className="mt-2 sm:mt-3 text-base sm:text-lg md:text-xl font-semibold">{text.title}</h3>
+          <p className="mt-1.5 sm:mt-2 text-[0.7rem] sm:text-sm leading-5 sm:leading-6 md:leading-7 text-text-secondary">
             {locale === 'zh'
               ? '查看成员信息、调整角色，并管理团队邀请。'
               : 'View members, update roles, and manage team invitations.'}
           </p>
         </div>
         {canInvite && onInvite && (
-          <div className="rounded-[22px] border border-border bg-white/72 p-2 lg:min-w-[180px]">
+          <div className="w-full rounded-md sm:rounded-lg md:rounded-xl border border-border bg-white/72 p-1.5 sm:p-2 sm:w-auto">
             <button
               onClick={onInvite}
-              className="btn-primary w-full justify-center whitespace-nowrap text-sm py-2.5 px-5"
+              className="btn-primary w-full justify-center whitespace-nowrap px-4 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm"
             >
-              <i className="fas fa-user-plus mr-2" />
+              <i className="fas fa-user-plus mr-1.5 sm:mr-2" />
               {text.invite}
             </button>
           </div>
         )}
       </div>
 
-      <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+      <div className="mt-3 sm:mt-4 md:mt-5 flex flex-col gap-2.5 sm:gap-3 sm:flex-row">
         <div className="relative flex-1">
-          <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
+          <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-xs sm:text-sm" />
           <input
             type="text"
             placeholder={text.searchPlaceholder}
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full rounded-[18px] border border-border bg-white/80 py-3 pl-10 pr-4 text-sm focus:outline-none focus:border-primary transition-colors"
+            className="w-full rounded-lg sm:rounded-xl border border-border bg-white/80 py-2.5 sm:py-3 pl-9 sm:pl-10 pr-3 sm:pr-4 text-xs sm:text-sm focus:outline-none focus:border-primary transition-colors"
           />
         </div>
 
@@ -150,16 +150,16 @@ export default function MemberList({
           value={roleFilter || ''}
           onChange={(value) => onRoleFilterChange((value as TeamRole) || null)}
           options={roleOptions}
-          className="sm:w-[180px]"
+          className="w-full sm:w-[160px] md:w-[180px]"
           size="md"
         />
       </div>
 
-      <div className="mt-5 space-y-3">
+      <div className="mt-3 sm:mt-4 md:mt-5 space-y-2.5 sm:space-y-3">
         {filteredMembers.length === 0 ? (
-          <div className="rounded-[22px] border border-dashed border-border bg-white/45 py-10 text-center text-text-secondary">
-            <i className="fas fa-users text-3xl mb-2 opacity-50" />
-            <p>{text.noMatches}</p>
+          <div className="rounded-md sm:rounded-lg md:rounded-xl border border-dashed border-border bg-white/45 py-8 sm:py-10 text-center text-text-secondary">
+            <i className="fas fa-users text-2xl sm:text-3xl mb-1.5 sm:mb-2 opacity-50" />
+            <p className="text-xs sm:text-sm">{text.noMatches}</p>
           </div>
         ) : (
           filteredMembers.map((member) => (
@@ -177,7 +177,7 @@ export default function MemberList({
         )}
       </div>
 
-      <div className="mt-5 border-t border-border pt-4 text-sm text-text-secondary">
+      <div className="mt-3 sm:mt-4 md:mt-5 border-t border-border pt-3 sm:pt-4 text-xs sm:text-sm text-text-secondary">
         {text.totalMembers} {members.length} {text.membersUnit}
         {filteredMembers.length !== members.length && (
           <span> , {text.showing} {filteredMembers.length}</span>
@@ -229,41 +229,41 @@ function MemberItem({
   const joinedDate = formatDate(member.joined_at, locale, text.unknown);
 
   return (
-    <div className="rounded-[22px] border border-border bg-white/72 p-4 transition-all hover:-translate-y-0.5 hover:shadow-soft">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className={`h-11 w-11 rounded-full flex items-center justify-center flex-shrink-0 ${getRoleAvatarBg(member.role)}`}>
+      <div className="rounded-md sm:rounded-lg md:rounded-xl border border-border bg-white/72 p-3 sm:p-4 transition-all hover:-translate-y-0.5 hover:shadow-soft">
+      <div className="flex flex-col gap-3 sm:gap-4 xl:flex-row xl:items-center xl:justify-between">
+        <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
+          <div className={`h-9 w-9 sm:h-10 sm:w-10 md:h-11 md:w-11 rounded-full flex items-center justify-center flex-shrink-0 ${getRoleAvatarBg(member.role)}`}>
             {member.user?.username ? (
-              <span className="text-sm font-medium">
+              <span className="text-xs sm:text-sm font-medium">
                 {member.user.username.charAt(0).toUpperCase()}
               </span>
             ) : (
-              <i className="fas fa-user text-sm" />
+              <i className="fas fa-user text-xs sm:text-sm" />
             )}
           </div>
 
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <span className="font-medium truncate">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <span className="break-all text-sm sm:text-base font-medium sm:truncate">
                 {member.user?.username || text.unknownUser}
               </span>
               {isCurrentUser && (
-                <span className="rounded-full bg-primary/20 px-2 py-0.5 text-xs text-primary">
+                <span className="rounded-full bg-primary/20 px-1.5 py-0.5 sm:px-2 text-[0.65rem] sm:text-xs text-primary">
                   {text.me}
                 </span>
               )}
             </div>
-            <div className="text-sm text-text-secondary truncate">
+            <div className="break-all text-[0.7rem] sm:text-sm text-text-secondary sm:truncate">
               {member.user?.email || text.noEmail}
             </div>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <div className={`px-3 py-1 rounded-full text-xs font-medium ${getRoleBadgeStyle(member.role)}`}>
+        <div className="flex w-full flex-col gap-1.5 sm:gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
+          <div className={`inline-flex self-start px-2 py-0.5 sm:px-3 sm:py-1 rounded-full text-[0.65rem] sm:text-xs font-medium ${getRoleBadgeStyle(member.role)}`}>
             {getRoleLabel(member.role)}
           </div>
-          <div className="text-sm text-text-secondary min-w-[100px]">
+          <div className="text-[0.7rem] sm:text-sm text-text-secondary">
             <i className="fas fa-calendar-alt mr-1" />
             {joinedDate}
           </div>
@@ -277,19 +277,19 @@ function MemberItem({
                 label: getRoleLabel(role),
               }))}
               size="sm"
-              className="min-w-[140px]"
+              className="w-full sm:w-[130px] md:w-[140px]"
               buttonClassName="rounded-full border-border bg-white/90 text-xs shadow-none"
-              menuClassName="min-w-[180px]"
+              menuClassName="sm:min-w-[160px] md:min-w-[180px]"
             />
           )}
 
           {canManage && !isOwner && onRemove && (
             <button
               onClick={() => onRemove(member.user_id)}
-              className="rounded-full border border-danger/30 px-3 py-2 text-error transition-colors hover:bg-error/10"
+              className="w-full rounded-full border border-danger/30 px-3 py-1.5 sm:py-2 text-error transition-colors hover:bg-error/10 sm:w-auto text-xs sm:text-sm"
               title={text.removeMember}
             >
-              <i className="fas fa-user-minus text-sm" />
+              <i className="fas fa-user-minus text-xs sm:text-sm" />
             </button>
           )}
         </div>

@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import Providers from '@/components/Providers';
 import Notification from '@/components/Notification';
@@ -8,6 +8,17 @@ import { authOptions } from '@/lib/auth';
 import { getAppUserById, sanitizeAppUser, upsertOAuthUser } from '@/services/account/app-user.service';
 import type { User } from '@ai-gateway/shared-types';
 import { getSiteUrl, SITE_DESCRIPTION, SITE_NAME, SITE_TITLE } from '@/config/site';
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#ffffff' }
+  ]
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),

@@ -5,6 +5,8 @@ import { getAuthAudienceFromHeaders } from '@/lib/auth-region';
 import { getDashboardPageBootstrap } from '@/services/dashboard/dashboard-page-bootstrap.service';
 import { resolveRequestedTeamId, type DashboardRouteSearchParams } from '../route-utils';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: '账单 | MeshRouter',
   description: '查看组织余额、账单明细和充值订单。',

@@ -5,6 +5,8 @@ import { getAuthAudienceFromHeaders } from '@/lib/auth-region';
 import { getDashboardPageBootstrap } from '@/services/dashboard/dashboard-page-bootstrap.service';
 import { resolveRequestedTeamId, type DashboardRouteSearchParams } from '../route-utils';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: '个人中心 | MeshRouter',
   description: '管理个人资料、安全设置和账户信息。',

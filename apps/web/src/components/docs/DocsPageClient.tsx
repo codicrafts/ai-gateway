@@ -29,13 +29,13 @@ function CodeBlock({
   };
 
   return (
-    <div className="relative my-4 overflow-hidden rounded-[1.25rem] border border-[#2f2620] bg-[#17120f] shadow-soft sm:my-6">
+    <div className="relative my-3 sm:my-4 md:my-6 overflow-hidden rounded-lg sm:rounded-[1.25rem] border border-[#2f2620] bg-[#17120f] shadow-soft">
       <div className="flex flex-col items-start justify-between gap-2 border-b border-[#3c3128] bg-[rgba(255,248,238,0.06)] px-3 py-2 xs:flex-row xs:items-center sm:px-4 sm:py-3">
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
           {method ? (
             <>
               <span
-                className={`rounded px-2 py-0.5 text-xs font-semibold sm:px-3 sm:py-1 ${
+                className={`rounded px-2 py-0.5 text-[0.65rem] sm:text-xs font-semibold sm:px-3 sm:py-1 ${
                   method.type === 'POST'
                     ? 'bg-success/20 text-success'
                     : 'bg-primary/20 text-primary'
@@ -43,21 +43,21 @@ function CodeBlock({
               >
                 {method.type}
               </span>
-              <code className="break-all text-xs text-[#f7efe1] sm:text-sm">{method.path}</code>
+              <code className="break-all text-[0.7rem] sm:text-xs md:text-sm text-[#f7efe1]">{method.path}</code>
             </>
           ) : (
-            <span className="text-xs text-[#f7efe1] sm:text-sm">{title}</span>
+            <span className="text-[0.7rem] sm:text-xs md:text-sm text-[#f7efe1]">{title}</span>
           )}
         </div>
         <button
           onClick={copy}
-          className="whitespace-nowrap rounded border border-[#6b5a49] bg-transparent px-2 py-1 text-xs text-[#f7efe1] transition-all hover:border-primary hover:bg-primary sm:px-3"
+          className="whitespace-nowrap rounded border border-[#6b5a49] bg-transparent px-2 py-1 text-[0.65rem] sm:text-xs text-[#f7efe1] transition-all hover:border-primary hover:bg-primary sm:px-3"
         >
           <i className="fas fa-copy" /> {copyLabel}
         </button>
       </div>
-      <pre className="overflow-x-auto p-3 sm:p-6">
-        <code className="font-mono text-xs leading-relaxed text-[#f3e5d1] sm:text-sm">{children}</code>
+      <pre className="overflow-x-auto p-3 sm:p-4 md:p-6">
+        <code className="font-mono text-[0.7rem] sm:text-xs md:text-sm leading-relaxed text-[#f3e5d1]">{children}</code>
       </pre>
     </div>
   );
@@ -134,19 +134,19 @@ export default function DocsPageClient({
     <div className="min-h-screen bg-background relative">
       <div className="absolute top-0 inset-x-0 h-[500px] pointer-events-none -z-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent opacity-60"></div>
       <Navbar />
-      <div className="mx-auto max-w-[1200px] px-4 sm:px-6 py-8 sm:py-16">
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[280px_1fr]">
+      <div className="mx-auto max-w-[1200px] px-3 sm:px-4 md:px-6 py-6 sm:py-8 md:py-16">
+        <div className="grid grid-cols-1 gap-6 sm:gap-8 lg:grid-cols-[280px_1fr]">
           <button
             onClick={() => setShowNav(!showNav)}
-            className="flex items-center justify-between rounded-[1.5rem] border border-border bg-white p-5 shadow-sm lg:hidden hover:shadow-md transition-shadow"
+            className="flex items-center justify-between rounded-xl sm:rounded-[1.5rem] border border-border bg-white p-4 sm:p-5 shadow-sm lg:hidden hover:shadow-md transition-shadow"
           >
-            <span className="font-semibold">{t.docsPage.mobileNav}</span>
-            <i className={`fas fa-chevron-${showNav ? 'up' : 'down'}`} />
+            <span className="font-semibold text-sm sm:text-base">{t.docsPage.mobileNav}</span>
+            <i className={`fas fa-chevron-${showNav ? 'up' : 'down'} text-sm`} />
           </button>
 
           <div className={`h-fit lg:sticky lg:top-24 ${showNav ? 'block' : 'hidden lg:block'}`}>
-            <nav className="rounded-[2rem] border border-border bg-white/60 backdrop-blur-sm p-6 shadow-sm">
-              <h3 className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-text-secondary">{t.docsPage.toc}</h3>
+            <nav className="rounded-xl sm:rounded-[2rem] border border-border bg-white/60 backdrop-blur-sm p-4 sm:p-6 shadow-sm">
+              <h3 className="mb-3 sm:mb-4 text-[0.65rem] sm:text-xs font-bold uppercase tracking-[0.18em] sm:tracking-[0.2em] text-text-secondary">{t.docsPage.toc}</h3>
               {sections.map((section) => (
                 <a
                   key={section.id}
@@ -155,7 +155,7 @@ export default function DocsPageClient({
                     setActiveSection(section.id);
                     setShowNav(false);
                   }}
-                  className={`mb-1 block rounded-xl px-4 py-2.5 text-sm font-medium transition-all no-underline ${
+                  className={`mb-1 block rounded-lg sm:rounded-xl px-3 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm font-medium transition-all no-underline ${
                     activeSection === section.id
                       ? 'bg-primary/10 text-primary shadow-sm'
                       : 'text-text-secondary hover:bg-dark-light/50 hover:text-text-primary'
@@ -167,13 +167,13 @@ export default function DocsPageClient({
             </nav>
           </div>
 
-          <div className="rounded-[2.5rem] border border-border bg-white/80 backdrop-blur-sm p-6 sm:p-10 lg:p-16 shadow-sm">
-            <h1 id="introduction" className="mb-4 text-4xl font-bold tracking-tight sm:text-5xl lg:text-[3.5rem]">
+          <div className="rounded-xl sm:rounded-[2rem] md:rounded-[2.5rem] border border-border bg-white/80 backdrop-blur-sm p-4 sm:p-6 md:p-10 lg:p-16 shadow-sm">
+            <h1 id="introduction" className="mb-3 sm:mb-4 text-[2rem] font-bold tracking-tight sm:text-4xl md:text-5xl lg:text-[3.5rem]">
               {t.docsPage.title}
             </h1>
-            <p className="mb-8 text-lg leading-relaxed text-text-secondary max-w-3xl">{t.docsPage.intro}</p>
+            <p className="mb-6 sm:mb-8 text-[0.9rem] sm:text-lg leading-relaxed text-text-secondary max-w-3xl">{t.docsPage.intro}</p>
 
-            <div className="mb-10 grid gap-5 sm:grid-cols-3">
+            <div className="mb-8 sm:mb-10 grid gap-4 sm:gap-5 sm:grid-cols-3">
               {[
                 { title: t.docsPage.card1Title, desc: t.docsPage.card1Desc },
                 { title: t.docsPage.card2Title, desc: t.docsPage.card2Desc },
@@ -181,65 +181,65 @@ export default function DocsPageClient({
               ].map((item, index) => (
                 <div
                   key={item.title}
-                  className={`rounded-[2rem] border p-6 transition-all hover:-translate-y-1 hover:shadow-md ${
+                  className={`rounded-xl sm:rounded-[2rem] border p-4 sm:p-6 transition-all hover:-translate-y-1 hover:shadow-md ${
                     index === 1 ? 'border-primary/20 bg-primary/5 shadow-sm' : 'border-border bg-white shadow-sm'
                   }`}
                 >
-                  <div className="text-[0.65rem] font-bold uppercase tracking-[0.24em] text-text-secondary mb-3 inline-block bg-dark-light/50 px-2 py-1 rounded">
+                  <div className="text-[0.6rem] sm:text-[0.65rem] font-bold uppercase tracking-[0.2em] sm:tracking-[0.24em] text-text-secondary mb-2 sm:mb-3 inline-block bg-dark-light/50 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded">
                     {String(index + 1).padStart(2, '0')}
                   </div>
-                  <h3 className="text-xl font-bold text-text-primary tracking-tight">{item.title}</h3>
-                  <p className="mt-3 text-sm leading-relaxed text-text-secondary">{item.desc}</p>
+                  <h3 className="text-base sm:text-xl font-bold text-text-primary tracking-tight">{item.title}</h3>
+                  <p className="mt-2 sm:mt-3 text-[0.8rem] sm:text-sm leading-relaxed text-text-secondary">{item.desc}</p>
                 </div>
               ))}
             </div>
 
-            <div className="mb-12 rounded-[2rem] border border-primary/20 bg-primary/5 p-6 sm:p-8 shadow-sm">
-              <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+            <div className="mb-8 sm:mb-12 rounded-xl sm:rounded-[2rem] border border-primary/20 bg-primary/5 p-4 sm:p-6 md:p-8 shadow-sm">
+              <div className="flex flex-col gap-4 sm:gap-6 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <div className="text-xs font-bold uppercase tracking-[0.24em] text-text-secondary inline-flex items-center gap-2">
+                  <div className="text-[0.65rem] sm:text-xs font-bold uppercase tracking-[0.2em] sm:tracking-[0.24em] text-text-secondary inline-flex items-center gap-1.5 sm:gap-2">
                     {t.docsPage.liveReference}
-                    <span className="w-2 h-2 rounded-full bg-success animate-pulse"></span>
+                    <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-success animate-pulse"></span>
                   </div>
-                  <h3 className="mt-3 text-2xl font-bold tracking-tight text-text-primary">{t.docsPage.liveReferenceTitle}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-text-secondary max-w-xl">
+                  <h3 className="mt-2 sm:mt-3 text-lg sm:text-2xl font-bold tracking-tight text-text-primary">{t.docsPage.liveReferenceTitle}</h3>
+                  <p className="mt-1.5 sm:mt-2 text-[0.8rem] sm:text-sm leading-relaxed text-text-secondary max-w-xl">
                     {reference ? t.docsPage.liveReferenceDesc : t.docsPage.liveReferenceLoading}
                   </p>
                 </div>
                 {referenceError ? (
-                  <div className="rounded-xl border border-warning/30 bg-warning/10 px-4 py-3 text-sm font-medium text-warning shadow-sm">
+                  <div className="rounded-lg sm:rounded-xl border border-warning/30 bg-warning/10 px-3 py-2 sm:px-4 sm:py-3 text-xs sm:text-sm font-medium text-warning shadow-sm">
                     {referenceError}
                   </div>
                 ) : null}
               </div>
-              <div className="mt-8 grid gap-5 sm:grid-cols-3">
+              <div className="mt-6 sm:mt-8 grid gap-4 sm:gap-5 sm:grid-cols-3">
                 {liveStats.map((item) => (
-                  <div key={item.key} className="rounded-[1.5rem] border border-border/60 bg-white/60 p-5 shadow-sm hover:bg-white transition-colors">
-                    <div className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-text-secondary">{item.label}</div>
-                    <div className="mt-3 text-4xl font-bold tracking-tight text-text-primary">{item.value}</div>
-                    <p className="mt-2 text-sm leading-relaxed text-text-secondary line-clamp-1">{item.desc}</p>
+                  <div key={item.key} className="rounded-xl sm:rounded-[1.5rem] border border-border/60 bg-white/60 p-4 sm:p-5 shadow-sm hover:bg-white transition-colors">
+                    <div className="text-[0.625rem] sm:text-[0.68rem] font-semibold uppercase tracking-[0.16em] sm:tracking-[0.18em] text-text-secondary">{item.label}</div>
+                    <div className="mt-2 sm:mt-3 text-[2rem] sm:text-4xl font-bold tracking-tight text-text-primary">{item.value}</div>
+                    <p className="mt-1.5 sm:mt-2 text-[0.8rem] sm:text-sm leading-relaxed text-text-secondary line-clamp-1">{item.desc}</p>
                   </div>
                 ))}
               </div>
             </div>
 
-            <h2 className="mt-16 mb-6 border-b border-border/60 pb-4 text-3xl font-bold tracking-tight sm:text-4xl">
+            <h2 className="mt-12 sm:mt-16 mb-4 sm:mb-6 border-b border-border/60 pb-3 sm:pb-4 text-[1.75rem] sm:text-3xl md:text-4xl font-bold tracking-tight">
               {t.docsPage.quickStart}
             </h2>
-            <p className="mb-6 text-base leading-relaxed text-text-secondary">{t.docsPage.quickStartDesc}</p>
-            <h3 className="mt-8 mb-4 text-xl font-bold tracking-tight">{t.docsPage.baseUrl}</h3>
+            <p className="mb-4 sm:mb-6 text-[0.9rem] sm:text-base leading-relaxed text-text-secondary">{t.docsPage.quickStartDesc}</p>
+            <h3 className="mt-6 sm:mt-8 mb-3 sm:mb-4 text-base sm:text-xl font-bold tracking-tight">{t.docsPage.baseUrl}</h3>
             <CodeBlock title={t.docsPage.endpoint} copyLabel={t.docsPage.copy} copiedLabel={t.docsPage.copied}>
               {baseUrl}
             </CodeBlock>
 
-            <h3 className="mt-10 mb-4 text-xl font-bold tracking-tight">{t.docsPage.supportedEndpoints}</h3>
-            <p className="mb-6 text-base leading-relaxed text-text-secondary">{t.docsPage.supportedEndpointsDesc}</p>
-            <div className="overflow-x-auto rounded-[1.5rem] border border-border shadow-sm">
+            <h3 className="mt-8 sm:mt-10 mb-3 sm:mb-4 text-base sm:text-xl font-bold tracking-tight">{t.docsPage.supportedEndpoints}</h3>
+            <p className="mb-4 sm:mb-6 text-[0.9rem] sm:text-base leading-relaxed text-text-secondary">{t.docsPage.supportedEndpointsDesc}</p>
+            <div className="overflow-x-auto rounded-xl sm:rounded-[1.5rem] border border-border shadow-sm">
               <table className="w-full min-w-[500px] border-collapse bg-white">
                 <thead>
                   <tr className="bg-dark-light/30">
                     {[t.docsPage.endpointName, t.docsPage.methodLabel, t.docsPage.pathLabel, t.docsPage.providerCoverage, t.docsPage.modelCoverage].map((heading) => (
-                      <th key={heading} className="border-b border-border p-4 text-left text-[0.75rem] font-bold uppercase tracking-wider text-text-secondary">
+                      <th key={heading} className="border-b border-border p-3 sm:p-4 text-left text-[0.65rem] sm:text-[0.75rem] font-bold uppercase tracking-wider text-text-secondary">
                         {heading}
                       </th>
                     ))}

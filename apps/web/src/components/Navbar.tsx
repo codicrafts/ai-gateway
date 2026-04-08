@@ -81,19 +81,19 @@ export default function Navbar({ variant = "default" }: NavbarProps) {
   return (
     <nav className="sticky top-0 z-[1000] border-b border-border/80 bg-[#f9f2e6]/85 backdrop-blur-xl">
       <div className="section-shell">
-        <div className="flex justify-between items-center py-3 sm:py-4">
+        <div className="flex justify-between items-center py-2.5 sm:py-4">
           <Link
             href="/"
             className="group flex items-center gap-3 text-xl sm:text-2xl no-underline text-text-primary"
           >
-            <span className="flex h-11 w-11 items-center justify-center rounded-full border border-text-primary bg-text-primary text-dark-light transition-transform duration-300 group-hover:rotate-12">
-              <i className="fas fa-compass text-base" />
+            <span className="flex h-10 w-10 items-center justify-center rounded-full border border-text-primary bg-text-primary text-dark-light transition-transform duration-300 group-hover:rotate-12 sm:h-11 sm:w-11">
+              <i className="fas fa-compass text-sm sm:text-base" />
             </span>
             <span className="flex flex-col leading-none">
               <span className="text-[0.62rem] uppercase tracking-[0.28em] text-text-secondary mb-1">
                 {t.brand.bureau}
               </span>
-              <span className="font-serif text-[1.35rem] sm:text-[1.6rem] italic tracking-[-0.04em]">
+              <span className="font-serif text-[1.2rem] sm:text-[1.6rem] italic tracking-[-0.04em]">
                 {t.brand.name}
               </span>
             </span>
@@ -175,7 +175,7 @@ export default function Navbar({ variant = "default" }: NavbarProps) {
             aria-label="Toggle menu"
           >
             <i
-              className={`fas ${mobileMenuOpen ? "fa-times" : "fa-bars"} text-xl`}
+              className={`fas ${mobileMenuOpen ? "fa-times" : "fa-bars"} text-lg sm:text-xl`}
             />
           </button>
         </div>

@@ -63,14 +63,14 @@ export default function JoinApplicationsPanel({
 
   return (
     <div className="space-y-6">
-      <div className="editorial-panel p-5 sm:p-6">
+      <div className="editorial-panel p-4 sm:p-6">
         <div className="eyebrow">{tr('加入团队', 'Join Team')}</div>
-        <h3 className="mt-3 text-xl font-semibold">{tr('通过团队标识提交加入申请', 'Apply to join a team by slug')}</h3>
-        <p className="mt-2 text-sm leading-7 text-text-secondary">
+        <h3 className="mt-3 text-lg font-semibold sm:text-xl">{tr('通过团队标识提交加入申请', 'Apply to join a team by slug')}</h3>
+        <p className="mt-2 text-sm leading-6 text-text-secondary sm:leading-7">
           {tr('输入团队 slug，说明你的使用场景，团队管理员会在当前工作区审批。', 'Enter the team slug and your use case. Team admins can review the request in this workspace.')}
         </p>
 
-        <form onSubmit={handleApply} className="mt-5 grid gap-4">
+        <form onSubmit={handleApply} className="mt-4 grid gap-4 sm:mt-5">
           <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px]">
             <div>
               <label className="mb-2 block text-sm text-text-secondary">{tr('团队 slug', 'Team Slug')}</label>
@@ -104,7 +104,7 @@ export default function JoinApplicationsPanel({
             />
           </div>
           <div className="flex justify-end">
-            <button type="submit" disabled={!slug.trim() || submitting} className="btn-primary px-5 py-2.5 disabled:opacity-50">
+            <button type="submit" disabled={!slug.trim() || submitting} className="btn-primary w-full px-5 py-2.5 disabled:opacity-50 sm:w-auto">
               <i className={`fas ${submitting ? 'fa-spinner fa-spin' : 'fa-paper-plane'} mr-2`} />
               {tr('提交申请', 'Submit Application')}
             </button>
@@ -113,10 +113,10 @@ export default function JoinApplicationsPanel({
       </div>
 
       {myPendingApplications.length > 0 && (
-        <div className="editorial-panel p-5 sm:p-6">
+        <div className="editorial-panel p-4 sm:p-6">
           <div className="eyebrow">{tr('我的申请', 'My Applications')}</div>
-          <h3 className="mt-3 text-xl font-semibold">{tr('最近申请记录', 'Recent Requests')}</h3>
-          <div className="mt-5 space-y-3">
+          <h3 className="mt-3 text-lg font-semibold sm:text-xl">{tr('最近申请记录', 'Recent Requests')}</h3>
+          <div className="mt-4 space-y-3 sm:mt-5">
             {myPendingApplications.map((item) => (
               <div key={item.id} className="rounded-[20px] border border-border bg-white/72 p-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -146,13 +146,13 @@ export default function JoinApplicationsPanel({
       )}
 
       {canManageTeam && (
-        <div className="editorial-panel p-5 sm:p-6">
+        <div className="editorial-panel p-4 sm:p-6">
           <div className="eyebrow">{tr('审批队列', 'Review Queue')}</div>
-          <h3 className="mt-3 text-xl font-semibold">{tr('待审批加入申请', 'Pending Join Requests')}</h3>
-          <p className="mt-2 text-sm leading-7 text-text-secondary">
+          <h3 className="mt-3 text-lg font-semibold sm:text-xl">{tr('待审批加入申请', 'Pending Join Requests')}</h3>
+          <p className="mt-2 text-sm leading-6 text-text-secondary sm:leading-7">
             {tr('这里会显示申请加入当前团队的请求，可直接批准为成员或访客。', 'Requests to join the current team appear here and can be approved as member or guest.')}
           </p>
-          <div className="mt-5 space-y-3">
+          <div className="mt-4 space-y-3 sm:mt-5">
             {applications.length === 0 ? (
               <div className="rounded-[20px] border border-dashed border-border bg-white/50 p-6 text-center text-sm text-text-secondary">
                 {tr('当前没有待审批申请', 'There are no pending requests')}
@@ -175,12 +175,12 @@ export default function JoinApplicationsPanel({
                         </div>
                       )}
                     </div>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap">
                       <button
                         type="button"
                         onClick={() => handleReview(item.id, 'approve')}
                         disabled={reviewingId === item.id}
-                        className="btn-primary px-4 py-2.5 text-sm disabled:opacity-50"
+                        className="btn-primary w-full px-4 py-2.5 text-sm disabled:opacity-50 sm:w-auto"
                       >
                         <i className={`fas ${reviewingId === item.id ? 'fa-spinner fa-spin' : 'fa-check'} mr-2`} />
                         {tr('批准', 'Approve')}
@@ -189,7 +189,7 @@ export default function JoinApplicationsPanel({
                         type="button"
                         onClick={() => handleReview(item.id, 'reject')}
                         disabled={reviewingId === item.id}
-                        className="btn-secondary border-danger/40 px-4 py-2.5 text-sm text-danger hover:bg-danger/10 disabled:opacity-50"
+                        className="btn-secondary w-full border-danger/40 px-4 py-2.5 text-sm text-danger hover:bg-danger/10 disabled:opacity-50 sm:w-auto"
                       >
                         <i className="fas fa-ban mr-2" />
                         {tr('拒绝', 'Reject')}
