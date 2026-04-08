@@ -9,7 +9,7 @@ export type BillingEntry = {
   description: string;
   amount: number;
   created_at: string;
-  status: 'settled';
+  status: 'settled' | 'failed';
   model?: string;
   token_name?: string;
   total_tokens?: number;
@@ -53,6 +53,14 @@ function roundToTwo(value: number): number {
   return Math.round(value * 100) / 100;
 }
 
+function preserveSmallAmount(value: number): number {
+  const rounded = roundToTwo(value);
+  if (rounded === 0 && value > 0) {
+    return value;
+  }
+  return rounded;
+}
+
 type OrgUsageLedgerRow = Database['public']['Tables']['org_usage_ledger']['Row'];
 type OrgBillingLedgerRow = Database['public']['Tables']['org_billing_ledger']['Row'];
 
@@ -84,7 +92,8 @@ export async function getOrganizationBalance(teamId: string): Promise<number> {
   const { data: usageRowsData, error: usageError } = await supabase
     .from('org_usage_ledger')
     .select('amount')
-    .eq('team_id', teamId);
+    .eq('team_id', teamId)
+    .eq('status', 'success');
 
   if (usageError) {
     throw new Error('获取组织用量账本失败');
@@ -111,15 +120,9 @@ export async function getOrganizationBalance(teamId: string): Promise<number> {
 export async function getBillingSummaryForTeam(teamId: string): Promise<BillingSummary> {
   const supabase = createServerAdminSupabaseClient();
 
-  const [usageRowsResult, billingRowsResult, usageAggregateRowsResult, billingBalanceRowsResult] = await Promise.all([
+  const [usageRowsResult, usageAggregateRowsResult, billingRowsResult, billingBalanceRowsResult, apiKeyNamesResult] = await Promise.all([
     supabase
       .from('org_usage_ledger')
-      .select('*')
-      .eq('team_id', teamId)
-      .order('occurred_at', { ascending: false })
-      .limit(100),
-    supabase
-      .from('org_billing_ledger')
       .select('*')
       .eq('team_id', teamId)
       .order('occurred_at', { ascending: false })
@@ -127,10 +130,21 @@ export async function getBillingSummaryForTeam(teamId: string): Promise<BillingS
     supabase
       .from('org_usage_ledger')
       .select('amount, occurred_at')
-      .eq('team_id', teamId),
+      .eq('team_id', teamId)
+      .eq('status', 'success'),
+    supabase
+      .from('org_billing_ledger')
+      .select('*')
+      .eq('team_id', teamId)
+      .order('occurred_at', { ascending: false })
+      .limit(100),
     supabase
       .from('org_billing_ledger')
       .select('amount')
+      .eq('team_id', teamId),
+    supabase
+      .from('org_api_keys')
+      .select('id, name')
       .eq('team_id', teamId),
   ]);
 
@@ -153,11 +167,18 @@ export async function getBillingSummaryForTeam(teamId: string): Promise<BillingS
   if (billingBalanceError) {
     throw new Error('获取组织账务聚合数据失败');
   }
+  const { data: apiKeyNamesData, error: apiKeyNamesError } = apiKeyNamesResult;
+  if (apiKeyNamesError) {
+    throw new Error('获取组织 API Key 名称失败');
+  }
 
   const usageRows = (usageRowsData || []) as OrgUsageLedgerRow[];
   const billingRows = (billingRowsData || []) as OrgBillingLedgerRow[];
   const usageAggregateRows = (usageAggregateRowsData || []) as Array<Pick<OrgUsageLedgerRow, 'amount' | 'occurred_at'>>;
   const billingBalanceRows = (billingBalanceRowsData || []) as Array<Pick<OrgBillingLedgerRow, 'amount'>>;
+  const apiKeyNameMap = new Map(
+    ((apiKeyNamesData || []) as Array<{ id: number; name: string }>).map((row) => [Number(row.id), row.name])
+  );
   const now = new Date();
   const previousMonth = getPreviousMonth(now);
   const recentThirtyDaysStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
@@ -165,13 +186,18 @@ export async function getBillingSummaryForTeam(teamId: string): Promise<BillingS
   const usageEntries: BillingEntry[] = usageRows.map((row) => ({
     id: `usage-${row.new_api_log_id ?? row.id}`,
     type: 'usage',
-    title: '模型调用',
-    description: row.provider ? `${row.model} / ${row.provider}` : row.model,
-    amount: -Number(row.amount || 0),
+    title: row.status === 'failed' ? '调用失败' : '模型调用',
+    description:
+      row.status === 'failed'
+        ? ''
+        : (row.provider ? `${row.model} / ${row.provider}` : row.model),
+    amount: row.status === 'failed' ? 0 : -Number(row.amount || 0),
     created_at: row.occurred_at,
-    status: 'settled',
+    status: row.status === 'failed' ? 'failed' : 'settled',
     model: row.model,
-    token_name: row.org_api_key_id ? `Key #${row.org_api_key_id}` : undefined,
+    token_name: row.org_api_key_id
+      ? apiKeyNameMap.get(Number(row.org_api_key_id)) || `Key #${row.org_api_key_id}`
+      : undefined,
     total_tokens: Number(row.total_tokens || 0),
   }));
   const rechargeEntries = billingRows.map(mapOrgBillingEntry);
@@ -203,10 +229,10 @@ export async function getBillingSummaryForTeam(teamId: string): Promise<BillingS
 
   return {
     current_balance: currentBalance,
-    current_month_spend: roundToTwo(currentMonthSpend),
-    previous_month_spend: roundToTwo(previousMonthSpend),
+    current_month_spend: preserveSmallAmount(currentMonthSpend),
+    previous_month_spend: preserveSmallAmount(previousMonthSpend),
     change_percentage: changePercentage,
-    average_daily_spend: averageDailySpend,
+    average_daily_spend: preserveSmallAmount(averageDailySpend),
     estimated_available_days: estimatedAvailableDays,
     recent_entries: recentEntries,
     currency: 'USD',

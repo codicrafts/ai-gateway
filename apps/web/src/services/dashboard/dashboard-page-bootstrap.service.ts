@@ -75,7 +75,7 @@ export async function getDashboardPageBootstrap(
 
   const needsTeamWorkspace = section === 'team';
   const needsApiKeys = section === 'overview' || section === 'api-keys';
-  const needsUsage = section === 'overview' || section === 'usage';
+  const needsUsage = section === 'overview' || section === 'usage' || section === 'api-keys';
   const needsBillingSummary = section === 'overview' || section === 'billing';
   const needsPaymentOrders = section === 'overview' || section === 'billing';
 

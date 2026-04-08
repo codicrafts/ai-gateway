@@ -86,7 +86,7 @@ export async function listGatewayUsageForTeam(options: {
     buildLedgerQuery('amount, request_count'),
     supabase
       .from('org_api_keys')
-      .select('quota, used_quota, unlimited_quota')
+      .select('id, name, quota, used_quota, unlimited_quota')
       .eq('team_id', teamId)
       .eq('status', 'active'),
   ]);
@@ -109,8 +109,9 @@ export async function listGatewayUsageForTeam(options: {
   const rows = (usageRows || []) as OrgUsageLedgerRow[];
 
   const usageStatRows = (statRows || []) as Array<Pick<OrgUsageLedgerRow, 'amount' | 'request_count'>>;
-  const activeKeys = (keyRows || []) as Array<Pick<OrgApiKeyRow, 'quota' | 'used_quota' | 'unlimited_quota'>>;
+  const activeKeys = (keyRows || []) as Array<Pick<OrgApiKeyRow, 'id' | 'name' | 'quota' | 'used_quota' | 'unlimited_quota'>>;
   const stats = buildUsageStats({ usageRows: usageStatRows, activeKeys });
+  const apiKeyNameMap = new Map(activeKeys.map((key) => [Number(key.id), key.name]));
 
   return {
     logs: rows.map((row) => ({
@@ -120,7 +121,11 @@ export async function listGatewayUsageForTeam(options: {
       completion_tokens: row.completion_tokens,
       total_tokens: row.total_tokens,
       quota_cost: Number(row.amount),
-      token_name: `Key #${row.org_api_key_id ?? '-'}`,
+      api_key_name:
+        (row.org_api_key_id ? apiKeyNameMap.get(Number(row.org_api_key_id)) : null) ||
+        `Key #${row.org_api_key_id ?? '-'}`,
+      status: row.status,
+      error_message: row.error_message,
       created_at: row.occurred_at,
     })),
     stats,

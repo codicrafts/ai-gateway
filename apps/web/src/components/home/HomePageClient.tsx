@@ -13,6 +13,7 @@ import { Model } from '@ai-gateway/shared-types';
 type CodeTab = 'python' | 'skill';
 
 const PROVIDERS = ['OpenAI', 'Anthropic', 'Google', 'DeepSeek', 'Mistral', 'Meta', 'Stability'];
+const SKILL_EDITORS = ['Claude Code', 'Codex', 'Cursor', 'Windsurf'];
 
 export default function HomePageClient({ initialModels }: { initialModels: Model[] }) {
   const dispatch = useAppDispatch();
@@ -32,14 +33,30 @@ response = client.chat.completions.create(
     model="gpt-4-turbo",
     messages=[{"role": "user", "content": "Give me a launch checklist."}]
 )`,
-    skill: `# Claude / Codex / Gemini skill install
-git clone https://github.com/your-org/ai-gateway-skill
+    skill: `# Install the official New API Skill plugin
+git clone https://github.com/QuantumNous/skills
 
-export AI_GATEWAY_API_KEY="your-api-key"
-export AI_GATEWAY_BASE_URL="https://api.aigateway.com/v1"
+export NEWAPI_BASE_URL="https://api.meshrouter.com/v1"
+export NEWAPI_API_KEY="your-api-key"
 
-# Start using one gateway across multiple models`,
+# Then inside Claude Code / Codex / Cursor:
+/newapi models
+/newapi balance
+/newapi tokens`,
   };
+
+  const quickStartSteps =
+    codeTab === 'python'
+      ? [
+          { index: '01', title: t.home.quickStartStep1Title, desc: t.home.quickStartStep1Desc },
+          { index: '02', title: t.home.quickStartStep2Title, desc: t.home.quickStartStep2Desc },
+          { index: '03', title: t.home.quickStartStep3Title, desc: t.home.quickStartStep3Desc },
+        ]
+      : [
+          { index: '01', title: t.home.quickStartSkillStep1Title, desc: t.home.quickStartSkillStep1Desc },
+          { index: '02', title: t.home.quickStartSkillStep2Title, desc: t.home.quickStartSkillStep2Desc },
+          { index: '03', title: t.home.quickStartSkillStep3Title, desc: t.home.quickStartSkillStep3Desc },
+        ];
 
   const copyCode = () => {
     navigator.clipboard.writeText(codeExamples[codeTab]).then(() => {
@@ -224,11 +241,36 @@ export AI_GATEWAY_BASE_URL="https://api.aigateway.com/v1"
                   <code>{codeExamples[codeTab]}</code>
                 </pre>
                 <div className="space-y-6 bg-white p-8 lg:border-l border-border">
-                  {[
-                    { index: '01', title: t.home.quickStartStep1Title, desc: t.home.quickStartStep1Desc },
-                    { index: '02', title: t.home.quickStartStep2Title, desc: t.home.quickStartStep2Desc },
-                    { index: '03', title: t.home.quickStartStep3Title, desc: t.home.quickStartStep3Desc },
-                  ].map((item) => (
+                  {codeTab === 'skill' ? (
+                    <div className="rounded-[1.5rem] border border-border bg-primary/5 p-5">
+                      <div className="text-[0.7rem] uppercase tracking-[0.18em] text-text-secondary">
+                        {t.home.quickStartSkillEditorsLabel}
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {SKILL_EDITORS.map((editor) => (
+                          <span
+                            key={editor}
+                            className="rounded-full border border-border bg-white px-3 py-1.5 text-xs font-semibold tracking-[0.08em] text-text-primary shadow-sm"
+                          >
+                            {editor}
+                          </span>
+                        ))}
+                      </div>
+                      <p className="mt-4 text-sm leading-relaxed text-text-secondary">
+                        {t.home.quickStartSkillLead}
+                      </p>
+                      <a
+                        href="https://docs.newapi.pro/en/docs/skills"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary transition hover:opacity-80"
+                      >
+                        <i className="fas fa-arrow-up-right-from-square text-xs" />
+                        {t.home.quickStartSkillDocs}
+                      </a>
+                    </div>
+                  ) : null}
+                  {quickStartSteps.map((item) => (
                     <div key={item.index} className="rounded-[1.5rem] border border-border bg-dark-light/20 p-6 hover:bg-white hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group">
                       <div className="text-xs uppercase tracking-[0.22em] text-primary font-bold bg-primary/10 inline-block px-2 py-1 rounded-md mb-3">{item.index}</div>
                       <div className="text-xl font-bold group-hover:text-primary transition-colors">{item.title}</div>

@@ -14,6 +14,9 @@ export interface GatewayApiKey {
   used_quota: number;
   unlimited_quota: boolean;
   models: string[];
+  request_count: number;
+  total_tokens: number;
+  spent_amount: number;
 }
 
 export interface GatewayUsageLog {
@@ -23,7 +26,9 @@ export interface GatewayUsageLog {
   completion_tokens: number;
   total_tokens: number;
   quota_cost: number;
-  token_name: string;
+  api_key_name: string;
+  status: 'success' | 'failed';
+  error_message?: string | null;
   created_at: string;
 }
 

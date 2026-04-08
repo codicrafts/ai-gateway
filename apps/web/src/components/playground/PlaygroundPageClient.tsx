@@ -394,7 +394,7 @@ print(response.choices[0].message.content)`;
                   {messages.length === 0 && !streamingContent ? (
                     <div className="flex h-full flex-col items-center justify-center text-center max-w-md mx-auto">
                       <div className="mb-6 inline-flex h-24 w-24 items-center justify-center rounded-[2rem] bg-white border border-border shadow-sm text-3xl text-primary animate-bounce-slow">
-                        <i className="fas fa-sparkles" />
+                        <i className="fas fa-flask" />
                       </div>
                       <div className="text-3xl font-bold tracking-tight text-text-primary mb-3">{t.playgroundPage.emptyTitle}</div>
                       <p className="text-base leading-relaxed text-text-secondary">

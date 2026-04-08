@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
+import { headers } from 'next/headers';
 import DashboardClient from '@/components/dashboard/DashboardClient';
+import { getAuthAudienceFromHeaders } from '@/lib/auth-region';
 import { getDashboardPageBootstrap } from '@/services/dashboard/dashboard-page-bootstrap.service';
 import { resolveRequestedTeamId, type DashboardRouteSearchParams } from '../route-utils';
 
@@ -15,5 +17,6 @@ type DashboardTeamPageProps = {
 export default async function DashboardTeamPage({ searchParams }: DashboardTeamPageProps) {
   const requestedTeamId = await resolveRequestedTeamId(searchParams);
   const initialBootstrap = await getDashboardPageBootstrap({ section: 'team', requestedTeamId });
-  return <DashboardClient section="team" initialBootstrap={initialBootstrap} />;
+  const authAudience = getAuthAudienceFromHeaders(await headers());
+  return <DashboardClient section="team" initialBootstrap={initialBootstrap} authAudience={authAudience} />;
 }

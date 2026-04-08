@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import EditorialSelect from '@/components/ui/EditorialSelect';
 import { useAppDialog } from '@/components/ui/AppDialogProvider';
+import type { AuthAudience } from '@/lib/auth-region';
 import { logoutUser } from '@/lib/logout';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setUser } from '@/store/slices/authSlice';
@@ -31,7 +32,7 @@ import {
   exportAuditLogs,
   hydrateTeamWorkspace,
 } from '@/store/slices/teamSlice';
-import { formatDate, formatCurrency, copyToClipboard } from '@/utils/helpers';
+import { formatDate, formatCurrency, formatBillingLineAmount, copyToClipboard } from '@/utils/helpers';
 import {
   TeamRole,
   AuditAction,
@@ -64,6 +65,7 @@ export type DashboardSection = 'overview' | 'api-keys' | 'usage' | 'billing' | '
 type DashboardClientProps = {
   section: DashboardSection;
   initialBootstrap?: DashboardPageBootstrapPayload | null;
+  authAudience?: AuthAudience;
 };
 
 const API_KEY_PERMISSION_SCOPE_ITEMS = [
@@ -76,7 +78,11 @@ const API_KEY_PERMISSION_SCOPE_ITEMS = [
   { value: 'models.read', zh: '读取模型列表', en: 'Read Models' },
 ] as const;
 
-export default function DashboardClient({ section, initialBootstrap = null }: DashboardClientProps) {
+export default function DashboardClient({
+  section,
+  initialBootstrap = null,
+  authAudience = 'global',
+}: DashboardClientProps) {
   const dispatch = useAppDispatch();
   const router = useRouter();
   const { confirm: confirmDialog } = useAppDialog();
@@ -133,6 +139,8 @@ export default function DashboardClient({ section, initialBootstrap = null }: Da
   const [copyingFullKeyId, setCopyingFullKeyId] = useState<number | null>(null);
   const [apiKeyModelOptions, setApiKeyModelOptions] = useState<string[]>([]);
   const [apiKeyModelOptionsLoading, setApiKeyModelOptionsLoading] = useState(false);
+  const [usageSyncing, setUsageSyncing] = useState(false);
+  const [trendRange, setTrendRange] = useState<'7d' | '30d'>('7d');
   const [editKeyStatus, setEditKeyStatus] = useState<'active' | 'disabled'>('active');
   const [profileData, setProfileData] = useState({ nickname: '', phone: '', avatar: '' });
   const [passwordData, setPasswordData] = useState({ current: '', newPass: '', confirm: '' });
@@ -155,12 +163,21 @@ export default function DashboardClient({ section, initialBootstrap = null }: Da
   const [initialDataReady, setInitialDataReady] = useState(Boolean(initialBootstrap));
   const [routeRefreshing, setRouteRefreshing] = useState(false);
   const apiKeyModelsRequestedRef = useRef(false);
+  const usageSyncRequestKeyRef = useRef<string | null>(null);
   const activeTeamId =
     currentTeam?.id ||
     initialBootstrap?.dashboard.team_id ||
     initialBootstrap?.team.current_team?.id ||
     searchParams?.get('team') ||
     null;
+  const isDomesticAudience = authAudience === 'domestic';
+  const visiblePaymentMethods = useMemo<PaymentMethod[]>(
+    () => (isDomesticAudience ? ['alipay', 'wechat_pay'] : ['credit_card', 'paypal']),
+    [isDomesticAudience]
+  );
+  const paymentMethodGroupLabel = isDomesticAudience
+    ? tr('国内支付', 'Domestic Payments')
+    : tr('国际支付', 'International Payments');
 
   const buildDashboardHref = useCallback((basePath: string, nextTeamId?: string | null) => {
     const params = new URLSearchParams(searchParams?.toString() || '');
@@ -239,6 +256,62 @@ export default function DashboardClient({ section, initialBootstrap = null }: Da
       apiKeyModelsRequestedRef.current = true;
     }
   }, [availableModels]);
+
+  useEffect(() => {
+    if (!visiblePaymentMethods.includes(selectedPaymentMethod)) {
+      setSelectedPaymentMethod(visiblePaymentMethods[0]);
+    }
+  }, [selectedPaymentMethod, visiblePaymentMethods]);
+
+  useEffect(() => {
+    if (!initialDataReady || !activeTeamId) return;
+    if (!['overview', 'usage', 'billing', 'api-keys'].includes(section)) return;
+    const requestKey = `${section}:${activeTeamId}`;
+
+    if (usageSyncRequestKeyRef.current === requestKey) {
+      return;
+    }
+
+    usageSyncRequestKeyRef.current = requestKey;
+
+    let cancelled = false;
+    setUsageSyncing(true);
+
+    const run = async () => {
+      try {
+        const response = await fetch('/api/runtime-sync/usage', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ team_id: activeTeamId }),
+        });
+        const result = await response.json().catch(() => null);
+        if (!response.ok || !result?.success) {
+          throw new Error(result?.error || tr('同步用量失败', 'Failed to sync usage'));
+        }
+        if (!cancelled) {
+          router.refresh();
+        }
+      } catch (error) {
+        usageSyncRequestKeyRef.current = null;
+        if (!cancelled) {
+          dispatch(showNotification({
+            message: getErrorMessage(error, tr('同步用量失败', 'Failed to sync usage')),
+            type: 'error',
+          }));
+        }
+      } finally {
+        if (!cancelled) {
+          setUsageSyncing(false);
+        }
+      }
+    };
+
+    void run();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTeamId, dispatch, getErrorMessage, initialDataReady, router, section, tr]);
 
   // 获取当前用户在当前团队中的角色
   const getCurrentUserRole = useCallback((): TeamRole => {
@@ -832,9 +905,10 @@ export default function DashboardClient({ section, initialBootstrap = null }: Da
     { name: tr('团队设置', 'Team settings'), desc: tr('修改团队信息', 'Update team information'), owner: true, admin: true, member: false, guest: false },
     { name: tr('删除团队', 'Delete team'), desc: tr('解散团队', 'Disband the team'), owner: true, admin: false, member: false, guest: false },
   ];
-  const recent7DayLabels = Array.from({ length: 7 }, (_, index) => {
+  const trendDays = trendRange === '30d' ? 30 : 7;
+  const trendLabels = Array.from({ length: trendDays }, (_, index) => {
     const date = new Date();
-    date.setDate(date.getDate() - (6 - index));
+    date.setDate(date.getDate() - (trendDays - 1 - index));
     return isZh
       ? `${date.getMonth() + 1}/${date.getDate()}`
       : date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -843,15 +917,32 @@ export default function DashboardClient({ section, initialBootstrap = null }: Da
   const avatarImageUrl = /^https?:\/\//.test(profileData.avatar) || profileData.avatar.startsWith('data:image')
     ? profileData.avatar
     : null;
-  const recent7DayRequests = recent7DayLabels.map((label, index) => {
+  const trendFailedRequests = trendLabels.map((_, index) => {
     const date = new Date();
-    date.setDate(date.getDate() - (6 - index));
+    date.setDate(date.getDate() - (trendDays - 1 - index));
     const year = date.getFullYear();
     const month = date.getMonth();
     const day = date.getDate();
     return usageLogs.filter((log) => {
       const logDate = new Date(log.created_at);
       return (
+        log.status === 'failed' &&
+        logDate.getFullYear() === year &&
+        logDate.getMonth() === month &&
+        logDate.getDate() === day
+      );
+    }).length;
+  });
+  const trendSuccessfulRequests = trendLabels.map((_, index) => {
+    const date = new Date();
+    date.setDate(date.getDate() - (trendDays - 1 - index));
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const day = date.getDate();
+    return usageLogs.filter((log) => {
+      const logDate = new Date(log.created_at);
+      return (
+        log.status !== 'failed' &&
         logDate.getFullYear() === year &&
         logDate.getMonth() === month &&
         logDate.getDate() === day
@@ -868,15 +959,26 @@ export default function DashboardClient({ section, initialBootstrap = null }: Da
     .sort((left, right) => right[1] - left[1])
     .slice(0, 4);
   const usageChartData = {
-    labels: recent7DayLabels,
-    datasets: [{
-      label: tr('请求数', 'Requests'),
-      data: recent7DayRequests,
-      borderColor: '#6366f1',
-      backgroundColor: 'rgba(99,102,241,0.1)',
-      tension: 0.4,
-      fill: true
-    }]
+    labels: trendLabels,
+    datasets: [
+      {
+        label: tr('成功请求', 'Successful Requests'),
+        data: trendSuccessfulRequests,
+        borderColor: '#6366f1',
+        backgroundColor: 'rgba(99,102,241,0.1)',
+        tension: 0.4,
+        fill: true
+      },
+      {
+        label: tr('失败请求', 'Failed Requests'),
+        data: trendFailedRequests,
+        borderColor: '#ef4444',
+        backgroundColor: 'rgba(239,68,68,0.08)',
+        tension: 0.35,
+        fill: false,
+        borderDash: [6, 4]
+      }
+    ]
   };
   const tokenChartData = {
     labels: modelUsagePairs.length > 0 ? modelUsagePairs.map(([label]) => label) : [tr('暂无数据', 'No data')],
@@ -1013,8 +1115,8 @@ export default function DashboardClient({ section, initialBootstrap = null }: Da
                   <EditorialSelect 
                     className="w-full sm:w-[180px] bg-dark-light/10 border-transparent rounded-xl text-sm" 
                     size="sm" 
-                    value="7d" 
-                    onChange={() => {}} 
+                    value={trendRange}
+                    onChange={(value) => setTrendRange(value as '7d' | '30d')}
                     options={[{ value: '7d', label: tr('最近 7 天', 'Last 7 Days') }, { value: '30d', label: tr('最近 30 天', 'Last 30 Days') }]} 
                   />
                 </div>
@@ -1025,7 +1127,16 @@ export default function DashboardClient({ section, initialBootstrap = null }: Da
                       ...chartOptions,
                       plugins: {
                         ...chartOptions.plugins,
-                        legend: { display: false }
+                        legend: {
+                          display: true,
+                          position: 'top',
+                          labels: {
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            color: '#64748b',
+                            font: { size: 11, weight: 600 }
+                          }
+                        }
                       },
                       scales: {
                         x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 11 } } },
@@ -1208,7 +1319,7 @@ export default function DashboardClient({ section, initialBootstrap = null }: Da
                       {/* 使用统计 */}
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
                         <div className="bg-white border border-border/60 rounded-[1rem] p-4 text-center shadow-sm">
-                          <div className="text-xl font-bold tracking-tight text-primary mb-1">{key.used_quota.toLocaleString()}</div>
+                          <div className="text-xl font-bold tracking-tight text-primary mb-1">{formatCurrency(key.spent_amount || key.used_quota)}</div>
                           <div className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary">{tr('已用额度', 'Used Quota')}</div>
                         </div>
                         <div className="bg-white border border-border/60 rounded-[1rem] p-4 text-center shadow-sm">
@@ -1242,6 +1353,14 @@ export default function DashboardClient({ section, initialBootstrap = null }: Da
                         </span>
                         <span className={`px-3 py-1.5 rounded-lg border text-xs font-medium ${key.unlimited_quota ? 'bg-success/5 text-success border-success/20' : 'bg-warning/5 text-warning border-warning/20'}`}>
                           <i className={`fas ${key.unlimited_quota ? 'fa-infinity' : 'fa-coins'} mr-1.5 opacity-70`} />{key.unlimited_quota ? tr('无限额度', 'Unlimited quota') : (isZh ? `${key.quota} 额度` : `${key.quota} quota`)}
+                        </span>
+                        <span className="px-3 py-1.5 bg-dark-light/20 text-text-secondary border border-border/50 rounded-lg text-xs font-medium">
+                          <i className="fas fa-paper-plane mr-1.5 opacity-70" />
+                          {isZh ? `${key.request_count} 次请求` : `${key.request_count} requests`}
+                        </span>
+                        <span className="px-3 py-1.5 bg-dark-light/20 text-text-secondary border border-border/50 rounded-lg text-xs font-medium">
+                          <i className="fas fa-database mr-1.5 opacity-70" />
+                          {isZh ? `${key.total_tokens.toLocaleString()} Token` : `${key.total_tokens.toLocaleString()} tokens`}
                         </span>
                         <span className={`px-3 py-1.5 rounded-lg border text-xs font-medium ${key.expires_at ? 'bg-warning/5 text-warning border-warning/20' : 'bg-dark-light/20 text-text-secondary border-border/50'}`}>
                           <i className="fas fa-clock mr-1.5 opacity-70" />{key.expires_at ? (isZh ? `${formatDate(key.expires_at)} 过期` : `Expires ${formatDate(key.expires_at)}`) : tr('永不过期', 'Never expires')}
@@ -1324,7 +1443,15 @@ export default function DashboardClient({ section, initialBootstrap = null }: Da
         {activeTab === 'usage' && (
           <div className="space-y-6 sm:space-y-8">
             <div className="bg-white border border-border rounded-[2rem] p-6 sm:p-8 shadow-sm">
-              <h3 className="text-2xl font-bold tracking-tight text-text-primary mb-6">{tr('实时监控', 'Live Metrics')}</h3>
+              <div className="flex items-center justify-between gap-3 mb-6">
+                <h3 className="text-2xl font-bold tracking-tight text-text-primary">{tr('实时监控', 'Live Metrics')}</h3>
+                {usageSyncing && (
+                  <span className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-primary/5 px-3 py-1 text-xs font-medium text-text-secondary">
+                    <span className="h-2 w-2 animate-pulse rounded-full bg-primary" />
+                    {tr('正在同步最新用量…', 'Syncing latest usage...')}
+                  </span>
+                )}
+              </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 sm:gap-6">{[
                 { label: tr('请求数', 'Requests'), value: (usageStats?.request_count ?? usageLogs.length).toLocaleString(), unit: tr('当前可见日志', 'Visible logs') },
                 { label: tr('输入 Token', 'Input Tokens'), value: totalPromptTokens.toLocaleString(), unit: tr('当前可见日志', 'Visible logs') },
@@ -1345,7 +1472,7 @@ export default function DashboardClient({ section, initialBootstrap = null }: Da
                 <table className="w-full min-w-[500px]">
                   <thead>
                     <tr className="border-b border-border/80">
-                      {[tr('时间', 'Time'), tr('模型', 'Model'), 'Input', 'Output', 'Token', tr('状态', 'Status')].map(h => (
+                      {[tr('时间', 'Time'), tr('模型', 'Model'), 'Input', 'Output', tr('API 密钥', 'API Key'), tr('状态', 'Status')].map(h => (
                         <th key={h} className="text-left py-3 sm:py-4 px-3 sm:px-4 text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary">{h}</th>
                       ))}
                     </tr>
@@ -1359,9 +1486,17 @@ export default function DashboardClient({ section, initialBootstrap = null }: Da
                         <td className="py-3 px-3 sm:px-4 text-sm font-medium text-text-primary">{log.model}</td>
                         <td className="py-3 px-3 sm:px-4 text-sm text-text-secondary">{log.prompt_tokens?.toLocaleString()}</td>
                         <td className="py-3 px-3 sm:px-4 text-sm text-text-secondary">{log.completion_tokens?.toLocaleString()}</td>
-                        <td className="py-3 px-3 sm:px-4 text-sm text-text-secondary">{log.token_name}</td>
+                        <td className="py-3 px-3 sm:px-4 text-sm text-text-secondary">{log.api_key_name}</td>
                         <td className="py-3 px-3 sm:px-4">
-                          <span className="px-2.5 py-1 bg-success/10 text-success rounded-md text-[0.65rem] font-bold uppercase tracking-wider">{tr('成功', 'Success')}</span>
+                          <span
+                            className={`px-2.5 py-1 rounded-md text-[0.65rem] font-bold uppercase tracking-wider ${
+                              log.status === 'failed'
+                                ? 'bg-danger/10 text-danger'
+                                : 'bg-success/10 text-success'
+                            }`}
+                          >
+                            {log.status === 'failed' ? tr('失败', 'Failed') : tr('成功', 'Success')}
+                          </span>
                         </td>
                       </tr>
                     ))}
@@ -1405,6 +1540,12 @@ export default function DashboardClient({ section, initialBootstrap = null }: Da
                 <div>
                   <h3 className="text-2xl font-bold tracking-tight text-text-primary mb-2">{tr('账单明细', 'Billing Details')}</h3>
                   <p className="text-text-secondary text-sm leading-relaxed">{tr('当前基于调用与账务记录聚合展示，支付与充值流水会继续逐步完善。', 'This view is currently aggregated from usage and ledger records. Payment and top-up entries will continue to be refined.')}</p>
+                  {usageSyncing && (
+                    <p className="mt-3 inline-flex items-center gap-2 text-xs font-medium text-text-secondary">
+                      <span className="h-2 w-2 animate-pulse rounded-full bg-primary" />
+                      {tr('正在同步最新用量与账务…', 'Syncing latest usage and billing...')}
+                    </p>
+                  )}
                 </div>
                 <button
                   className="btn-secondary rounded-full shadow-sm text-sm w-full sm:w-auto justify-center px-6"
@@ -1423,7 +1564,7 @@ export default function DashboardClient({ section, initialBootstrap = null }: Da
                   <table className="w-full min-w-[640px]">
                     <thead>
                       <tr className="border-b border-border/80">
-                        {[tr('时间', 'Time'), tr('类型', 'Type'), tr('说明', 'Description'), 'Token', tr('金额', 'Amount')].map((h) => (
+                        {[tr('时间', 'Time'), tr('类型', 'Type'), tr('说明', 'Description'), tr('总 Token', 'Total Tokens'), tr('状态', 'Status'), tr('金额', 'Amount')].map((h) => (
                           <th key={h} className="text-left py-3 sm:py-4 px-3 sm:px-4 text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary">{h}</th>
                         ))}
                       </tr>
@@ -1439,14 +1580,31 @@ export default function DashboardClient({ section, initialBootstrap = null }: Da
                           </td>
                           <td className="py-3 px-3 sm:px-4 text-sm">
                             <div className="font-semibold text-text-primary">{entry.type === 'recharge' ? entry.title : entry.model}</div>
-                            <div className="text-text-secondary text-xs mt-1">{entry.description}</div>
+                            {entry.description ? (
+                              <div className="text-text-secondary text-xs mt-1">{entry.description}</div>
+                            ) : null}
                             {entry.reference && <div className="text-text-secondary text-[0.65rem] font-mono mt-1 opacity-70">{entry.reference}</div>}
                           </td>
                           <td className="py-3 px-3 sm:px-4 text-sm text-text-secondary">{entry.total_tokens ? entry.total_tokens.toLocaleString() : '--'}</td>
-                          <td className={`py-3 px-3 sm:px-4 text-sm font-bold ${entry.type === 'recharge' ? 'text-success' : 'text-warning'}`}>
-                            {entry.type === 'recharge' ? '+' : '-'}
-                            {entry.currency ? `${entry.currency} ` : '$'}
-                            {Math.abs(entry.amount).toFixed(2)}
+                          <td className="py-3 px-3 sm:px-4">
+                            <span
+                              className={`px-2.5 py-1 rounded-md text-[0.65rem] font-bold uppercase tracking-wider ${
+                                entry.status === 'failed'
+                                  ? 'bg-danger/10 text-danger'
+                                  : entry.type === 'recharge'
+                                    ? 'bg-success/10 text-success'
+                                    : 'bg-warning/10 text-warning'
+                              }`}
+                            >
+                              {entry.status === 'failed'
+                                ? tr('失败', 'Failed')
+                                : entry.type === 'recharge'
+                                  ? tr('已入账', 'Settled')
+                                  : tr('成功', 'Success')}
+                            </span>
+                          </td>
+                          <td className={`py-3 px-3 sm:px-4 text-sm font-bold ${entry.status === 'failed' ? 'text-danger' : entry.type === 'recharge' ? 'text-success' : 'text-warning'}`}>
+                            {formatBillingLineAmount(entry.amount, entry.type)}
                           </td>
                         </tr>
                       ))}
@@ -1904,7 +2062,7 @@ export default function DashboardClient({ section, initialBootstrap = null }: Da
         <div className="flex gap-3"><button type="button" onClick={() => setShowCreateModal(false)} className="btn-secondary flex-1 justify-center">{tr('取消', 'Cancel')}</button><button type="submit" className="btn-primary flex-1 justify-center">{tr('创建密钥', 'Create Key')}</button></div>
       </form></div></div>)}
       {showKeyModal && (<div className="fixed inset-0 bg-black/70 z-[9999] flex items-center justify-center p-4" onClick={() => setShowKeyModal(false)}><div className="bg-white border border-border rounded-[2rem] shadow-xl p-6 sm:p-8 max-w-[500px] w-full" onClick={e => e.stopPropagation()}><h3 className="text-lg sm:text-xl font-semibold mb-4">{tr('保存您的 API 密钥', 'Save Your API Key')}</h3><div className="bg-danger/10 border border-danger rounded-lg p-3 sm:p-4 mb-4 text-xs sm:text-sm"><i className="fas fa-exclamation-triangle text-danger mr-2" />{tr('请立即复制并保存，密钥只显示一次！', 'Copy and save this key now. It will only be shown once!')}</div><div className="flex gap-2 mb-6"><input type="text" className="form-control font-mono text-xs sm:text-sm" readOnly value={newKeyValue} /><button className="btn-primary flex-shrink-0" onClick={() => { copyToClipboard(newKeyValue); dispatch(showNotification({ message: tr('已复制', 'Copied') })); }}><i className="fas fa-copy" /></button></div><button className="btn-secondary w-full justify-center" onClick={() => setShowKeyModal(false)}>{tr('我已保存', 'I have saved it')}</button></div></div>)}
-      {showRechargeModal && (<div className="fixed inset-0 bg-black/70 z-[9999] flex items-center justify-center p-4" onClick={() => setShowRechargeModal(false)}><div className="bg-white border border-border rounded-[2rem] shadow-xl p-6 sm:p-8 max-w-[520px] w-full" onClick={e => e.stopPropagation()}><div className="flex justify-between items-center mb-6"><h3 className="text-lg sm:text-xl font-semibold">{tr('账户充值', 'Top Up Account')}</h3><button onClick={() => setShowRechargeModal(false)} className="text-text-secondary hover:text-text-primary text-xl">&times;</button></div><div className="mb-6"><div className="text-sm text-text-secondary mb-3">{tr('快捷金额', 'Quick Amount')}</div><div className="grid grid-cols-3 gap-2 sm:gap-3">{[10, 50, 100, 200, 500, 1000].map((amount) => (<button key={amount} className={`py-2 sm:py-3 border rounded-lg transition-all text-sm sm:text-base ${Number(rechargeAmount) === amount ? 'border-primary text-primary bg-primary/10' : 'border-border hover:border-primary hover:text-primary'}`} onClick={() => setRechargeAmount(String(amount))}>${amount}</button>))}</div></div><div className="mb-6"><label className="block text-sm text-text-secondary mb-2">{tr('自定义金额', 'Custom Amount')}</label><input type="number" className="form-control" placeholder={tr('输入金额', 'Enter amount')} min="1" value={rechargeAmount} onChange={e => setRechargeAmount(e.target.value)} /></div><div className="mb-6 space-y-4"><div><div className="text-sm text-text-secondary mb-2">{tr('国内支付', 'Domestic Payments')}</div><div className="grid grid-cols-2 gap-3">{([{ value: 'alipay', label: getPaymentMethodLabel('alipay') }, { value: 'wechat_pay', label: getPaymentMethodLabel('wechat_pay') }] as const).map((item) => (<button key={item.value} onClick={() => setSelectedPaymentMethod(item.value)} className={`py-3 border rounded-lg text-sm transition-all ${selectedPaymentMethod === item.value ? 'border-primary text-primary bg-primary/10' : 'border-border hover:border-primary hover:text-primary'}`}>{item.label}</button>))}</div></div><div><div className="text-sm text-text-secondary mb-2">{tr('国际支付', 'International Payments')}</div><div className="grid grid-cols-2 gap-3">{([{ value: 'credit_card', label: getPaymentMethodLabel('credit_card') }, { value: 'paypal', label: 'PayPal' }] as const).map((item) => (<button key={item.value} onClick={() => setSelectedPaymentMethod(item.value)} className={`py-3 border rounded-lg text-sm transition-all ${selectedPaymentMethod === item.value ? 'border-primary text-primary bg-primary/10' : 'border-border hover:border-primary hover:text-primary'}`}>{item.label}</button>))}</div></div></div><div className="bg-dark-light/40 border border-border rounded-lg p-4 mb-6 text-sm text-text-secondary"><div className="flex justify-between mb-2"><span>{tr('当前渠道', 'Selected Rail')}</span><span className="text-text-primary">{getPaymentMethodLabel(selectedPaymentMethod)}</span></div><div className="flex justify-between mb-2"><span>{tr('结算币种', 'Settlement Currency')}</span><span className="text-text-primary">{selectedPaymentMethod === 'alipay' || selectedPaymentMethod === 'wechat_pay' ? 'CNY' : 'USD'}</span></div><div className="flex justify-between"><span>{tr('说明', 'Notes')}</span><span className="text-text-primary">{tr('当前阶段创建待支付订单', 'This phase only creates a pending payment order')}</span></div></div><button className="btn-primary w-full justify-center" onClick={handleCreatePaymentOrder}><i className="fas fa-credit-card mr-2" />{tr('创建充值订单', 'Create Top-Up Order')}</button></div></div>)}
+      {showRechargeModal && (<div className="fixed inset-0 bg-black/70 z-[9999] flex items-center justify-center p-4" onClick={() => setShowRechargeModal(false)}><div className="bg-white border border-border rounded-[2rem] shadow-xl p-6 sm:p-8 max-w-[520px] w-full" onClick={e => e.stopPropagation()}><div className="flex justify-between items-center mb-6"><h3 className="text-lg sm:text-xl font-semibold">{tr('账户充值', 'Top Up Account')}</h3><button onClick={() => setShowRechargeModal(false)} className="text-text-secondary hover:text-text-primary text-xl">&times;</button></div><div className="mb-6"><div className="text-sm text-text-secondary mb-3">{tr('快捷金额', 'Quick Amount')}</div><div className="grid grid-cols-3 gap-2 sm:gap-3">{[10, 50, 100, 200, 500, 1000].map((amount) => (<button key={amount} className={`py-2 sm:py-3 border rounded-lg transition-all text-sm sm:text-base ${Number(rechargeAmount) === amount ? 'border-primary text-primary bg-primary/10' : 'border-border hover:border-primary hover:text-primary'}`} onClick={() => setRechargeAmount(String(amount))}>${amount}</button>))}</div></div><div className="mb-6"><label className="block text-sm text-text-secondary mb-2">{tr('自定义金额', 'Custom Amount')}</label><input type="number" className="form-control" placeholder={tr('输入金额', 'Enter amount')} min="1" value={rechargeAmount} onChange={e => setRechargeAmount(e.target.value)} /></div><div className="mb-6"><div className="text-sm text-text-secondary mb-2">{paymentMethodGroupLabel}</div><div className="grid grid-cols-2 gap-3">{visiblePaymentMethods.map((method) => (<button key={method} onClick={() => setSelectedPaymentMethod(method)} className={`py-3 border rounded-lg text-sm transition-all ${selectedPaymentMethod === method ? 'border-primary text-primary bg-primary/10' : 'border-border hover:border-primary hover:text-primary'}`}>{getPaymentMethodLabel(method)}</button>))}</div></div><div className="bg-dark-light/40 border border-border rounded-lg p-4 mb-6 text-sm text-text-secondary"><div className="flex justify-between mb-2"><span>{tr('当前渠道', 'Selected Rail')}</span><span className="text-text-primary">{getPaymentMethodLabel(selectedPaymentMethod)}</span></div><div className="flex justify-between mb-2"><span>{tr('结算币种', 'Settlement Currency')}</span><span className="text-text-primary">{isDomesticAudience ? 'CNY' : 'USD'}</span></div><div className="flex justify-between"><span>{tr('说明', 'Notes')}</span><span className="text-text-primary">{tr('当前阶段创建待支付订单', 'This phase only creates a pending payment order')}</span></div></div><button className="btn-primary w-full justify-center" onClick={handleCreatePaymentOrder}><i className="fas fa-credit-card mr-2" />{tr('创建充值订单', 'Create Top-Up Order')}</button></div></div>)}
       {showPasswordModal && (<div className="fixed inset-0 bg-black/70 z-[9999] flex items-center justify-center p-4" onClick={() => setShowPasswordModal(false)}><div className="bg-white border border-border rounded-[2rem] shadow-xl p-6 sm:p-8 max-w-[450px] w-full" onClick={e => e.stopPropagation()}><div className="flex justify-between items-center mb-6"><h3 className="text-lg sm:text-xl font-semibold">{tr('修改密码', 'Change Password')}</h3><button onClick={() => setShowPasswordModal(false)} className="text-text-secondary hover:text-text-primary text-xl">&times;</button></div><form onSubmit={handleChangePassword}><div className="space-y-4 mb-6"><div><label className="block text-sm text-text-secondary mb-2">{tr('当前密码', 'Current Password')}</label><input type="password" className="form-control" required value={passwordData.current} onChange={e => setPasswordData({...passwordData, current: e.target.value})} /></div><div><label className="block text-sm text-text-secondary mb-2">{tr('新密码', 'New Password')}</label><input type="password" className="form-control" required minLength={6} value={passwordData.newPass} onChange={e => setPasswordData({...passwordData, newPass: e.target.value})} /></div><div><label className="block text-sm text-text-secondary mb-2">{tr('确认新密码', 'Confirm New Password')}</label><input type="password" className="form-control" required value={passwordData.confirm} onChange={e => setPasswordData({...passwordData, confirm: e.target.value})} /></div></div><button type="submit" className="btn-primary w-full justify-center">{tr('确认修改', 'Confirm Change')}</button></form></div></div>)}
       {showAvatarModal && (<div className="fixed inset-0 bg-black/70 z-[9999] flex items-center justify-center p-4" onClick={() => setShowAvatarModal(false)}><div className="bg-white border border-border rounded-[2rem] shadow-xl p-6 sm:p-8 max-w-[450px] w-full" onClick={e => e.stopPropagation()}><div className="flex justify-between items-center mb-6"><h3 className="text-lg sm:text-xl font-semibold">{tr('更换头像', 'Change Avatar')}</h3><button onClick={() => setShowAvatarModal(false)} className="text-text-secondary hover:text-text-primary text-xl">&times;</button></div><div className="grid grid-cols-4 gap-3 mb-6">{['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'].map((letter) => (<button key={letter} onClick={() => { setProfileData({...profileData, avatar: letter}); setShowAvatarModal(false); dispatch(showNotification({ message: tr('头像已更新', 'Avatar updated') })); }} className={`w-14 h-14 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white text-xl font-bold hover:scale-110 transition-transform ${profileData.avatar === letter ? 'ring-2 ring-primary ring-offset-2 ring-offset-dark' : ''}`}>{letter}</button>))}</div><p className="text-text-secondary text-sm text-center">{tr('选择一个字母作为头像', 'Choose a letter as your avatar')}</p></div></div>)}
       {showEditKeyModal && editingKey && (

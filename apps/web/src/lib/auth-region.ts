@@ -1,5 +1,17 @@
 export type AuthAudience = 'domestic' | 'global';
 
+function parseCookieValue(cookieHeader: string | null | undefined, name: string) {
+  if (!cookieHeader) return null;
+  const items = cookieHeader.split(';');
+  for (const item of items) {
+    const [key, ...rest] = item.trim().split('=');
+    if (key === name) {
+      return rest.join('=');
+    }
+  }
+  return null;
+}
+
 function normalizeCountry(country?: string | null) {
   return country?.trim().toUpperCase() || null;
 }
@@ -34,6 +46,12 @@ export function getAuthAudienceFromHeaders(headers: { get(name: string): string 
 
   if (headerAudience === 'domestic' || headerAudience === 'global') {
     return headerAudience;
+  }
+
+  const cookieAudience = parseCookieValue(headers.get('cookie'), 'auth_audience');
+
+  if (cookieAudience === 'domestic' || cookieAudience === 'global') {
+    return cookieAudience;
   }
 
   return resolveAuthAudience({

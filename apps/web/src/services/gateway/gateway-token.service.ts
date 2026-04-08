@@ -46,6 +46,9 @@ function mapOrgApiKeyToGatewayApiKey(key: OrgApiKeyRow, sync: OrgApiKeySyncRow |
     used_quota: Number(key.used_quota),
     unlimited_quota: key.unlimited_quota,
     models: key.models || [],
+    request_count: 0,
+    total_tokens: 0,
+    spent_amount: 0,
     remark: key.remark,
     subnet: key.subnet,
     permission_scopes: key.permission_scopes || [],
@@ -199,9 +202,47 @@ export async function listGatewayApiKeysForTeam(teamId: string): Promise<Gateway
     throw new Error('获取 API Key 同步信息失败');
   }
 
-  const syncMap = new Map((syncRows || []).map((row) => [row.org_api_key_id, row]));
+  const { data: usageRowsData, error: usageRowsError } = await supabase
+    .from('org_usage_ledger')
+    .select('org_api_key_id,amount,total_tokens,request_count')
+    .eq('team_id', teamId)
+    .eq('status', 'success')
+    .in('org_api_key_id', keys.map((key) => key.id));
 
-  return keys.map((key) => mapOrgApiKeyToGatewayApiKey(key, syncMap.get(key.id) || null));
+  if (usageRowsError) {
+    throw new Error('获取 API Key 用量统计失败');
+  }
+
+  const syncMap = new Map((syncRows || []).map((row) => [row.org_api_key_id, row]));
+  const usageMap = new Map<number, { spentAmount: number; requestCount: number; totalTokens: number }>();
+
+  for (const row of usageRowsData || []) {
+    const orgApiKeyId = typeof row.org_api_key_id === 'number' ? row.org_api_key_id : null;
+    if (!orgApiKeyId) continue;
+
+    const current = usageMap.get(orgApiKeyId) || { spentAmount: 0, requestCount: 0, totalTokens: 0 };
+    current.spentAmount += Number(row.amount || 0);
+    current.requestCount += Number(row.request_count || 0);
+    current.totalTokens += Number(row.total_tokens || 0);
+    usageMap.set(orgApiKeyId, current);
+  }
+
+  return keys.map((key) => {
+    const gatewayKey = mapOrgApiKeyToGatewayApiKey(key, syncMap.get(key.id) || null);
+    const usage = usageMap.get(key.id);
+
+    if (!usage) {
+      return gatewayKey;
+    }
+
+    return {
+      ...gatewayKey,
+      used_quota: usage.spentAmount,
+      spent_amount: usage.spentAmount,
+      request_count: usage.requestCount,
+      total_tokens: usage.totalTokens,
+    };
+  });
 }
 
 

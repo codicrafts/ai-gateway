@@ -3,7 +3,38 @@ export function formatDate(timestamp: string): string {
 }
 
 export function formatCurrency(amount: number): string {
-  return `$${amount.toFixed(2)}`;
+  if (!Number.isFinite(amount)) {
+    return '$0.00';
+  }
+
+  const sign = amount < 0 ? '-' : '';
+  const absolute = Math.abs(amount);
+  const rounded = absolute.toFixed(2);
+
+  if (parseFloat(rounded) === 0 && absolute > 0) {
+    return `${sign}$0.01`;
+  }
+
+  return `${sign}$${rounded}`;
+}
+
+export function formatBillingLineAmount(amount: number, type: 'usage' | 'recharge'): string {
+  if (!Number.isFinite(amount)) {
+    return '$0.00';
+  }
+
+  const absolute = Math.abs(amount);
+  if (absolute === 0) {
+    return '$0.00';
+  }
+
+  const sign = type === 'recharge' ? '+' : '-';
+
+  if (absolute < 0.01) {
+    return `${sign}<$0.01`;
+  }
+
+  return `${sign}$${absolute.toFixed(2)}`;
 }
 
 export function generateUUID(): string {

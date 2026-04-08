@@ -18,6 +18,9 @@ export interface ApiKey {
   used_quota: number;
   unlimited_quota: boolean;
   models: string[];
+  request_count: number;
+  total_tokens: number;
+  spent_amount: number;
 }
 
 // 用量日志类型
@@ -28,7 +31,9 @@ export interface UsageLog {
   completion_tokens: number;
   total_tokens: number;
   quota_cost: number;
-  token_name: string;
+  api_key_name: string;
+  status: 'success' | 'failed';
+  error_message?: string | null;
   created_at: string;
 }
 
@@ -47,7 +52,7 @@ export interface BillingEntry {
   description: string;
   amount: number;
   created_at: string;
-  status: 'settled';
+  status: 'settled' | 'failed';
   model?: string;
   token_name?: string;
   total_tokens?: number;

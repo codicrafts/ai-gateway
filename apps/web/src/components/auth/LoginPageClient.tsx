@@ -61,6 +61,7 @@ export default function LoginPageClient({
   }, [countdown]);
 
   const subtitle = isDomestic ? t.auth.domesticLoginSubtitle : t.auth.globalLoginSubtitle;
+  const accountPlaceholder = isDomestic ? t.auth.accountPlaceholder : t.auth.emailPlaceholder;
 
   const oauthProviders = useMemo(
     () => [
@@ -100,6 +101,15 @@ export default function LoginPageClient({
   };
 
   const validateCurrentIdentifier = (): 'phone' | 'email' | null => {
+    if (!isDomestic) {
+      if (validateEmail(identifier)) {
+        return 'email';
+      }
+
+      dispatch(showNotification({ message: t.auth.invalidEmail, type: 'error' }));
+      return null;
+    }
+
     if (isPhoneIdentifier(identifier)) {
       return 'phone';
     }
@@ -316,7 +326,7 @@ export default function LoginPageClient({
                   type="text"
                   className="w-full px-4 py-3.5 bg-slate-50 border border-border rounded-xl text-text-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm"
                   required
-                  placeholder={t.auth.accountPlaceholder}
+                  placeholder={accountPlaceholder}
                   value={identifier}
                   onChange={(event) => setIdentifier(event.target.value)}
                 />

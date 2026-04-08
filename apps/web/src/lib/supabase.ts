@@ -982,6 +982,8 @@ export type Database = {
           total_tokens: number
           amount: number
           currency: string
+          status: 'success' | 'failed'
+          error_message: string | null
           occurred_at: string
           created_at: string
         }
@@ -999,6 +1001,8 @@ export type Database = {
           total_tokens?: number
           amount?: number
           currency?: string
+          status?: 'success' | 'failed'
+          error_message?: string | null
           occurred_at?: string
           created_at?: string
         }
@@ -1016,6 +1020,8 @@ export type Database = {
           total_tokens?: number
           amount?: number
           currency?: string
+          status?: 'success' | 'failed'
+          error_message?: string | null
           occurred_at?: string
           created_at?: string
         }

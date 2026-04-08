@@ -50,6 +50,15 @@ export interface OneApiUser {
   created_time?: number
 }
 
+interface OneApiStatusResponse {
+  success?: boolean
+  quota_per_unit?: number
+  data?: {
+    quota_per_unit?: number
+    [key: string]: unknown
+  }
+}
+
 export interface CreateUserRequest {
   username: string
   password: string
@@ -130,7 +139,8 @@ function serializePermissionScopes(scopes?: string[]): string | undefined {
 export interface UsageLog {
   id: number
   user_id: number
-  created_time: number
+  created_time?: number
+  created_at?: number
   type: number
   content: string
   model_name: string
@@ -393,6 +403,36 @@ async function adminRequest<T>(
   return data as OneApiResponse<T>
 }
 
+async function getOneApiStatus(): Promise<OneApiStatusResponse> {
+  const response = await fetch(`${ONE_API_URL}/api/status`, {
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${ONE_API_ACCESS_TOKEN}`,
+      ...(ONE_API_USER_ID ? { 'New-Api-User': ONE_API_USER_ID } : {}),
+    },
+    cache: 'no-store',
+  })
+
+  const data = await response.json().catch(() => null)
+
+  if (!response.ok || !data) {
+    throw new Error((data as { message?: string } | null)?.message || `获取 new-api 状态失败: ${response.status}`)
+  }
+
+  return data as OneApiStatusResponse
+}
+
+export async function getQuotaPerUnit(): Promise<number> {
+  const status = await getOneApiStatus()
+  const quotaPerUnit = Number(status.data?.quota_per_unit ?? status.quota_per_unit)
+
+  if (!Number.isFinite(quotaPerUnit) || quotaPerUnit <= 0) {
+    throw new Error('获取 new-api quota_per_unit 失败')
+  }
+
+  return quotaPerUnit
+}
+
 async function runtimeUserRequest<T>(
   userId: number,
   accessToken: string,
@@ -501,6 +541,10 @@ export async function updateUser(
     method: 'PUT',
     body: JSON.stringify(userData),
   })
+}
+
+export async function getUser(userId: number): Promise<OneApiResponse<OneApiUser>> {
+  return adminRequest<OneApiUser>(`/api/user/${userId}`)
 }
 
 /**
@@ -775,6 +819,22 @@ export async function getUsageLogs(
   return adminRequest<UsageLog[]>(url)
 }
 
+export async function getUsageLogsByUsername(
+  page: number = 0,
+  pageSize: number = 20,
+  username?: string,
+  modelName?: string
+): Promise<OneApiResponse<UsageLog[]>> {
+  let url = `/api/log/?p=${page}&page_size=${pageSize}`
+  if (username) {
+    url += `&username=${encodeURIComponent(username)}`
+  }
+  if (modelName) {
+    url += `&model_name=${encodeURIComponent(modelName)}`
+  }
+  return adminRequest<UsageLog[]>(url)
+}
+
 /**
  * 获取指定用户的用量日志（管理员）
  * @param userId 用户 ID
@@ -798,15 +858,62 @@ export async function getUserUsageLogs(
  */
 export async function topUpUser(
   userId: number,
-  quota: number
+  amount: number
 ): Promise<OneApiResponse<void>> {
-  return adminRequest<void>('/api/topup/', {
-    method: 'POST',
-    body: JSON.stringify({
-      user_id: userId,
-      quota: quota,
-    }),
+  const normalizedAmount = Number(amount)
+  if (!Number.isFinite(normalizedAmount) || normalizedAmount <= 0) {
+    return {
+      success: false,
+      message: '充值金额无效',
+    }
+  }
+
+  const [userResult, status] = await Promise.all([
+    getUser(userId),
+    getOneApiStatus(),
+  ])
+
+  if (!userResult.success || !userResult.data) {
+    return {
+      success: false,
+      message: userResult.message || '获取 new-api 用户失败',
+    }
+  }
+
+  const quotaPerUnit = Number(status.data?.quota_per_unit ?? status.quota_per_unit)
+  if (!Number.isFinite(quotaPerUnit) || quotaPerUnit <= 0) {
+    return {
+      success: false,
+      message: '获取 new-api quota_per_unit 失败',
+    }
+  }
+
+  const currentUser = userResult.data
+  const quotaToAdd = Math.floor(normalizedAmount * quotaPerUnit)
+  const nextQuota = Math.max(0, Number(currentUser.quota || 0) + quotaToAdd)
+
+  const updateResult = await updateUser({
+    id: currentUser.id,
+    username: currentUser.username,
+    display_name: currentUser.display_name,
+    email: currentUser.email,
+    role: currentUser.role,
+    status: currentUser.status,
+    quota: nextQuota,
+    group: currentUser.group,
   })
+
+  if (!updateResult.success) {
+    return {
+      success: false,
+      message: updateResult.message || '更新 new-api 用户额度失败',
+    }
+  }
+
+  return {
+    success: true,
+    message: '',
+  }
 }
 
 // ============ Provider / Model / Router Admin API ============
