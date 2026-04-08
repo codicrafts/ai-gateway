@@ -1,5 +1,5 @@
 import { createAuditLog, type ClientInfo } from '@/lib/auditLog';
-import { createServerSupabaseClient, type Database } from '@/lib/supabase';
+import { createServerAdminSupabaseClient, type Database } from '@/lib/supabase';
 import { ensureUserExists } from '@/lib/oneapi';
 import { canLeaveTeam, canModifyRole, canRemoveMember } from '@/lib/teamAuth';
 import type {
@@ -76,7 +76,7 @@ export function validateTeamBrandColor(color: string | undefined | null): string
 }
 
 async function getUserInfoById(userId: string): Promise<BasicUserRecord | null> {
-  const supabase = createServerSupabaseClient();
+  const supabase = createServerAdminSupabaseClient();
   const { data: userData, error } = await supabase
     .from('users')
     .select('username, email')
@@ -128,7 +128,7 @@ export async function createTeamWithOwner(params: {
   request: CreateTeamRequest;
   clientInfo: ClientInfo;
 }): Promise<Team> {
-  const supabase = createServerSupabaseClient();
+  const supabase = createServerAdminSupabaseClient();
   const { userId, request, clientInfo } = params;
   const requestedSlug = normalizeTeamSlug(request.slug || buildDefaultTeamSlug(request.name));
   const { data: existingSlugTeam } = await supabase
@@ -161,6 +161,10 @@ export async function createTeamWithOwner(params: {
   const team = teamData as TeamRecord | null;
 
   if (teamError || !team) {
+    console.error('创建团队写入 teams 失败:', teamError);
+    if (teamError?.code === 'PGRST204' && teamError.message?.includes('created_by')) {
+      throw new Error('数据库缺少 teams.created_by 字段，请先执行 009_team_invitation_flow.sql 迁移');
+    }
     throw new Error('创建团队失败');
   }
   const memberInsert: TeamMemberInsert = {
@@ -175,6 +179,7 @@ export async function createTeamWithOwner(params: {
     .insert(memberInsert as never);
 
   if (memberError) {
+    console.error('创建团队写入 team_members 失败:', memberError);
     await supabase.from('teams').delete().eq('id', team.id);
     throw new Error('创建团队失败');
   }
@@ -219,7 +224,7 @@ export async function updateTeamProfile(params: {
   request: UpdateTeamRequest;
   clientInfo: ClientInfo;
 }): Promise<Team> {
-  const supabase = createServerSupabaseClient();
+  const supabase = createServerAdminSupabaseClient();
   const { teamId, userId, request, clientInfo } = params;
 
   const { data: existingTeamData, error: existingTeamError } = await supabase
@@ -327,7 +332,7 @@ export async function deleteTeamById(params: {
   userId: string;
   clientInfo: ClientInfo;
 }): Promise<{ id: string }> {
-  const supabase = createServerSupabaseClient();
+  const supabase = createServerAdminSupabaseClient();
   const { teamId, userId, clientInfo } = params;
 
   const { data: teamData, error: teamError } = await supabase
@@ -385,7 +390,7 @@ export async function inviteTeamMember(params: {
   role: Exclude<TeamRole, 'owner'>;
   clientInfo: ClientInfo;
 }): Promise<TeamMember> {
-  const supabase = createServerSupabaseClient();
+  const supabase = createServerAdminSupabaseClient();
   const normalizedEmail = params.email.toLowerCase();
 
   const { data: invitedUserData, error: userError } = await supabase
@@ -480,7 +485,7 @@ export async function updateTeamMemberRole(params: {
   newRole: Exclude<TeamRole, 'owner'>;
   clientInfo: ClientInfo;
 }): Promise<TeamMember> {
-  const supabase = createServerSupabaseClient();
+  const supabase = createServerAdminSupabaseClient();
 
   const { data: targetMemberData, error: memberError } = await supabase
     .from('team_members')
@@ -581,7 +586,7 @@ export async function removeTeamMember(params: {
   operatorRole: TeamRole;
   clientInfo: ClientInfo;
 }): Promise<{ user_id: string }> {
-  const supabase = createServerSupabaseClient();
+  const supabase = createServerAdminSupabaseClient();
   const isSelfLeave = params.operatorUserId === params.targetUserId;
 
   const { data: targetMemberData, error: memberError } = await supabase
@@ -654,7 +659,7 @@ export async function transferTeamOwnership(params: {
   newOwnerId: string;
   clientInfo: ClientInfo;
 }): Promise<{ old_owner: TeamMember; new_owner: TeamMember }> {
-  const supabase = createServerSupabaseClient();
+  const supabase = createServerAdminSupabaseClient();
 
   if (params.newOwnerId === params.currentOwnerId) {
     throw new Error('不能将所有权转让给自己');

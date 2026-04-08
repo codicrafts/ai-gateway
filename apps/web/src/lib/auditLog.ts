@@ -1,7 +1,7 @@
 // src/lib/auditLog.ts
 // 审计日志服务 - 记录团队管理相关的敏感操作
 
-import { createServerSupabaseClient, Database } from './supabase';
+import { createServerAdminSupabaseClient, Database } from './supabase';
 import type { AuditAction, AuditLog } from '@ai-gateway/shared-types/team';
 import type { NextRequest } from 'next/server';
 
@@ -103,7 +103,7 @@ function rowToAuditLog(row: AuditLogRow): AuditLog {
 export async function createAuditLog(
   params: CreateAuditLogParams
 ): Promise<AuditLog | null> {
-  const supabase = createServerSupabaseClient();
+  const supabase = createServerAdminSupabaseClient();
 
   const {
     team_id,
@@ -160,7 +160,7 @@ export async function createAuditLog(
 export async function createAuditLogsBatch(
   logs: CreateAuditLogParams[]
 ): Promise<boolean> {
-  const supabase = createServerSupabaseClient();
+  const supabase = createServerAdminSupabaseClient();
 
   const insertData: AuditLogInsert[] = logs.map((log) => ({
     team_id: log.team_id,
