@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import type { User } from '@ai-gateway/shared-types';
+import { QRCodeSVG } from 'qrcode.react';
 import { useAppSelector } from '@/store/hooks';
 import { copyToClipboard } from '@/utils/helpers';
 
@@ -60,12 +61,21 @@ export default function TwoFactorCard({
 
   const handleEnable = async () => {
     try {
+      const normalizedCode = totpCode.replace(/\D/g, '').trim();
+      if (!/^\d{6}$/.test(normalizedCode)) {
+        throw new Error(
+          tr(
+            '这里需要输入验证器生成的 6 位动态验证码，不是上面的密钥。',
+            'Enter the 6-digit code from your authenticator, not the secret above.'
+          )
+        );
+      }
       setLoading(true);
       const response = await fetch('/api/account/two-factor/enable', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          code: totpCode,
+          code: normalizedCode,
           team_id: currentTeamId || undefined,
         }),
       });
@@ -158,25 +168,84 @@ export default function TwoFactorCard({
 
       {!currentUser?.two_factor_enabled && setup && (
         <div className="mt-4 sm:mt-5 space-y-3 sm:space-y-4 rounded-lg sm:rounded-xl border border-border bg-white/72 p-3 sm:p-4">
-          <div className="rounded-lg sm:rounded-xl border border-border bg-[rgba(169,75,43,0.06)] p-2.5 sm:p-3">
-            <div className="text-[0.65rem] sm:text-xs uppercase tracking-[0.16em] sm:tracking-[0.18em] text-text-secondary">{tr('手动录入密钥', 'Manual Secret')}</div>
-            <div className="mt-2 flex flex-col gap-2.5 sm:gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <code className="break-all rounded-lg bg-white/80 px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm text-primary">{setup.secret}</code>
-              <button
-                type="button"
-                className="btn-secondary w-full justify-center rounded-full px-4 py-2 text-xs sm:text-sm shadow-sm sm:w-auto"
-                onClick={() => {
-                  copyToClipboard(setup.secret);
-                  onNotify(tr('密钥已复制', 'Secret copied'));
-                }}
-              >
-                <i className="fas fa-copy mr-1.5 sm:mr-2" />
-                {tr('复制密钥', 'Copy Secret')}
-              </button>
+          <div className="grid gap-3 sm:gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
+            <div className="rounded-lg sm:rounded-xl border border-border bg-[rgba(169,75,43,0.06)] p-3 sm:p-4">
+              <div className="text-[0.65rem] sm:text-xs uppercase tracking-[0.16em] sm:tracking-[0.18em] text-text-secondary">
+                {tr('扫码录入', 'Scan QR Code')}
+              </div>
+              <div className="mt-3 flex justify-center rounded-xl bg-white p-3 shadow-soft">
+                <QRCodeSVG
+                  value={setup.otpauthUrl}
+                  size={160}
+                  marginSize={2}
+                  bgColor="transparent"
+                  fgColor="#1f1713"
+                  level="M"
+                  includeMargin
+                />
+              </div>
+              <p className="mt-3 text-[0.7rem] sm:text-xs md:text-sm leading-5 sm:leading-6 md:leading-7 text-text-secondary">
+                {tr(
+                  '优先使用验证器扫码录入；如果设备不方便扫码，再使用右侧手动密钥。',
+                  'Scan this QR code with your authenticator first. Use the manual secret on the right only if scanning is inconvenient.'
+                )}
+              </p>
             </div>
-            <p className="mt-2.5 sm:mt-3 text-[0.7rem] sm:text-xs md:text-sm leading-5 sm:leading-6 md:leading-7 text-text-secondary">
-              {tr('将以上密钥录入到 Google Authenticator、1Password 或其他支持 TOTP 的验证器中。', 'Add this secret to Google Authenticator, 1Password, or any TOTP-compatible authenticator.')}
-            </p>
+
+            <div className="space-y-3 sm:space-y-4 rounded-lg sm:rounded-xl border border-border bg-[rgba(169,75,43,0.06)] p-3 sm:p-4">
+              <div>
+                <div className="text-[0.65rem] sm:text-xs uppercase tracking-[0.16em] sm:tracking-[0.18em] text-text-secondary">
+                  {tr('步骤 1：手动录入密钥', 'Step 1: Manual Secret')}
+                </div>
+                <div className="mt-2 flex flex-col gap-3">
+                  <code className="break-all rounded-lg bg-white/80 px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm text-primary">
+                    {setup.secret}
+                  </code>
+                  <div className="flex flex-wrap gap-2 sm:justify-end">
+                    <button
+                      type="button"
+                      className="btn-secondary inline-flex min-w-[112px] justify-center whitespace-nowrap rounded-full px-3.5 py-2 text-xs sm:text-sm shadow-sm"
+                      onClick={() => {
+                        copyToClipboard(setup.secret);
+                        onNotify(tr('密钥已复制', 'Secret copied'));
+                      }}
+                    >
+                      <i className="fas fa-copy mr-1.5 sm:mr-2" />
+                      {tr('复制密钥', 'Copy Secret')}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-secondary inline-flex min-w-[112px] justify-center whitespace-nowrap rounded-full px-3.5 py-2 text-xs sm:text-sm shadow-sm"
+                      onClick={() => {
+                        copyToClipboard(setup.otpauthUrl);
+                        onNotify(tr('配置链接已复制', 'Setup link copied'));
+                      }}
+                    >
+                      <i className="fas fa-link mr-1.5 sm:mr-2" />
+                      {tr('复制配置链接', 'Copy Setup Link')}
+                    </button>
+                  </div>
+                </div>
+                <p className="mt-2.5 sm:mt-3 text-[0.7rem] sm:text-xs md:text-sm leading-5 sm:leading-6 md:leading-7 text-text-secondary">
+                  {tr(
+                    '将以上密钥录入到 Google Authenticator、1Password 或其他支持 TOTP 的验证器中。',
+                    'Add this secret to Google Authenticator, 1Password, or any TOTP-compatible authenticator.'
+                  )}
+                </p>
+              </div>
+
+              <div className="rounded-lg border border-border bg-white/80 p-3">
+                <div className="text-[0.65rem] sm:text-xs uppercase tracking-[0.16em] sm:tracking-[0.18em] text-text-secondary">
+                  {tr('步骤 2：输入 6 位动态码', 'Step 2: Enter the 6-digit code')}
+                </div>
+                <p className="mt-2 text-[0.7rem] sm:text-xs md:text-sm leading-5 sm:leading-6 md:leading-7 text-text-secondary">
+                  {tr(
+                    '验证器会每 30 秒生成一个新的 6 位验证码。这里需要输入动态码，不是上面的密钥。',
+                    'Your authenticator generates a new 6-digit code every 30 seconds. Enter that code here, not the secret above.'
+                  )}
+                </p>
+              </div>
+            </div>
           </div>
 
           <div>
@@ -185,7 +254,10 @@ export default function TwoFactorCard({
               type="text"
               className="form-control"
               value={totpCode}
-              onChange={(event) => setTotpCode(event.target.value)}
+              onChange={(event) => setTotpCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
+              inputMode="numeric"
+              maxLength={6}
+              autoComplete="one-time-code"
               placeholder={tr('输入验证器中的 6 位验证码', 'Enter the 6-digit code from your authenticator')}
             />
           </div>

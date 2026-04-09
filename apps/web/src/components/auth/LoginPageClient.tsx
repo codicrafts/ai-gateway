@@ -20,6 +20,8 @@ type AuthProfile = {
   hasPassword: boolean;
   availableMethods: AuthMethod[];
   recommendedMethod: AuthMethod;
+  requiresTwoFactor?: boolean;
+  recoveryCodesRemaining?: number;
 };
 
 export default function LoginPageClient({
@@ -37,6 +39,9 @@ export default function LoginPageClient({
   const [identifier, setIdentifier] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [totp, setTotp] = useState('');
+  const [recoveryCode, setRecoveryCode] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [oauthLoading, setOauthLoading] = useState<string | null>(null);
@@ -47,6 +52,7 @@ export default function LoginPageClient({
   const isDomestic = authAudience === 'domestic';
   const isCodeLogin = authMethod === 'code';
   const isPasswordLogin = authMethod === 'password';
+  const requiresTwoFactor = Boolean(authProfile?.requiresTwoFactor && isPasswordLogin);
 
   useEffect(() => {
     if (currentUser?.id) {
@@ -77,6 +83,9 @@ export default function LoginPageClient({
     setAuthProfile(null);
     setVerificationCode('');
     setPassword('');
+    setShowPassword(false);
+    setTotp('');
+    setRecoveryCode('');
     setRememberMe(false);
     setCountdown(0);
   };
@@ -145,6 +154,9 @@ export default function LoginPageClient({
       setAuthMethod(nextMethod);
       setVerificationCode('');
       setPassword('');
+      setShowPassword(false);
+      setTotp('');
+      setRecoveryCode('');
       setRememberMe(false);
       setCountdown(0);
       setLoginStep('method');
@@ -205,6 +217,9 @@ export default function LoginPageClient({
 
     setVerificationCode('');
     setPassword('');
+    setShowPassword(false);
+    setTotp('');
+    setRecoveryCode('');
     setRememberMe(false);
     setLoginStep('verify');
   };
@@ -224,12 +239,19 @@ export default function LoginPageClient({
       return;
     }
 
+    if (requiresTwoFactor && !totp.trim() && !recoveryCode.trim()) {
+      dispatch(showNotification({ message: t.auth.twoFactorCodeRequired || '请输入验证器生成的 6 位动态码或恢复码', type: 'error' }));
+      return;
+    }
+
     setLoading(true);
     try {
       const result = await signIn('credentials', {
         identifier,
         password: isPasswordLogin ? password : '',
         code: isCodeLogin ? verificationCode : '',
+        totp: isPasswordLogin ? totp.trim() : '',
+        recoveryCode: isPasswordLogin ? recoveryCode.trim() : '',
         authMethod: isCodeLogin ? 'code' : 'password',
         redirect: false,
         callbackUrl,
@@ -238,7 +260,11 @@ export default function LoginPageClient({
       if (result?.error) {
         dispatch(
           showNotification({
-            message: isCodeLogin ? t.auth.codeInvalid : t.auth.wrongCredentials,
+            message: isCodeLogin
+              ? t.auth.codeInvalid
+              : requiresTwoFactor
+                ? t.auth.twoFactorCodeInvalid || '双因素验证码无效'
+                : t.auth.wrongCredentials,
             type: 'error',
           }),
         );
@@ -498,15 +524,25 @@ export default function LoginPageClient({
                     <label className="block mb-2 font-medium text-sm text-text-primary" htmlFor="password">
                       {t.auth.password}
                     </label>
-                    <input
-                      id="password"
-                      type="password"
-                      className="w-full px-4 py-3.5 bg-slate-50 border border-border rounded-xl text-text-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm"
-                      required
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(event) => setPassword(event.target.value)}
-                    />
+                    <div className="relative">
+                      <input
+                        id="password"
+                        type={showPassword ? 'text' : 'password'}
+                        className="w-full px-4 py-3.5 pr-12 bg-slate-50 border border-border rounded-xl text-text-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm"
+                        required
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(event) => setPassword(event.target.value)}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((current) => !current)}
+                        className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-text-secondary transition-colors hover:text-text-primary"
+                        aria-label={showPassword ? t.auth.hidePassword || 'Hide password' : t.auth.showPassword || 'Show password'}
+                      >
+                        <i className={`fas ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`} />
+                      </button>
+                    </div>
                   </div>
 
                   <div className="flex justify-between items-center text-sm pt-1">
@@ -526,6 +562,56 @@ export default function LoginPageClient({
                       {t.auth.forgotPassword}
                     </Link>
                   </div>
+
+                  {requiresTwoFactor ? (
+                    <div className="rounded-[1.35rem] border border-border bg-dark-light/70 p-4">
+                      <div className="text-[0.72rem] uppercase tracking-[0.18em] text-text-secondary">
+                        {t.auth.twoFactorTitle || '双因素认证'}
+                      </div>
+                      <p className="mt-2 text-sm leading-6 text-text-secondary">
+                        {t.auth.twoFactorPrompt || '请输入验证器生成的 6 位动态码。你也可以改用恢复码完成登录。'}
+                      </p>
+
+                      <div className="mt-4 space-y-4">
+                        <div>
+                          <label className="mb-2 block font-medium text-sm text-text-primary" htmlFor="totp">
+                            {t.auth.twoFactorCodeLabel || '验证器动态码'}
+                          </label>
+                          <input
+                            id="totp"
+                            type="text"
+                            inputMode="numeric"
+                            autoComplete="one-time-code"
+                            maxLength={6}
+                            className="w-full px-4 py-3.5 bg-slate-50 border border-border rounded-xl text-text-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm"
+                            placeholder={t.auth.twoFactorCodePlaceholder || '输入 6 位动态码'}
+                            value={totp}
+                            onChange={(event) => setTotp(event.target.value.replace(/\D/g, '').slice(0, 6))}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="mb-2 block font-medium text-sm text-text-primary" htmlFor="recoveryCode">
+                            {t.auth.recoveryCodeLabel || '恢复码'}
+                          </label>
+                          <input
+                            id="recoveryCode"
+                            type="text"
+                            autoComplete="one-time-code"
+                            className="w-full px-4 py-3.5 bg-slate-50 border border-border rounded-xl text-text-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm"
+                            placeholder={t.auth.recoveryCodePlaceholder || '没有动态码时可输入恢复码'}
+                            value={recoveryCode}
+                            onChange={(event) => setRecoveryCode(event.target.value.trim())}
+                          />
+                          {authProfile?.recoveryCodesRemaining ? (
+                            <p className="mt-2 text-xs text-text-secondary">
+                              {(t.auth.recoveryCodesRemaining || '剩余恢复码') + `: ${authProfile.recoveryCodesRemaining}`}
+                            </p>
+                          ) : null}
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
                 </>
               )}
 

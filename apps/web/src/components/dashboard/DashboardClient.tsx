@@ -17,6 +17,10 @@ import {
   createPaymentOrder as createPaymentOrderAction,
   deleteApiKey as deleteApiKeyAction,
   fetchApiKeySecret,
+  fetchApiKeys,
+  fetchBillingSummary,
+  fetchPaymentOrders,
+  fetchUsageLogs,
   hydrateDashboardSnapshot,
   updateApiKey,
   type PaymentMethod,
@@ -125,6 +129,7 @@ export default function DashboardClient({
   const [showRechargeModal, setShowRechargeModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showAvatarModal, setShowAvatarModal] = useState(false);
+  const [avatarUploading, setAvatarUploading] = useState(false);
   const [showEditKeyModal, setShowEditKeyModal] = useState(false);
   const [editingKey, setEditingKey] = useState<typeof apiKeys[0] | null>(null);
   const [rechargeAmount, setRechargeAmount] = useState('100');
@@ -164,6 +169,7 @@ export default function DashboardClient({
   const [routeRefreshing, setRouteRefreshing] = useState(false);
   const apiKeyModelsRequestedRef = useRef(false);
   const usageSyncRequestKeyRef = useRef<string | null>(null);
+  const avatarFileInputRef = useRef<HTMLInputElement | null>(null);
   const activeTeamId =
     currentTeam?.id ||
     initialBootstrap?.dashboard.team_id ||
@@ -289,7 +295,27 @@ export default function DashboardClient({
           throw new Error(result?.error || tr('同步用量失败', 'Failed to sync usage'));
         }
         if (!cancelled) {
-          router.refresh();
+          if (section === 'usage') {
+            await dispatch(fetchUsageLogs(activeTeamId)).unwrap();
+          } else if (section === 'billing') {
+            await Promise.all([
+              dispatch(fetchUsageLogs(activeTeamId)).unwrap(),
+              dispatch(fetchBillingSummary(activeTeamId)).unwrap(),
+              dispatch(fetchPaymentOrders(activeTeamId)).unwrap(),
+            ]);
+          } else if (section === 'api-keys') {
+            await Promise.all([
+              dispatch(fetchApiKeys(activeTeamId)).unwrap(),
+              dispatch(fetchUsageLogs(activeTeamId)).unwrap(),
+            ]);
+          } else {
+            await Promise.all([
+              dispatch(fetchApiKeys(activeTeamId)).unwrap(),
+              dispatch(fetchUsageLogs(activeTeamId)).unwrap(),
+              dispatch(fetchBillingSummary(activeTeamId)).unwrap(),
+              dispatch(fetchPaymentOrders(activeTeamId)).unwrap(),
+            ]);
+          }
         }
       } catch (error) {
         usageSyncRequestKeyRef.current = null;
@@ -310,8 +336,11 @@ export default function DashboardClient({
 
     return () => {
       cancelled = true;
+      if (usageSyncRequestKeyRef.current === requestKey) {
+        usageSyncRequestKeyRef.current = null;
+      }
     };
-  }, [activeTeamId, dispatch, getErrorMessage, initialDataReady, router, section, tr]);
+  }, [activeTeamId, dispatch, getErrorMessage, initialDataReady, section, tr]);
 
   // 获取当前用户在当前团队中的角色
   const getCurrentUserRole = useCallback((): TeamRole => {
@@ -810,6 +839,39 @@ export default function DashboardClient({
       dispatch(showNotification({ message: getErrorMessage(error, tr('修改密码失败', 'Failed to change password')), type: 'error' }));
     }
   }, [dispatch, getErrorMessage, passwordData, tr]);
+
+  const handleAvatarUpload = useCallback(async (file: File | null) => {
+    if (!file) return;
+
+    try {
+      setAvatarUploading(true);
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/account/avatar', {
+        method: 'POST',
+        body: formData,
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || tr('上传头像失败', 'Failed to upload avatar'));
+      }
+
+      handleUserUpdated(result.data);
+      setShowAvatarModal(false);
+      dispatch(showNotification({ message: tr('头像已更新', 'Avatar updated') }));
+    } catch (error) {
+      dispatch(showNotification({
+        message: getErrorMessage(error, tr('上传头像失败', 'Failed to upload avatar')),
+        type: 'error',
+      }));
+    } finally {
+      setAvatarUploading(false);
+      if (avatarFileInputRef.current) {
+        avatarFileInputRef.current.value = '';
+      }
+    }
+  }, [dispatch, getErrorMessage, handleUserUpdated, tr]);
 
   const handleExportBilling = useCallback(async () => {
     try {
@@ -2178,7 +2240,44 @@ export default function DashboardClient({
       {showKeyModal && (<div className="fixed inset-0 bg-black/70 z-[9999] flex items-center justify-center p-4" onClick={() => setShowKeyModal(false)}><div className="bg-white border border-border rounded-[2rem] shadow-xl p-6 sm:p-8 max-w-[500px] w-full" onClick={e => e.stopPropagation()}><h3 className="text-lg sm:text-xl font-semibold mb-4">{tr('保存您的 API 密钥', 'Save Your API Key')}</h3><div className="bg-danger/10 border border-danger rounded-lg p-3 sm:p-4 mb-4 text-xs sm:text-sm"><i className="fas fa-exclamation-triangle text-danger mr-2" />{tr('请立即复制并保存，密钥只显示一次！', 'Copy and save this key now. It will only be shown once!')}</div><div className="flex gap-2 mb-6"><input type="text" className="form-control font-mono text-xs sm:text-sm" readOnly value={newKeyValue} /><button className="btn-primary flex-shrink-0" onClick={() => { copyToClipboard(newKeyValue); dispatch(showNotification({ message: tr('已复制', 'Copied') })); }}><i className="fas fa-copy" /></button></div><button className="btn-secondary w-full justify-center" onClick={() => setShowKeyModal(false)}>{tr('我已保存', 'I have saved it')}</button></div></div>)}
       {showRechargeModal && (<div className="fixed inset-0 bg-black/70 z-[9999] flex items-center justify-center p-4" onClick={() => setShowRechargeModal(false)}><div className="bg-white border border-border rounded-[2rem] shadow-xl p-6 sm:p-8 max-w-[520px] w-full" onClick={e => e.stopPropagation()}><div className="flex justify-between items-center mb-6"><h3 className="text-lg sm:text-xl font-semibold">{tr('账户充值', 'Top Up Account')}</h3><button onClick={() => setShowRechargeModal(false)} className="text-text-secondary hover:text-text-primary text-xl">&times;</button></div><div className="mb-6"><div className="text-sm text-text-secondary mb-3">{tr('快捷金额', 'Quick Amount')}</div><div className="grid grid-cols-3 gap-2 sm:gap-3">{[10, 50, 100, 200, 500, 1000].map((amount) => (<button key={amount} className={`py-2 sm:py-3 border rounded-lg transition-all text-sm sm:text-base ${Number(rechargeAmount) === amount ? 'border-primary text-primary bg-primary/10' : 'border-border hover:border-primary hover:text-primary'}`} onClick={() => setRechargeAmount(String(amount))}>${amount}</button>))}</div></div><div className="mb-6"><label className="block text-sm text-text-secondary mb-2">{tr('自定义金额', 'Custom Amount')}</label><input type="number" className="form-control" placeholder={tr('输入金额', 'Enter amount')} min="1" value={rechargeAmount} onChange={e => setRechargeAmount(e.target.value)} /></div><div className="mb-6"><div className="text-sm text-text-secondary mb-2">{paymentMethodGroupLabel}</div><div className="grid grid-cols-2 gap-3">{visiblePaymentMethods.map((method) => (<button key={method} onClick={() => setSelectedPaymentMethod(method)} className={`py-3 border rounded-lg text-sm transition-all ${selectedPaymentMethod === method ? 'border-primary text-primary bg-primary/10' : 'border-border hover:border-primary hover:text-primary'}`}>{getPaymentMethodLabel(method)}</button>))}</div></div><div className="bg-dark-light/40 border border-border rounded-lg p-4 mb-6 text-sm text-text-secondary"><div className="flex justify-between mb-2"><span>{tr('当前渠道', 'Selected Rail')}</span><span className="text-text-primary">{getPaymentMethodLabel(selectedPaymentMethod)}</span></div><div className="flex justify-between mb-2"><span>{tr('结算币种', 'Settlement Currency')}</span><span className="text-text-primary">{isDomesticAudience ? 'CNY' : 'USD'}</span></div><div className="flex justify-between"><span>{tr('说明', 'Notes')}</span><span className="text-text-primary">{tr('当前阶段创建待支付订单', 'This phase only creates a pending payment order')}</span></div></div><button className="btn-primary w-full justify-center" onClick={handleCreatePaymentOrder}><i className="fas fa-credit-card mr-2" />{tr('创建充值订单', 'Create Top-Up Order')}</button></div></div>)}
       {showPasswordModal && (<div className="fixed inset-0 bg-black/70 z-[9999] flex items-center justify-center p-4" onClick={() => setShowPasswordModal(false)}><div className="bg-white border border-border rounded-[2rem] shadow-xl p-6 sm:p-8 max-w-[450px] w-full" onClick={e => e.stopPropagation()}><div className="flex justify-between items-center mb-6"><h3 className="text-lg sm:text-xl font-semibold">{tr('修改密码', 'Change Password')}</h3><button onClick={() => setShowPasswordModal(false)} className="text-text-secondary hover:text-text-primary text-xl">&times;</button></div><form onSubmit={handleChangePassword}><div className="space-y-4 mb-6"><div><label className="block text-sm text-text-secondary mb-2">{tr('当前密码', 'Current Password')}</label><input type="password" className="form-control" required value={passwordData.current} onChange={e => setPasswordData({...passwordData, current: e.target.value})} /></div><div><label className="block text-sm text-text-secondary mb-2">{tr('新密码', 'New Password')}</label><input type="password" className="form-control" required minLength={6} value={passwordData.newPass} onChange={e => setPasswordData({...passwordData, newPass: e.target.value})} /></div><div><label className="block text-sm text-text-secondary mb-2">{tr('确认新密码', 'Confirm New Password')}</label><input type="password" className="form-control" required value={passwordData.confirm} onChange={e => setPasswordData({...passwordData, confirm: e.target.value})} /></div></div><button type="submit" className="btn-primary w-full justify-center">{tr('确认修改', 'Confirm Change')}</button></form></div></div>)}
-      {showAvatarModal && (<div className="fixed inset-0 bg-black/70 z-[9999] flex items-center justify-center p-4" onClick={() => setShowAvatarModal(false)}><div className="bg-white border border-border rounded-[2rem] shadow-xl p-6 sm:p-8 max-w-[450px] w-full" onClick={e => e.stopPropagation()}><div className="flex justify-between items-center mb-6"><h3 className="text-lg sm:text-xl font-semibold">{tr('更换头像', 'Change Avatar')}</h3><button onClick={() => setShowAvatarModal(false)} className="text-text-secondary hover:text-text-primary text-xl">&times;</button></div><div className="grid grid-cols-4 gap-3 mb-6">{['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'].map((letter) => (<button key={letter} onClick={() => { setProfileData({...profileData, avatar: letter}); setShowAvatarModal(false); dispatch(showNotification({ message: tr('头像已更新', 'Avatar updated') })); }} className={`w-14 h-14 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white text-xl font-bold hover:scale-110 transition-transform ${profileData.avatar === letter ? 'ring-2 ring-primary ring-offset-2 ring-offset-dark' : ''}`}>{letter}</button>))}</div><p className="text-text-secondary text-sm text-center">{tr('选择一个字母作为头像', 'Choose a letter as your avatar')}</p></div></div>)}
+      {showAvatarModal && (
+        <div className="fixed inset-0 bg-black/70 z-[9999] flex items-center justify-center p-4" onClick={avatarUploading ? undefined : () => setShowAvatarModal(false)}>
+          <div className="bg-white border border-border rounded-[2rem] shadow-xl p-6 sm:p-8 max-w-[450px] w-full" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg sm:text-xl font-semibold">{tr('更换头像', 'Change Avatar')}</h3>
+              <button onClick={avatarUploading ? undefined : () => setShowAvatarModal(false)} className="text-text-secondary hover:text-text-primary text-xl">
+                &times;
+              </button>
+            </div>
+            <div className="flex flex-col items-center text-center">
+              <div className="relative mb-5 flex h-24 w-24 items-center justify-center overflow-hidden rounded-[2rem] bg-gradient-to-br from-primary to-secondary text-3xl font-bold text-white shadow-md">
+                {avatarImageUrl ? (
+                  <Image src={avatarImageUrl} alt={profileDisplayName} fill sizes="96px" className="object-cover" />
+                ) : (
+                  profileDisplayName.charAt(0).toUpperCase()
+                )}
+              </div>
+              <p className="text-sm text-text-secondary leading-6">
+                {tr('上传 PNG、JPEG、WEBP 或 SVG 图片，保存后会同步更新你的个人头像。', 'Upload a PNG, JPEG, WEBP, or SVG image to update your profile avatar.')}
+              </p>
+              <label className={`mt-5 inline-flex cursor-pointer items-center rounded-full border border-border bg-white px-4 py-2 text-sm font-medium text-text-primary transition hover:border-primary hover:text-primary ${avatarUploading ? 'pointer-events-none opacity-60' : ''}`}>
+                <i className={`fas ${avatarUploading ? 'fa-spinner fa-spin' : 'fa-upload'} mr-2 text-sm`} />
+                {avatarUploading ? tr('上传中', 'Uploading') : tr('上传头像', 'Upload Avatar')}
+                <input
+                  ref={avatarFileInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                  className="hidden"
+                  onChange={(event) => {
+                    const nextFile = event.target.files?.[0] || null;
+                    void handleAvatarUpload(nextFile);
+                  }}
+                />
+              </label>
+            </div>
+          </div>
+        </div>
+      )}
       {showEditKeyModal && editingKey && (
         <div className="fixed inset-0 bg-black/70 z-[9999] flex items-center justify-center p-4" onClick={() => setShowEditKeyModal(false)}>
           <div className="bg-white border border-border rounded-[2rem] shadow-xl p-6 sm:p-8 max-w-[600px] w-full max-h-[90vh] overflow-y-auto custom-scrollbar" onClick={e => e.stopPropagation()}>
