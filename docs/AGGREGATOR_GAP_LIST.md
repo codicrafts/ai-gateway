@@ -1,448 +1,618 @@
-# Aggregator 目标需求 vs 当前项目 Gap List
+# Aggregator 需求对齐审计
 
-基于以下两部分对比整理：
+基于以下三部分交叉整理：
 
 - 目标需求：[AGGREGATOR_REQUIREMENTS_SUMMARY.md](/Users/weili/work/ai-gateway/docs/AGGREGATOR_REQUIREMENTS_SUMMARY.md)
-- 当前实现：`/src`、`/docs`、`/supabase`、`/new-api` 下现有代码
+- 当前主项目：`ai-gateway`
+- 运行时底座：`/Users/weili/work/new-api`
 
-## 1. 总体判断
+## 1. 总体结论
 
-当前项目更接近：
+当前状态不是“完全没做”，也不是“已经差不多上线”，而是：
 
-- 一个已经具备官网、控制台、Playground、团队管理 UI 的产品原型
-- 一个部分接入 `new-api` 能力、部分使用 mock 数据、部分自建 Supabase 数据的混合架构
+- `ai-gateway` 已经具备官网、登录注册、团队、账单、API Key、Playground 的产品骨架
+- `new-api` 已经具备用户、Token、Channel、Model、Relay、Monitoring、Topup、Subscription 等运行时能力
+- 两者之间只打通了最小子集，很多需求点处于“页面已做但数据没对齐”或“底座已有但产品层没接出来”的状态
 
-距离目标中的 MVP 还有明显差距，主要不在页面数量，而在以下四类核心问题：
+距离需求中的 MVP，最大 gap 不在页面数量，而在这四条主线：
 
-- 认证与用户数据没有统一
-- 模型、价格、用量等关键数据仍有大量 mock
-- 商业化闭环没有打通
-- 平台侧路由、监控、计量能力还没有真正落到当前主项目
+- 官网展示数据与实际运行时能力没有统一
+- 用户/个人/团队/API Key/账单之间的产品边界没有完全对齐
+- 支付、充值、账单闭环还停留在半成品
+- Provider/Router/Monitoring 虽然底座有能力，但还没有在 `ai-gateway` 中产品化
 
-## 2. 当前已具备的基础
+## 2. 现有能力分层
 
-这些能力已经有了明显雏形，可以作为后续补齐的基础：
+### 2.1 已基本具备
 
-- 官网页面框架已存在
-  - 首页、Models、Pricing、Docs、Contact
-- 控制台页面已存在
-  - Dashboard、API Key、Usage、Playground
-- `new-api` 接入基础已存在
-  - `/api/chat`
-  - `/api/tables/api_keys`
-  - `/api/tables/usage_logs`
-- 团队管理的数据模型和 API 雏形已存在
-  - Supabase migration
-  - Team API
-  - Team 组件和 Redux slice
+- 官网基础页
+  - 首页、Models、Pricing、Docs、Contact 已存在
+- 账号体系基础
+  - NextAuth、邮箱/手机号验证码登录、本地密码登录、忘记密码、手机号绑定、2FA 已存在
+- 团队基础
+  - 团队创建、成员管理、邀请、加入申请、团队设置、审计日志已存在
+- 团队 API Key
+  - 本地组织 API Key 与 `new-api` 运行时 Token 的同步链路已存在
+- 团队账务基础
+  - 组织用量账本、充值订单、账单摘要、CSV 导出已存在
+- Playground 原型
+  - 已可基于平台 Key 或团队 Key 发起 `chat/completions`
 
-## 3. P0 Gap List
+### 2.2 主要问题形态
 
-以下缺口会直接阻塞目标中的 MVP 主链路。
+- `ai-gateway` 前台展示层很多地方仍不以 `new-api` 的真实运行态为准
+- `new-api` 的大量能力只停留在底座侧，未在 `ai-gateway` 中形成面向客户的产品能力
+- 个人维度与团队维度的职责边界不完全符合需求文档的表述
 
-### 3.1 认证与用户体系未打通
+## 3. 模块级对齐结果
 
-目标：
+## 3.1 官网
 
-- 稳定的注册登录
+### Landing Page
+
+结论：
+
+- 大体已实现，但有少量需求点未补齐
+
+已对齐：
+
+- Hero
+- 快速接入示例
+- CTA
+- 模型能力展示
+- 核心功能介绍
+- 成本优势说明
+- API 调用示例
+- Skill 安装示例
+
+未实现或未对齐：
+
+- 文档批注提到的 QA 区块未看到独立实现
+- 客户背书 / 使用案例未实现
+- 页面文案中宣称的平台能力，部分还没有和实际运行时能力完全打通
+
+证据：
+
+- [HomePageClient.tsx](/Users/weili/work/ai-gateway/apps/web/src/components/home/HomePageClient.tsx)
+
+### Models
+
+结论：
+
+- 页面存在，但和需求相比仍缺关键能力
+
+已对齐：
+
+- 模型列表
+- 搜索
+- Provider 筛选
+- Category 筛选
+- 基础价格展示
+
+未实现：
+
+- 模型详情页
+- Benchmark 展示
+- 模型在线状态
+- 延迟状态
+- 按价格筛选
+- 按能力标签筛选
+
+未对齐：
+
+- 当前目录主要来自 OpenRouter + 本地 catalog，不是 `new-api` 当前真实启用模型
+- 因此前台“可展示模型”与运行时“可调用模型”不是一套口径
+
+证据：
+
+- [page.tsx](/Users/weili/work/ai-gateway/apps/web/src/app/models/page.tsx)
+- [ModelsPageClient.tsx](/Users/weili/work/ai-gateway/apps/web/src/components/models/ModelsPageClient.tsx)
+- [model-catalog.service.ts](/Users/weili/work/ai-gateway/apps/web/src/services/catalog/model-catalog.service.ts)
+- [gateway-model.service.ts](/Users/weili/work/ai-gateway/apps/web/src/services/gateway/gateway-model.service.ts)
+
+### Pricing
+
+结论：
+
+- 页面完成度不低，但仍偏展示页，不是严格的运行时价格镜像
+
+已对齐：
+
+- 价格说明
+- 模型价格表
+- FAQ
+- 企业方案入口
+
+未对齐：
+
+- 模型价格来自 catalog，而不是 `new-api /api/pricing`
+- “成本对比”更接近参考解释，没有真实官方对比口径
+- “使用成本示例”是静态推导，不是按真实账单规则实时计算
+
+已存在但未接入：
+
+- `new-api` 有价格目录接口，当前主项目没有把它接到前台
+
+证据：
+
+- [page.tsx](/Users/weili/work/ai-gateway/apps/web/src/app/pricing/page.tsx)
+- [PricingPageClient.tsx](/Users/weili/work/ai-gateway/apps/web/src/components/pricing/PricingPageClient.tsx)
+- [pricing-reference.service.ts](/Users/weili/work/ai-gateway/apps/web/src/services/pricing/pricing-reference.service.ts)
+- [oneapi.ts](/Users/weili/work/ai-gateway/apps/web/src/lib/oneapi.ts)
+- [api-router.go](/Users/weili/work/new-api/router/api-router.go)
+
+### Documentation
+
+结论：
+
+- 文档页结构齐全，但“文档内容”和“实际接入入口”存在明显偏差
+
+已对齐：
+
+- Overview / Quickstart / API Reference / Models / Pricing / Usage & Billing
+- 错误码列表
+
+未对齐：
+
+- 文档写的 base URL 是 `/api/openai/v1`
+- 但当前 `ai-gateway` 仓库里并没有对应的完整 relay 路由实现
+- 当前主项目真正提供的是 `/api/chat` 这一层 chat 代理
+- 文档展示了 `/v1/messages`、`/v1/responses` 等能力，这些能力实际在独立 `new-api` 服务中，不在当前主项目内
+
+风险：
+
+- 文档会让用户以为 `ai-gateway` 自己提供完整 OpenAI/Anthropic relay
+- 实际部署中必须额外配套 `new-api`
+
+证据：
+
+- [page.tsx](/Users/weili/work/ai-gateway/apps/web/src/app/docs/page.tsx)
+- [DocsPageClient.tsx](/Users/weili/work/ai-gateway/apps/web/src/components/docs/DocsPageClient.tsx)
+- [docs-reference.service.ts](/Users/weili/work/ai-gateway/apps/web/src/services/docs/docs-reference.service.ts)
+- [docs-reference.ts](/Users/weili/work/ai-gateway/apps/web/src/config/docs-reference.ts)
+- [route.ts](/Users/weili/work/ai-gateway/apps/web/src/app/api/chat/route.ts)
+- [relay-router.go](/Users/weili/work/new-api/router/relay-router.go)
+
+### Contact / About
+
+结论：
+
+- Contact 已经不是假表单了，但 About 仍未独立成页
+
+已对齐：
+
+- 联系表单提交
+- 线索落库
+- 通知发送尝试
+
+未实现：
+
+- 独立 About 页面
+
+未对齐：
+
+- 需求里是 `Contact / About` 两块
+- 当前实现是 Contact 页面内混合展示 About 内容
+
+证据：
+
+- [page.tsx](/Users/weili/work/ai-gateway/apps/web/src/app/contact/page.tsx)
+- [ContactPageClient.tsx](/Users/weili/work/ai-gateway/apps/web/src/components/contact/ContactPageClient.tsx)
+- [route.ts](/Users/weili/work/ai-gateway/apps/web/src/app/api/contact/route.ts)
+
+## 3.2 账号与组织
+
+### 注册登录
+
+结论：
+
+- 已经比旧版本成熟很多，但仍未完全达到需求里“国内/国外完整生产级方案”
+
+已对齐：
+
+- 邮箱密码登录
+- 手机号验证码登录
+- 邮箱验证码登录
 - 会话管理
-- 用户资料与后续 API Key / 账单 / 团队能力统一挂在同一身份体系下
+- 忘记密码 / 重置密码
+- Google / GitHub OAuth
 
-现状：
+未实现或未对齐：
 
-- 前端登录态依赖 `localStorage.currentUser`
-- 服务端 API 同时又依赖 `NextAuth session`
-- 用户数据接口使用进程内 `Map`，重启即丢失
-
-证据：
-
-- [apps/web/src/app/login/page.tsx](/Users/weili/work/ai-gateway/apps/web/src/app/login/page.tsx)
-- [apps/web/src/app/register/page.tsx](/Users/weili/work/ai-gateway/apps/web/src/app/register/page.tsx)
-- [apps/web/src/store/slices/authSlice.ts](/Users/weili/work/ai-gateway/apps/web/src/store/slices/authSlice.ts)
-- [apps/web/src/app/api/auth/[...nextauth]/route.ts](/Users/weili/work/ai-gateway/apps/web/src/app/api/auth/%5B...nextauth%5D/route.ts)
-- [apps/web/src/app/api/tables/users/route.ts](/Users/weili/work/ai-gateway/apps/web/src/app/api/tables/users/route.ts)
-
-差距：
-
-- 当前不是一个可持续的生产级账号系统
-- 用户数据、团队数据、API Key 数据不在同一可信身份源下
-- 无法支撑目标需求中的注册登录、权限、团队、账单闭环
-
-建议优先级：
-
-- 最高
-
-### 3.2 官网核心数据仍是 mock，不能支撑真实转化
-
-目标：
-
-- Models、Pricing、Docs 页面反映真实模型、价格、能力和限制
-
-现状：
-
-- 模型列表来自写死的 mock 数组
-- 价格页依赖同一组 mock 模型
-- 文档内容是静态示例，不与真实接口能力同步
+- 手机短信未真实发送，当前只是写库 + 开发态回显验证码
+- 忘记密码没有真实邮件发送链路，生产态只是不返回 reset link
+- 国内手机号注册的产品路径存在，但仍是自建实现，不是成熟短信网关闭环
+- `new-api` 还支持 passkey，`ai-gateway` 当前未接
 
 证据：
 
-- [apps/web/src/app/api/tables/models/route.ts](/Users/weili/work/ai-gateway/apps/web/src/app/api/tables/models/route.ts)
-- [apps/web/src/app/models/page.tsx](/Users/weili/work/ai-gateway/apps/web/src/app/models/page.tsx)
-- [apps/web/src/app/pricing/page.tsx](/Users/weili/work/ai-gateway/apps/web/src/app/pricing/page.tsx)
-- [apps/web/src/app/docs/page.tsx](/Users/weili/work/ai-gateway/apps/web/src/app/docs/page.tsx)
+- [auth.ts](/Users/weili/work/ai-gateway/apps/web/src/lib/auth.ts)
+- [LoginPageClient.tsx](/Users/weili/work/ai-gateway/apps/web/src/components/auth/LoginPageClient.tsx)
+- [auth-requirements route.ts](/Users/weili/work/ai-gateway/apps/web/src/app/api/account/auth-requirements/route.ts)
+- [account-code route.ts](/Users/weili/work/ai-gateway/apps/web/src/app/api/account/account-code/route.ts)
+- [phone-auth.service.ts](/Users/weili/work/ai-gateway/apps/web/src/services/account/phone-auth.service.ts)
+- [forgot-password route.ts](/Users/weili/work/ai-gateway/apps/web/src/app/api/account/forgot-password/route.ts)
+- [app-user.service.ts](/Users/weili/work/ai-gateway/apps/web/src/services/account/app-user.service.ts)
+- [api-router.go](/Users/weili/work/new-api/router/api-router.go)
 
-差距：
+### 个人中心
 
-- 目标要求“模型大全 + 价格对比 + SEO 入口”
-- 当前页面虽然齐，但内容不可信，不能直接用于真实售卖和转化
+结论：
 
-建议优先级：
+- 大部分基础能力已具备
 
-- 最高
+已对齐：
 
-### 3.3 API Key 与用量没有真正的用户级隔离
+- 个人资料管理
+- 修改密码
+- 手机号绑定
+- 2FA
 
-目标：
+未对齐：
 
-- 用户能创建、管理自己的 API Key
-- 用户只能看到自己的调用数据、消耗和账单
-
-现状：
-
-- API Key 和 usage 接口使用全局 `ONE_API_KEY` 调 `new-api`
-- 服务端只校验“是否登录”，没有把当前登录用户映射到 `new-api` 的真实用户边界
-
-证据：
-
-- [apps/web/src/lib/oneapi.ts](/Users/weili/work/ai-gateway/apps/web/src/lib/oneapi.ts)
-- [apps/web/src/app/api/tables/api_keys/route.ts](/Users/weili/work/ai-gateway/apps/web/src/app/api/tables/api_keys/route.ts)
-- [apps/web/src/app/api/tables/api_keys/[id]/route.ts](/Users/weili/work/ai-gateway/apps/web/src/app/api/tables/api_keys/%5Bid%5D/route.ts)
-- [apps/web/src/app/api/tables/usage_logs/route.ts](/Users/weili/work/ai-gateway/apps/web/src/app/api/tables/usage_logs/route.ts)
-
-差距：
-
-- 当前更像“管理员代查 / 代管”的封装，不是严格意义上的多租户用户控制台
-- 这会直接影响目标中的 API Key 管理、计量、账单透明和权限边界
-
-建议优先级：
-
-- 最高
-
-### 3.4 钱包、充值、支付、账单闭环基本缺失
-
-目标：
-
-- 钱包余额
-- 充值
-- 支付接入
-- 充值历史
-- 费用明细
-- 报表导出
-
-现状：
-
-- UI 层只有少量价格展示和预估费用
-- 没有真实支付接入
-- 没有真实充值、余额、账单数据链路
+- 文档把 API Key 管理归入个人中心，但当前实际是 Team 维度 API Key
+- 个人使用统计不是以“个人账户”为主，而是团队账本/团队 Key 视角
+- `new-api` 已支持 passkey，但个人中心未暴露
 
 证据：
 
-- [apps/web/src/app/pricing/page.tsx](/Users/weili/work/ai-gateway/apps/web/src/app/pricing/page.tsx)
-- [apps/web/src/app/dashboard/page.tsx](/Users/weili/work/ai-gateway/apps/web/src/app/dashboard/page.tsx)
+- [password route.ts](/Users/weili/work/ai-gateway/apps/web/src/app/api/account/password/route.ts)
+- [PhoneBindingCard.tsx](/Users/weili/work/ai-gateway/apps/web/src/components/account/PhoneBindingCard.tsx)
+- [TwoFactorCard.tsx](/Users/weili/work/ai-gateway/apps/web/src/components/account/TwoFactorCard.tsx)
+- [dashboard/profile page.tsx](/Users/weili/work/ai-gateway/apps/web/src/app/dashboard/profile/page.tsx)
+- [api-router.go](/Users/weili/work/new-api/router/api-router.go)
 
-差距：
+### 组织和团队管理
 
-- 目标中的商业化主链路目前没有实现
-- 这是从“能演示”到“能收费”之间最大的缺口之一
+结论：
 
-建议优先级：
+- 这是当前主项目里完成度最高的一块之一
 
-- 最高
+已对齐：
 
-### 3.5 平台级计量和监控能力远未达到目标要求
-
-目标：
-
-- Token 消耗
-- Requests
-- TTFT
-- Latency
-- 成功率 / 错误率
-- 消耗趋势
-- 异常告警
-
-现状：
-
-- Dashboard 主要展示 API Key 和 usage logs
-- 没有 TTFT、Latency、成功率、异常告警等平台级指标
-- 也没有完整的路由健康度指标和监控视图
-
-证据：
-
-- [apps/web/src/store/slices/dashboardSlice.ts](/Users/weili/work/ai-gateway/apps/web/src/store/slices/dashboardSlice.ts)
-- [apps/web/src/app/dashboard/page.tsx](/Users/weili/work/ai-gateway/apps/web/src/app/dashboard/page.tsx)
-
-差距：
-
-- 当前只能算基础使用记录展示
-- 目标里的 BI / 监控 / 运营看板能力尚未真正落地
-
-建议优先级：
-
-- 高
-
-### 3.6 Provider、Router、Gateway 能力没有在当前主项目中真正产品化
-
-目标：
-
-- Provider 接入
-- 健康检查
-- 版本管理
-- Router
-- Fallback
-- 负载均衡
-- 路由策略管理
-- 协议转换
-- 限流
-
-现状：
-
-- 这些能力更多存在于 `new-api` 的概念和能力边界里
-- 当前根项目只有少量代理接口和前端描述
-- 缺少面向 Aggregator 产品自身的配置、管理和观测闭环
-
-证据：
-
-- [new-api/go.mod](/Users/weili/work/ai-gateway/new-api/go.mod)
-- [apps/web/src/lib/oneapi.ts](/Users/weili/work/ai-gateway/apps/web/src/lib/oneapi.ts)
-- [apps/web/src/app/page.tsx](/Users/weili/work/ai-gateway/apps/web/src/app/page.tsx)
-- [docs/AGGREGATOR_TECHNICAL_SPEC.md](/Users/weili/work/ai-gateway/docs/AGGREGATOR_TECHNICAL_SPEC.md)
-
-差距：
-
-- 现在主要是“依赖 `new-api` 底座”
-- 但目标需要的是“把这些能力变成 Aggregator 自己的可售卖产品能力”
-
-建议优先级：
-
-- 高
-
-### 3.7 Contact / 销售入口是静态假流程
-
-目标：
-
-- 商务联系和合作线索收集
-
-现状：
-
-- 联系表单提交后只是前端等待 1 秒并提示成功
-- 没有真实表单投递、CRM、邮件或工单流转
-
-证据：
-
-- [apps/web/src/app/contact/page.tsx](/Users/weili/work/ai-gateway/apps/web/src/app/contact/page.tsx)
-
-差距：
-
-- 页面具备展示价值，但没有业务闭环
-
-建议优先级：
-
-- 中高
-
-## 4. P1 Gap List
-
-以下能力属于第二阶段，但部分已经有雏形，前提是先解决身份和数据源问题。
-
-### 4.1 团队与组织能力部分实现，但依赖链不稳定
-
-目标：
-
-- 创建 / 加入组织
+- 创建团队
 - 成员管理
+- 邀请成员
+- 加入申请
 - 角色分配
 - 团队设置
 - 审计日志
 
-现状：
+未对齐：
 
-- 团队 API、Redux、UI、Supabase migration 都已经存在
-- 但它依赖 `users` 表和 `NextAuth` 身份，而当前登录注册并不稳定地写入这个统一用户表
+- 当前产品很多能力默认要求“用户至少属于一个团队”
+- 需求文档里团队更像 P1 增强项，但当前实现里它已经是 API Key / 账单 / 用量的基础容器
 
-证据：
+说明：
 
-- [supabase/migrations/001_team_management.sql](/Users/weili/work/ai-gateway/supabase/migrations/001_team_management.sql)
-- [apps/web/src/lib/teamAuth.ts](/Users/weili/work/ai-gateway/apps/web/src/lib/teamAuth.ts)
-- [apps/web/src/app/api/teams/route.ts](/Users/weili/work/ai-gateway/apps/web/src/app/api/teams/route.ts)
-- [apps/web/src/app/api/teams/[id]/route.ts](/Users/weili/work/ai-gateway/apps/web/src/app/api/teams/%5Bid%5D/route.ts)
-- [apps/web/src/app/api/teams/[id]/members/route.ts](/Users/weili/work/ai-gateway/apps/web/src/app/api/teams/%5Bid%5D/members/route.ts)
-- [apps/web/src/app/api/teams/[id]/audit-logs/route.ts](/Users/weili/work/ai-gateway/apps/web/src/app/api/teams/%5Bid%5D/audit-logs/route.ts)
-
-差距：
-
-- 这块并非没有做，而是“做了不少，但挂在不稳定的身份体系上”
-
-建议优先级：
-
-- P1 中最高
-
-### 4.2 Playground 已有，但还不是完整的开发者平台
-
-目标：
-
-- Playground
-- 示例代码
-- 调试体验
-
-现状：
-
-- Playground 已可发起聊天请求
-- 支持基础模型切换、温度、max tokens、代码示例
-- 但仍依赖 mock 模型列表和当前混合认证体系
+- 这不是“没实现”
+- 而是产品边界和需求文档的叙述顺序不一致
 
 证据：
 
-- [apps/web/src/app/playground/page.tsx](/Users/weili/work/ai-gateway/apps/web/src/app/playground/page.tsx)
-- [apps/web/src/app/api/chat/route.ts](/Users/weili/work/ai-gateway/apps/web/src/app/api/chat/route.ts)
+- [team-query.service.ts](/Users/weili/work/ai-gateway/apps/web/src/services/team/team-query.service.ts)
+- [team-mutation.service.ts](/Users/weili/work/ai-gateway/apps/web/src/services/team/team-mutation.service.ts)
+- [team-audit.service.ts](/Users/weili/work/ai-gateway/apps/web/src/services/team/team-audit.service.ts)
+- [teamAuth.ts](/Users/weili/work/ai-gateway/apps/web/src/lib/teamAuth.ts)
+- [route.ts](/Users/weili/work/ai-gateway/apps/web/src/app/api/teams/route.ts)
 
-差距：
+### 权限管理
 
-- 具备体验原型
-- 还不具备完整的开发者接入与调试闭环
+结论：
 
-建议优先级：
+- 基础 RBAC 已做，细粒度权限还没有
 
-- 中高
+已对齐：
 
-### 4.3 请求日志追踪与调试能力不完整
+- Owner / Admin / Member / Guest
+- 团队级 RBAC
+- 审计日志
 
-目标：
+已部分对齐：
 
-- 请求记录
-- 错误详情
-- 日志导出
+- API Key 支持模型限制、权限 scope、IP 白名单
 
-现状：
+未对齐：
 
-- 当前更多是 usage logs 展示
-- 缺少完整的请求输入输出、错误上下文、日志下载能力
-
-证据：
-
-- [apps/web/src/app/api/tables/usage_logs/route.ts](/Users/weili/work/ai-gateway/apps/web/src/app/api/tables/usage_logs/route.ts)
-- [apps/web/src/app/dashboard/page.tsx](/Users/weili/work/ai-gateway/apps/web/src/app/dashboard/page.tsx)
-
-差距：
-
-- 还达不到目标里的“排障工具”标准
-
-建议优先级：
-
-- 中
-
-### 4.4 OAuth、多语言、SEO 只是部分存在
-
-目标：
-
-- 更完整的国际化和增长体系
-
-现状：
-
-- 有语言切换和 i18n 基础
-- 有 Google / GitHub OAuth 壳
-- 但增长、内容、SEO、分析体系还不成系统
+- 权限和 credit / 垫付逻辑没有关联
+- 没有更细的功能权限矩阵配置
+- 没有独立“权限中心”产品界面
 
 证据：
 
-- [apps/web/src/components/LanguageSwitcher.tsx](/Users/weili/work/ai-gateway/apps/web/src/components/LanguageSwitcher.tsx)
-- [apps/web/src/i18n](/Users/weili/work/ai-gateway/apps/web/src/i18n)
-- [apps/web/src/app/api/auth/[...nextauth]/route.ts](/Users/weili/work/ai-gateway/apps/web/src/app/api/auth/%5B...nextauth%5D/route.ts)
+- [team.ts](/Users/weili/work/ai-gateway/packages/shared-types/src/team.ts)
+- [teamAuth.ts](/Users/weili/work/ai-gateway/apps/web/src/lib/teamAuth.ts)
+- [gateway-token.service.ts](/Users/weili/work/ai-gateway/apps/web/src/services/gateway/gateway-token.service.ts)
 
-差距：
+## 3.3 API Key 管理
 
-- 有基础，不足以支撑国际化增长目标
+结论：
 
-建议优先级：
+- 团队 API Key 闭环已初步成型，但和需求中的“个人 Key + 团队 Key”口径未完全一致
 
-- 中
+已对齐：
 
-## 5. 关键架构问题
+- 创建 API Key
+- 启停 / 删除
+- 命名 / 备注
+- 模型范围限制
+- IP 白名单
+- scope 控制
+- 过期时间
 
-如果不先解决这些问题，很多需求即使“做了页面”，也很难真正打通：
+已实现但需注意：
 
-### 5.1 三套数据源并存
+- 本地 `org_api_keys` 会同步到团队运行时账户对应的 `new-api token`
+- 用量与花费通过 `org_usage_ledger` 回收统计
 
-当前项目同时存在：
+未对齐：
 
-- 根项目内存用户数据
-- Supabase 团队数据
-- `new-api` 用户 / token / usage 数据
+- 当前是 Team Key，不是个人 Key
+- 需求里提到的“个人中心 API Key 管理”没有独立实现
+- 权限策略还没和组织 credit 直接绑定
 
-问题：
+证据：
 
-- 身份不能自然贯通
-- 账单、团队、API Key 无法稳定挂在同一用户实体上
+- [gateway-token.service.ts](/Users/weili/work/ai-gateway/apps/web/src/services/gateway/gateway-token.service.ts)
+- [org-api-key-sync.service.ts](/Users/weili/work/ai-gateway/apps/web/src/services/runtime-sync/org-api-key-sync.service.ts)
+- [route.ts](/Users/weili/work/ai-gateway/apps/web/src/app/api/tables/api_keys/route.ts)
+- [api-router.go](/Users/weili/work/new-api/router/api-router.go)
 
-### 5.2 根项目与 `new-api` 的角色边界不清晰
+## 3.4 Provider 接入、Router、Gateway
 
-当前看起来像：
+### new-api 底座能力
 
-- 官网和控制台由根项目负责
-- 网关底座由 `new-api` 负责
+结论：
 
-但没有完全明确：
+- `new-api` 对这块能力支持很强
 
-- 哪些数据以 `new-api` 为主
-- 哪些数据以 Supabase 为主
-- 哪些功能必须自研，哪些只做 `new-api` 封装
+已存在于 `new-api`：
 
-### 5.3 当前很多页面是“可演示”而不是“可运营”
+- Provider / Channel 管理
+- Channel 测试、余额更新、拉取上游模型
+- 版本回滚
+- Ability、Priority、Weight
+- Retry / Fallback 基础
+- OpenAI / Anthropic / Responses / Embeddings / Images / Audio / Rerank 等 relay
+- 监控 summary / alerts / trends / channels
 
-典型特征：
+证据：
 
-- mock 模型
-- mock 用户
-- mock 联系表单
-- 部分静态文档
-- 部分硬编码价格和统计
+- [api-router.go](/Users/weili/work/new-api/router/api-router.go)
+- [relay-router.go](/Users/weili/work/new-api/router/relay-router.go)
+- [channel.go](/Users/weili/work/new-api/model/channel.go)
+- [ability.go](/Users/weili/work/new-api/model/ability.go)
+- [monitoring.go](/Users/weili/work/new-api/model/monitoring.go)
 
-这意味着当前更适合内部评审和产品原型展示，不适合直接进入真实运营阶段。
+### ai-gateway 产品层
 
-## 6. 建议优先修复顺序
+结论：
 
-如果按“最快补齐到可用 MVP”来排，建议顺序如下：
+- 这是当前最明显的“底座有、产品没接”的模块
 
-### 第一阶段：统一身份和数据边界
+已实现：
 
-- 统一账号体系
-- 确定用户主数据归属
-- 明确 `new-api` 与 Supabase 的职责边界
-- 打通登录用户与 API Key / usage / team 的映射关系
+- 通过 `oneapi.ts` 调一部分管理接口
+- 有少量 enterprise-config / sync service 雏形
+- Playground 会校验模型是否在运行时启用
 
-### 第二阶段：去 mock，接真实数据
+未实现：
 
-- 模型列表改为真实来源
-- 价格页改为真实价格
-- 文档同步真实接口能力
-- 联系表单接入真实投递
+- Provider 管理后台
+- 路由策略管理后台
+- 版本管理后台
+- 健康检查面板
+- 渠道负载、压力、延迟策略配置页
 
-### 第三阶段：补商业化闭环
+未对齐：
 
-- 钱包
-- 余额
-- 充值
-- 支付
-- 账单明细
-- 导出
+- 技术方案文档把这些能力视为 Aggregator 产品的一部分
+- 当前真正可操作的大部分仍在 `new-api` 自带后台
 
-### 第四阶段：补平台侧观测和协作能力
+证据：
 
-- TTFT / Latency / Success Rate
-- 告警
-- 团队能力
-- 请求日志追踪
-- Playground 增强
+- [oneapi.ts](/Users/weili/work/ai-gateway/apps/web/src/lib/oneapi.ts)
+- [gateway-model.service.ts](/Users/weili/work/ai-gateway/apps/web/src/services/gateway/gateway-model.service.ts)
+- [new-api-sync.service.ts](/Users/weili/work/ai-gateway/apps/web/src/services/sync/new-api-sync.service.ts)
 
-## 7. 一句话结论
+## 3.5 数据、支付、账单
 
-当前项目已经有了不错的产品壳和部分后台雏形，但距离目标需求里的 Aggregator MVP，最大的 gap 不是页面数量，而是“统一身份、真实数据、商业化闭环、平台级监控”这四条主线还没有真正打通。
+### 用量与账单
+
+结论：
+
+- 团队用量账本已经有了，但还不是完整“请求级账单中心”
+
+已对齐：
+
+- 用量 webhook 入账
+- 组织账单摘要
+- 充值订单列表
+- CSV 导出
+
+未对齐：
+
+- 当前是组织账本视角，不是需求里“个人 + 组织”双视角
+- 请求日志和账单明细仍偏简化
+- 趋势图能力较弱
+
+证据：
+
+- [one-api-usage route.ts](/Users/weili/work/ai-gateway/apps/web/src/app/api/webhooks/one-api-usage/route.ts)
+- [gateway-usage.service.ts](/Users/weili/work/ai-gateway/apps/web/src/services/gateway/gateway-usage.service.ts)
+- [billing.service.ts](/Users/weili/work/ai-gateway/apps/web/src/services/billing/billing.service.ts)
+
+### 支付与充值
+
+结论：
+
+- 已经不是“完全缺失”，但仍未完成真实支付接入
+
+已实现：
+
+- 充值订单模型
+- 支付方式抽象
+- webhook 入口
+- 手动确认并给 `new-api` 充值
+- 组织账务流水写入
+
+未对齐：
+
+- 创建订单时 metadata 明确写了 `manual_pending_gateway_integration`
+- 说明支付宝 / 微信 / 信用卡 / PayPal 的真实拉起与回调核验还未最终打通
+- 目前更像“支付壳 + 履约壳”
+
+证据：
+
+- [payment.service.ts](/Users/weili/work/ai-gateway/apps/web/src/services/billing/payment.service.ts)
+- [payment-orders route.ts](/Users/weili/work/ai-gateway/apps/web/src/app/api/billing/payment-orders/route.ts)
+- [webhooks route.ts](/Users/weili/work/ai-gateway/apps/web/src/app/api/billing/webhooks/%5Bprovider%5D/route.ts)
+- [api-router.go](/Users/weili/work/new-api/router/api-router.go)
+
+## 3.6 实时 BI / 监控
+
+结论：
+
+- `new-api` 已经有 summary / alerts / trends / channel health，但 `ai-gateway` 还没把这些能力产品化
+
+已在 `new-api` 中具备：
+
+- 请求量
+- 成功率 / 错误率
+- 平均延迟 / P95 延迟
+- 通道健康
+- 监控告警状态
+
+未在 `ai-gateway` 中落地：
+
+- 平台监控大盘
+- 告警中心
+- Channel health 看板
+
+未实现：
+
+- TTFT
+- TPOT
+- Provider 压力指标
+
+证据：
+
+- [monitoring.go](/Users/weili/work/new-api/model/monitoring.go)
+- [monitoring_alert_state.go](/Users/weili/work/new-api/model/monitoring_alert_state.go)
+
+## 3.7 开发者体验
+
+### Playground
+
+结论：
+
+- 已有可用原型，但仍是聊天调试器，不是完整开发者平台
+
+已对齐：
+
+- 模型切换
+- 温度 / max tokens
+- 代码示例
+- 使用平台 Key 或团队 Key 调用聊天
+
+未对齐：
+
+- 只支持 `chat/completions`
+- 没把 `messages`、`responses`、embeddings、images、audio、rerank 等能力暴露出来
+
+证据：
+
+- [page.tsx](/Users/weili/work/ai-gateway/apps/web/src/app/playground/page.tsx)
+- [PlaygroundPageClient.tsx](/Users/weili/work/ai-gateway/apps/web/src/components/playground/PlaygroundPageClient.tsx)
+- [chat route.ts](/Users/weili/work/ai-gateway/apps/web/src/app/api/chat/route.ts)
+- [relay-router.go](/Users/weili/work/new-api/router/relay-router.go)
+
+### 请求日志追踪与调试
+
+结论：
+
+- 当前更接近“组织用量账本”，还不是“调试日志中心”
+
+已对齐：
+
+- 请求成功 / 失败状态
+- 基础错误信息
+- Token / 金额 / 模型统计
+
+未实现：
+
+- 输入输出明细
+- 状态码级调试视图
+- 请求日志导出
+- 面向排障的 trace 视图
+
+证据：
+
+- [gateway-usage.service.ts](/Users/weili/work/ai-gateway/apps/web/src/services/gateway/gateway-usage.service.ts)
+- [DashboardClient.tsx](/Users/weili/work/ai-gateway/apps/web/src/components/dashboard/DashboardClient.tsx)
+
+## 4. 分类汇总
+
+### 4.1 文档里没实现的功能
+
+- Models 详情页
+- Benchmark 展示
+- 模型在线状态 / 延迟展示
+- 按价格筛选
+- 按能力筛选
+- 独立 About 页面
+- QA 区块
+- 客户背书 / 使用案例
+- 平台侧 Provider 管理后台
+- 路由策略管理后台
+- 健康检查 / 监控看板后台
+- 请求日志导出
+- TTFT / TPOT 指标
+- passkey 产品接入
+
+### 4.2 已有实现但没对齐的功能
+
+- Models / Pricing / Docs 不是按 `new-api` 真实运行态展示
+- Docs 中的 API 入口与主项目真实路由不一致
+- API Key 当前是 Team 维度，不是文档中的个人中心维度
+- 团队在产品中比文档描述更“前置”
+- 账单与用量偏组织账本，不是完整个人 + 组织双视角
+- Playground 能力范围小于文档表述
+
+### 4.3 new-api 已有但 ai-gateway 没接出来的功能
+
+- `/v1/messages`
+- `/v1/responses`
+- embeddings / images / audio / rerank relay
+- Channel / Provider 管理
+- 版本回滚
+- 监控 summary / alerts / trends / channels
+- passkey
+- subscription billing
+- runtime organization summary
+
+## 5. 优先级建议
+
+### 第一优先级
+
+- 统一官网展示数据与运行时能力口径
+- 修正文档 API 入口与部署边界
+- 确认“个人 vs 团队”产品边界
+- 完成真实支付接入
+
+### 第二优先级
+
+- 把 `new-api` 的模型、监控、路由、Provider 能力接到 `ai-gateway`
+- 增强 Playground 到多 endpoint 调试台
+- 完善请求日志追踪能力
+
+### 第三优先级
+
+- 模型详情页
+- SEO / 增长增强
+- passkey
+- 更细权限和 credit 关联
+
+## 6. 一句话结论
+
+当前最大的真实问题不是“页面不够”，而是 `ai-gateway` 作为产品层，还没有把 `new-api` 的真实运行时能力、价格能力、监控能力和支付能力，统一成一个对客户口径一致的 Aggregator 产品。

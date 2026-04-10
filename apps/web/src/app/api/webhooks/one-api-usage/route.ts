@@ -24,6 +24,8 @@ interface OneApiWebhookPayload {
   content: string;
   user_id: number;
   token_id: number;
+  request_id?: string;
+  other?: Record<string, unknown> | null;
 }
 
 const NEW_API_LOG_TYPE_CONSUME = 2;
@@ -125,6 +127,16 @@ export async function POST(request: NextRequest) {
         request_count: 1,
         status: isSuccessLog ? 'success' : 'failed',
         error_message: isFailedLog ? payload.content : null,
+        runtime_channel_id: payload.channel_id,
+        runtime_token_name: payload.token_name,
+        runtime_request_id: payload.request_id || null,
+        runtime_content: payload.content || null,
+        runtime_use_time:
+          Number.isFinite(payload.end_time) && Number.isFinite(payload.start_time)
+            ? Math.max(0, payload.end_time - payload.start_time)
+            : null,
+        runtime_is_stream: false,
+        runtime_other: payload.other || {},
         occurred_at: new Date(payload.created_at * 1000).toISOString(),
       });
 

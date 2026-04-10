@@ -34,6 +34,12 @@ export interface UsageLog {
   api_key_name: string;
   status: 'success' | 'failed';
   error_message?: string | null;
+  runtime_channel_id?: number | null;
+  runtime_request_id?: string | null;
+  runtime_content?: string | null;
+  runtime_use_time?: number | null;
+  runtime_is_stream?: boolean;
+  runtime_other?: Record<string, unknown> | null;
   created_at: string;
 }
 
@@ -73,6 +79,17 @@ export interface BillingSummary {
 
 export type PaymentMethod = 'alipay' | 'wechat_pay' | 'credit_card' | 'paypal';
 export type PaymentOrderStatus = 'pending' | 'paid' | 'failed' | 'cancelled' | 'expired';
+export type PaymentCheckoutMode = 'redirect' | 'qr_code' | 'manual_review';
+
+export interface PaymentCheckoutAction {
+  mode: PaymentCheckoutMode;
+  provider_label: string;
+  url: string | null;
+  display_url: string | null;
+  qr_code_value: string | null;
+  webhook_enabled: boolean;
+  manual_confirm_allowed: boolean;
+}
 
 export interface PaymentOrder {
   id: string;
@@ -89,6 +106,7 @@ export interface PaymentOrder {
   fulfilled_at: string | null;
   fulfilled_amount: number | null;
   fulfilled_new_api_user_id: number | null;
+  checkout_action: PaymentCheckoutAction | null;
   created_at: string;
   updated_at: string;
 }

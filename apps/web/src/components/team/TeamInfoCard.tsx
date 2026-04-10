@@ -18,6 +18,9 @@ interface TeamInfoCardProps {
  * 需求: 15.2
  */
 export default function TeamInfoCard({ team, userRole, onEdit }: TeamInfoCardProps) {
+  const brandColor = team.brand_color || '#A94B2B';
+  const brandSoft = `${brandColor}18`;
+  const brandHeaderTint = `${brandColor}1f`;
   const locale = useAppSelector((state) => state.locale.locale);
   const copy = locale === 'zh'
     ? {
@@ -70,7 +73,10 @@ export default function TeamInfoCard({ team, userRole, onEdit }: TeamInfoCardPro
     // 默认显示团队名称首字母
     const initial = team.name.charAt(0).toUpperCase();
     return (
-      <div className="flex h-12 w-12 sm:h-14 sm:w-14 md:h-16 md:w-16 items-center justify-center rounded-xl bg-primary/20 text-lg sm:text-xl md:text-2xl font-bold text-primary">
+      <div
+        className="flex h-12 w-12 sm:h-14 sm:w-14 md:h-16 md:w-16 items-center justify-center rounded-xl text-lg sm:text-xl md:text-2xl font-bold"
+        style={{ backgroundColor: brandSoft, color: brandColor }}
+      >
         {initial}
       </div>
     );
@@ -78,7 +84,12 @@ export default function TeamInfoCard({ team, userRole, onEdit }: TeamInfoCardPro
 
   return (
     <div className="editorial-panel overflow-hidden">
-      <div className="border-b border-border bg-[linear-gradient(135deg,rgba(169,75,43,0.12),rgba(255,248,238,0.78)_52%,rgba(33,93,89,0.08))] px-3 py-3 sm:px-4 sm:py-4 md:px-6 md:py-5">
+      <div
+        className="border-b border-border px-3 py-3 sm:px-4 sm:py-4 md:px-6 md:py-5"
+        style={{
+          backgroundImage: `linear-gradient(135deg, ${brandHeaderTint}, rgba(255,248,238,0.78) 52%, rgba(33,93,89,0.08))`,
+        }}
+      >
         <div className="flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="flex min-w-0 items-start gap-3 sm:gap-4">
             <div className="flex-shrink-0">
@@ -181,9 +192,9 @@ export default function TeamInfoCard({ team, userRole, onEdit }: TeamInfoCardPro
               <div className="mt-0.5 sm:mt-1 flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-medium text-text-primary">
                 <span
                   className="h-3 w-3 sm:h-3.5 sm:w-3.5 rounded-full border border-border"
-                  style={{ backgroundColor: team.brand_color || '#A94B2B' }}
+                  style={{ backgroundColor: brandColor }}
                 />
-                {team.brand_color || '#A94B2B'}
+                {brandColor}
               </div>
             </div>
           </div>

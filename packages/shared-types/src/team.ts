@@ -134,6 +134,9 @@ export interface TeamInvitation {
   invite_url?: string | null;
   inviter?: Pick<UserInfo, 'username' | 'email'>;
   team_name?: string;
+  team_slug?: string | null;
+  team_logo?: string | null;
+  team_brand_color?: string | null;
   notification_status?: 'queued' | 'sent' | 'failed' | null;
   notification_error?: string | null;
   notification_updated_at?: string | null;

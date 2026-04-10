@@ -41,6 +41,9 @@ type UserLookupRow = {
 type TeamRow = {
   id: string;
   name: string;
+  slug?: string | null;
+  logo?: string | null;
+  brand_color?: string | null;
 };
 
 type TeamMemberLookupRow = {
@@ -117,7 +120,7 @@ async function getUsersMap(userIds: string[]): Promise<Map<string, UserSummary>>
 function buildInvitationResponse(
   invitation: InvitationRow,
   inviter?: UserSummary,
-  teamName?: string,
+  teamMeta?: Pick<TeamRow, 'name' | 'slug' | 'logo' | 'brand_color'> | null,
   inviteUrl?: string | null,
   delivery?: NotificationOutboxRow | null
 ): TeamInvitation {
@@ -136,7 +139,10 @@ function buildInvitationResponse(
     updated_at: invitation.updated_at,
     invite_url: inviteUrl ?? null,
     inviter,
-    team_name: teamName,
+    team_name: teamMeta?.name,
+    team_slug: teamMeta?.slug ?? null,
+    team_logo: teamMeta?.logo ?? null,
+    team_brand_color: teamMeta?.brand_color ?? null,
     notification_status: delivery?.status || null,
     notification_error: delivery?.error_message || null,
     notification_updated_at: delivery?.updated_at || null,
@@ -340,7 +346,7 @@ export async function createTeamInvitation(params: {
   return buildInvitationResponse(
     invitation as InvitationRow,
     inviterMap.get(params.inviterUserId),
-    teamRow.name,
+    teamRow,
     `${params.inviteBaseUrl.replace(/\/$/, '')}/accept-invite?token=${token}`
   );
 }
@@ -385,15 +391,15 @@ export async function getTeamInvitationByToken(token: string): Promise<TeamInvit
   const deliveryMap = await getInvitationDeliveryMap([invitation.id]);
   const { data: team } = await supabase
     .from('teams')
-    .select('name')
+    .select('name, slug, logo, brand_color')
     .eq('id', invitation.team_id)
     .maybeSingle();
-  const teamRow = team as Pick<TeamRow, 'name'> | null;
+  const teamRow = team as Pick<TeamRow, 'name' | 'slug' | 'logo' | 'brand_color'> | null;
 
   return buildInvitationResponse(
     invitation as InvitationRow,
     inviterMap.get(invitation.invited_by),
-    teamRow?.name,
+    teamRow,
     undefined,
     deliveryMap.get(invitation.id)
   );

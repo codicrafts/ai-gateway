@@ -984,6 +984,13 @@ export type Database = {
           currency: string
           status: 'success' | 'failed'
           error_message: string | null
+          runtime_channel_id: number | null
+          runtime_token_name: string | null
+          runtime_request_id: string | null
+          runtime_content: string | null
+          runtime_use_time: number | null
+          runtime_is_stream: boolean
+          runtime_other: Record<string, unknown>
           occurred_at: string
           created_at: string
         }
@@ -1003,6 +1010,13 @@ export type Database = {
           currency?: string
           status?: 'success' | 'failed'
           error_message?: string | null
+          runtime_channel_id?: number | null
+          runtime_token_name?: string | null
+          runtime_request_id?: string | null
+          runtime_content?: string | null
+          runtime_use_time?: number | null
+          runtime_is_stream?: boolean
+          runtime_other?: Record<string, unknown>
           occurred_at?: string
           created_at?: string
         }
@@ -1022,6 +1036,13 @@ export type Database = {
           currency?: string
           status?: 'success' | 'failed'
           error_message?: string | null
+          runtime_channel_id?: number | null
+          runtime_token_name?: string | null
+          runtime_request_id?: string | null
+          runtime_content?: string | null
+          runtime_use_time?: number | null
+          runtime_is_stream?: boolean
+          runtime_other?: Record<string, unknown>
           occurred_at?: string
           created_at?: string
         }

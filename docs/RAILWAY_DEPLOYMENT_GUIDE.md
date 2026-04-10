@@ -100,6 +100,12 @@ ONE_API_USER_ID=1
 # 支付配置
 STRIPE_SECRET_KEY=sk_test_xxx
 STRIPE_WEBHOOK_SECRET=whsec_xxx
+PAYMENT_ALIPAY_CHECKOUT_URL=https://pay.example.com/alipay
+PAYMENT_WECHAT_PAY_CHECKOUT_URL=https://pay.example.com/wechat
+PAYMENT_CREDIT_CARD_CHECKOUT_URL=https://pay.example.com/card
+PAYMENT_PAYPAL_CHECKOUT_URL=https://pay.example.com/paypal
+PAYMENT_WEBHOOK_SECRET=replace-with-shared-secret
+PAYMENT_MANUAL_CONFIRM_ENABLED=false
 
 # 邮件服务
 SMTP_HOST=smtp.gmail.com
@@ -107,9 +113,20 @@ SMTP_PORT=587
 SMTP_USER=your-email@gmail.com
 SMTP_PASSWORD=your-app-password
 
-# 短信服务（国内）
+# 短信服务（国内 / 阿里云短信）
+SMS_PROVIDER=aliyun
 SMS_ACCESS_KEY_ID=your-access-key
 SMS_ACCESS_KEY_SECRET=your-secret
+SMS_SIGN_NAME=your-sign-name
+SMS_TEMPLATE_CODE=SMS_xxxxxx
+# 可按场景单独覆盖模板；未设置时回退到 SMS_TEMPLATE_CODE
+SMS_TEMPLATE_CODE_AUTH=
+SMS_TEMPLATE_CODE_LOGIN=
+SMS_TEMPLATE_CODE_REGISTER=
+SMS_TEMPLATE_CODE_BIND_PHONE=
+SMS_TEMPLATE_CODE_RESET_PASSWORD=
+SMS_ALIYUN_ENDPOINT=https://dysmsapi.aliyuncs.com/
+SMS_ALIYUN_REGION_ID=cn-hangzhou
 ```
 
 ### 3. Railway 配置

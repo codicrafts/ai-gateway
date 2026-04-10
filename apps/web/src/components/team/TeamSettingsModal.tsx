@@ -136,7 +136,7 @@ export default function TeamSettingsModal({
               <div className="eyebrow">{tr('团队品牌资料', 'Team Branding')}</div>
               <h3 className="mt-2 sm:mt-3 text-lg sm:text-xl md:text-2xl font-semibold">{tr('编辑团队资料与品牌识别', 'Edit team profile and branding')}</h3>
               <p className="mt-1.5 sm:mt-2 max-w-2xl text-xs sm:text-sm leading-5 sm:leading-6 md:leading-7 text-text-secondary">
-                {tr('团队名称、slug、品牌色、官网和 Logo 会同时影响组织工作区与邀请落点。', 'Team name, slug, brand color, website, and logo affect both the workspace and invite landing points.')}
+                {tr('团队名称、slug、品牌色、官网和 Logo 会用于团队资料和邀请页展示。', 'Team name, slug, brand color, website, and logo are used on team profiles and invite pages.')}
               </p>
             </div>
             <button type="button" onClick={busy ? undefined : onClose} className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full border border-border bg-white/80 text-text-secondary transition-colors hover:text-text-primary flex-shrink-0">
@@ -208,7 +208,7 @@ export default function TeamSettingsModal({
 
             <div>
               <label className="mb-1.5 sm:mb-2 block text-xs sm:text-sm text-text-secondary">{tr('团队简介', 'Description')}</label>
-              <textarea value={description} onChange={(event) => setDescription(event.target.value)} className="form-control min-h-[100px] sm:min-h-[120px] text-sm sm:text-base" placeholder={tr('用于说明团队业务边界、使用场景或交付背景。', 'Describe the team scope, use case, or delivery context.')} />
+              <textarea value={description} onChange={(event) => setDescription(event.target.value)} className="form-control min-h-[100px] sm:min-h-[120px] text-sm sm:text-base" placeholder={tr('用于介绍团队用途、协作方式或对外说明。', 'Describe what the team is for, how it works together, or how it should be presented.')} />
             </div>
 
             <div>

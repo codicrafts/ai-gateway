@@ -29,6 +29,12 @@ export interface GatewayUsageLog {
   api_key_name: string;
   status: 'success' | 'failed';
   error_message?: string | null;
+  runtime_channel_id?: number | null;
+  runtime_request_id?: string | null;
+  runtime_content?: string | null;
+  runtime_use_time?: number | null;
+  runtime_is_stream?: boolean;
+  runtime_other?: Record<string, unknown> | null;
   created_at: string;
 }
 

@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -198,21 +199,21 @@ export default function ContactPageClient() {
           </div>
         </section>
 
-        <section className="mb-8">
-          <div className="text-center mb-12">
-            <span className="eyebrow inline-block bg-primary/10 text-primary px-3 py-1 rounded-full border border-primary/20 mb-4">{t.contact.aboutUs}</span>
-            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-text-primary">{t.contact.aboutUs}</h2>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 lg:gap-8">
-            {[{ icon: 'fa-bullseye', title: t.contact.mission, desc: t.contact.missionDesc }, { icon: 'fa-eye', title: t.contact.vision, desc: t.contact.visionDesc }, { icon: 'fa-heart', title: t.contact.values, desc: t.contact.valuesDesc }].map((item) => (
-              <div key={item.title} className="bg-white border border-border rounded-[2.5rem] p-8 sm:p-10 text-center shadow-sm hover:shadow-lg transition-shadow group">
-                <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary text-2xl mx-auto mb-6 group-hover:scale-110 group-hover:rotate-3 transition-transform">
-                  <i className={`fas ${item.icon}`} />
-                </div>
-                <h3 className="text-2xl font-bold tracking-tight mb-4 text-text-primary">{item.title}</h3>
-                <p className="text-text-secondary text-sm leading-relaxed">{item.desc}</p>
-              </div>
-            ))}
+        <section className="mb-8 rounded-[2.5rem] border border-border bg-white/75 p-8 sm:p-10 shadow-sm backdrop-blur-sm">
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+            <div>
+              <span className="eyebrow inline-block bg-primary/10 text-primary px-3 py-1 rounded-full border border-primary/20 mb-4">{t.contact.aboutUs}</span>
+              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-text-primary">{t.contact.aboutCtaTitle}</h2>
+              <p className="mt-4 max-w-3xl text-base leading-relaxed text-text-secondary">{t.contact.aboutCtaDesc}</p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Link href="/about" className="btn-primary btn-large justify-center no-underline rounded-full">
+                {t.contact.aboutCtaPrimary}
+              </Link>
+              <Link href="/docs" className="btn-secondary btn-large justify-center no-underline rounded-full">
+                {t.contact.aboutCtaSecondary}
+              </Link>
+            </div>
           </div>
         </section>
       </main>

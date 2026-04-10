@@ -1,5 +1,6 @@
 import { createHash, timingSafeEqual } from 'crypto';
 import { createServerAdminSupabaseClient } from '@/lib/supabase';
+import { canSendPhoneVerificationSms, sendPhoneVerificationSms } from '@/services/notification/sms.service';
 import { validateMainlandPhone, normalizeMainlandPhone } from '@/utils/helpers';
 
 export type PhoneVerificationPurpose = 'register' | 'login' | 'bind_phone' | 'reset_password' | 'auth';
@@ -60,6 +61,17 @@ export async function issuePhoneVerificationCode(
 
   if (error) {
     throw new Error('发送验证码失败');
+  }
+
+  if (canSendPhoneVerificationSms(purpose)) {
+    await sendPhoneVerificationSms({
+      phoneNumber: normalizedPhone,
+      code,
+      purpose,
+      expiresAt,
+    });
+  } else if (process.env.NODE_ENV === 'production') {
+    throw new Error('短信服务未配置');
   }
 
   const shouldExposeDebugCode = process.env.NODE_ENV !== 'production' || process.env.PHONE_AUTH_DEBUG_CODE;

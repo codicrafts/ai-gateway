@@ -11,7 +11,9 @@ import EditorialSelect, {
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   hydrateModels,
+  setCapabilityFilter,
   setCategoryFilter,
+  setPriceFilter,
   setProviderFilter,
   setSearchTerm,
   setSortFilter,
@@ -20,33 +22,14 @@ import { showNotification } from "@/store/slices/notificationSlice";
 import { copyToClipboard } from "@/utils/helpers";
 import { formatPricePerMillion } from "@/utils/modelPricing";
 import { useTranslation } from "@/hooks/useTranslation";
-
-const categoryStyles: Record<string, string> = {
-  text: "bg-[rgba(169,75,43,0.14)] text-primary",
-  image: "bg-[rgba(33,93,89,0.14)] text-secondary",
-  audio: "bg-[rgba(186,122,42,0.14)] text-warning",
-  video: "bg-[rgba(45,127,84,0.14)] text-success",
-  embedding: "bg-[rgba(24,19,16,0.08)] text-text-primary",
-};
-
-function getLocalizedModelDescription(model: Model, locale: string) {
-  if (locale === "zh" && model.description_zh) return model.description_zh;
-  if (locale === "en" && model.description_en) return model.description_en;
-  return model.description;
-}
-
-function getLocalizedCapabilityTags(
-  model: Model,
-  locale: string,
-  defaultCapabilityTags: Record<string, string[]>,
-  genericAccessTag: string,
-) {
-  if (locale === "zh" && model.capabilities_zh?.length)
-    return model.capabilities_zh;
-  if (locale === "en" && model.capabilities_en?.length)
-    return model.capabilities_en;
-  return defaultCapabilityTags[model.category] || [genericAccessTag];
-}
+import {
+  categoryStyles,
+  formatContextLength,
+  getModelCapabilitySignals,
+  getLocalizedCapabilityTags,
+  getLocalizedModelDescription,
+} from "@/components/models/modelCatalog";
+import type { ModelCapabilitySignal } from "@/components/models/modelCatalog";
 
 export default function ModelsPageClient({
   initialModels,
@@ -66,7 +49,15 @@ export default function ModelsPageClient({
     }),
     [t],
   );
-  const { models, searchTerm, providerFilter, categoryFilter, sortFilter } =
+  const {
+    models,
+    searchTerm,
+    providerFilter,
+    categoryFilter,
+    priceFilter,
+    capabilityFilter,
+    sortFilter,
+  } =
     useAppSelector((s) => s.models);
   const [showFilters, setShowFilters] = useState(false);
 
@@ -85,6 +76,36 @@ export default function ModelsPageClient({
     [t],
   );
 
+  const capabilityLabels = useMemo<Record<string, string>>(
+    () => ({
+      reasoning: t.modelsPage.capabilityReasoning,
+      code: t.modelsPage.capabilityCode,
+      long_context: t.modelsPage.capabilityLongContext,
+      multimodal: t.modelsPage.capabilityMultimodal,
+      image_generation: t.modelsPage.capabilityImageGeneration,
+      embedding: t.modelsPage.capabilityEmbedding,
+      low_latency: t.modelsPage.capabilityLowLatency,
+      affordable: t.modelsPage.capabilityAffordable,
+    }),
+    [t],
+  );
+
+  const priceMatches = (model: Model) => {
+    if (!priceFilter) return true;
+
+    if (priceFilter === "budget") {
+      return model.input_price > 0 && model.input_price <= 1;
+    }
+    if (priceFilter === "standard") {
+      return model.input_price > 1 && model.input_price <= 5;
+    }
+    if (priceFilter === "premium") {
+      return model.input_price > 5;
+    }
+
+    return true;
+  };
+
   const filtered = useMemo(() => {
     const result = [...(models || [])].filter((model) => {
       const term = searchTerm.trim().toLowerCase();
@@ -101,7 +122,19 @@ export default function ModelsPageClient({
         !providerFilter || model.provider === providerFilter;
       const matchCategory =
         !categoryFilter || model.category === categoryFilter;
-      return matchSearch && matchProvider && matchCategory;
+      const matchPrice = priceMatches(model);
+      const matchCapability =
+        !capabilityFilter ||
+        getModelCapabilitySignals(model).includes(
+          capabilityFilter as ReturnType<typeof getModelCapabilitySignals>[number],
+        );
+      return (
+        matchSearch &&
+        matchProvider &&
+        matchCategory &&
+        matchPrice &&
+        matchCapability
+      );
     });
 
     switch (sortFilter) {
@@ -120,7 +153,16 @@ export default function ModelsPageClient({
     }
 
     return result;
-  }, [models, searchTerm, providerFilter, categoryFilter, sortFilter, locale]);
+  }, [
+    models,
+    searchTerm,
+    providerFilter,
+    categoryFilter,
+    priceFilter,
+    capabilityFilter,
+    sortFilter,
+    locale,
+  ]);
 
   const providers = Array.from(
     new Set((models || []).map((model) => model.provider)),
@@ -142,6 +184,41 @@ export default function ModelsPageClient({
     ],
     [categoryNames, t],
   );
+  const priceOptions = useMemo<EditorialSelectOption[]>(
+    () => [
+      { value: "", label: t.modelsPage.allPriceBands },
+      { value: "budget", label: t.modelsPage.priceBandBudget },
+      { value: "standard", label: t.modelsPage.priceBandStandard },
+      { value: "premium", label: t.modelsPage.priceBandPremium },
+    ],
+    [t],
+  );
+  const capabilityOptions = useMemo<EditorialSelectOption[]>(() => {
+    const order: ModelCapabilitySignal[] = [
+      "reasoning",
+      "code",
+      "long_context",
+      "multimodal",
+      "image_generation",
+      "embedding",
+      "low_latency",
+      "affordable",
+    ];
+
+    const availableSignals = new Set(
+      (models || []).flatMap((model) => getModelCapabilitySignals(model)),
+    );
+
+    return [
+      { value: "", label: t.modelsPage.allCapabilities },
+      ...order
+        .filter((signal) => availableSignals.has(signal))
+        .map((signal) => ({
+          value: signal,
+          label: capabilityLabels[signal],
+        })),
+    ];
+  }, [capabilityLabels, models, t]);
   const sortOptions = useMemo<EditorialSelectOption[]>(
     () => [
       { value: "name", label: t.modelsPage.sortName },
@@ -264,7 +341,7 @@ export default function ModelsPageClient({
             </button>
           </div>
 
-          <div className={`grid gap-3 sm:gap-5 lg:grid-cols-[minmax(0,2fr)_repeat(3,minmax(0,1fr))] ${showFilters ? "grid" : "hidden sm:grid"}`}>
+          <div className={`grid gap-3 sm:gap-5 sm:grid-cols-2 xl:grid-cols-[minmax(0,1.5fr)_repeat(5,minmax(0,1fr))] ${showFilters ? "grid" : "hidden sm:grid"}`}>
             <div className="lg:col-span-1">
               <label className="mb-1.5 sm:mb-2 block text-[0.65rem] sm:text-xs font-semibold uppercase tracking-[0.16em] sm:tracking-[0.18em] text-text-secondary">
                 {t.modelsPage.search}
@@ -296,6 +373,26 @@ export default function ModelsPageClient({
                 value={categoryFilter}
                 options={categoryOptions}
                 onChange={(nextValue) => dispatch(setCategoryFilter(nextValue))}
+              />
+            </div>
+
+            <div>
+              <EditorialSelect
+                label={t.modelsPage.priceBand}
+                value={priceFilter}
+                options={priceOptions}
+                onChange={(nextValue) => dispatch(setPriceFilter(nextValue))}
+              />
+            </div>
+
+            <div>
+              <EditorialSelect
+                label={t.modelsPage.capability}
+                value={capabilityFilter}
+                options={capabilityOptions}
+                onChange={(nextValue) =>
+                  dispatch(setCapabilityFilter(nextValue))
+                }
               />
             </div>
 
@@ -478,9 +575,10 @@ export default function ModelsPageClient({
                       {t.modelsPage.context}
                     </div>
                     <div className="mt-0.5 sm:mt-1 text-xs sm:text-sm font-bold text-text-primary">
-                      {model.context_length
-                        ? `${Math.round(model.context_length / 1000)}K`
-                        : t.modelsPage.unlabeled}
+                      {formatContextLength(
+                        model.context_length,
+                        t.modelsPage.unlabeled,
+                      )}
                     </div>
                   </div>
                   <div className="rounded-lg sm:rounded-xl bg-dark-light/20 p-2.5 sm:p-3 group-hover:bg-white border border-transparent group-hover:border-border/60 transition-colors">
@@ -493,7 +591,14 @@ export default function ModelsPageClient({
                   </div>
                 </div>
 
-                <div className="mt-auto flex gap-2 sm:gap-3 pt-4 sm:pt-6">
+                <div className="mt-auto grid grid-cols-2 gap-2.5 sm:gap-3 pt-4 sm:pt-6">
+                  <Link
+                    href={`/models/${model.id}`}
+                    className="btn-secondary min-h-[48px] justify-center rounded-2xl border-border/80 bg-dark-light/30 px-3 py-2.5 text-[0.72rem] sm:text-xs font-semibold tracking-[0.04em] sm:tracking-[0.06em] no-underline hover:border-primary/30 hover:bg-white hover:text-primary transition-all"
+                  >
+                    <i className="fas fa-arrow-right mr-1.5 sm:mr-2 opacity-70" />
+                    {t.modelsPage.viewDetails}
+                  </Link>
                   <button
                     onClick={() => {
                       copyToClipboard(model.id);
@@ -506,15 +611,16 @@ export default function ModelsPageClient({
                         }),
                       );
                     }}
-                    className="btn-secondary flex-1 justify-center rounded-full hover:border-primary/30 hover:text-primary transition-colors text-xs sm:text-sm"
+                    className="btn-secondary min-h-[48px] justify-center rounded-2xl border-border/80 bg-dark-light/30 px-3 py-2.5 text-[0.72rem] sm:text-xs font-semibold tracking-[0.04em] sm:tracking-[0.06em] hover:border-primary/30 hover:bg-white hover:text-primary transition-all"
                   >
                     <i className="fas fa-copy mr-1.5 sm:mr-2 opacity-70" />
                     {t.modelsPage.copyId}
                   </button>
                   <Link
                     href={`/playground?model=${model.id}`}
-                    className="btn-primary flex-1 justify-center no-underline rounded-full shadow-sm hover:shadow hover:-translate-y-0.5 transition-all text-xs sm:text-sm"
+                    className="btn-primary col-span-2 min-h-[52px] justify-center rounded-2xl px-4 py-3 text-sm sm:text-[0.86rem] font-bold tracking-[0.06em] sm:tracking-[0.08em] no-underline shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all"
                   >
+                    <i className="fas fa-sparkles mr-2 opacity-90" />
                     {t.modelsPage.startTrial}
                   </Link>
                 </div>

@@ -7,6 +7,8 @@ interface ModelsState {
   searchTerm: string;
   providerFilter: string;
   categoryFilter: string;
+  priceFilter: string;
+  capabilityFilter: string;
   sortFilter: string;
 }
 
@@ -16,6 +18,8 @@ const initialState: ModelsState = {
   searchTerm: '',
   providerFilter: '',
   categoryFilter: '',
+  priceFilter: '',
+  capabilityFilter: '',
   sortFilter: 'name',
 };
 
@@ -39,6 +43,8 @@ const modelsSlice = createSlice({
     setSearchTerm(state, action: PayloadAction<string>) { state.searchTerm = action.payload; },
     setProviderFilter(state, action: PayloadAction<string>) { state.providerFilter = action.payload; },
     setCategoryFilter(state, action: PayloadAction<string>) { state.categoryFilter = action.payload; },
+    setPriceFilter(state, action: PayloadAction<string>) { state.priceFilter = action.payload; },
+    setCapabilityFilter(state, action: PayloadAction<string>) { state.capabilityFilter = action.payload; },
     setSortFilter(state, action: PayloadAction<string>) { state.sortFilter = action.payload; },
   },
   extraReducers: (builder) => {
@@ -49,5 +55,13 @@ const modelsSlice = createSlice({
   },
 });
 
-export const { hydrateModels, setSearchTerm, setProviderFilter, setCategoryFilter, setSortFilter } = modelsSlice.actions;
+export const {
+  hydrateModels,
+  setSearchTerm,
+  setProviderFilter,
+  setCategoryFilter,
+  setPriceFilter,
+  setCapabilityFilter,
+  setSortFilter,
+} = modelsSlice.actions;
 export default modelsSlice.reducer;

@@ -28,6 +28,7 @@ export interface Model {
   capabilities_zh?: string[];
   capabilities_en?: string[];
   source_url?: string;
+  supported_endpoint_types?: string[];
 }
 
 export interface ApiKey {

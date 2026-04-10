@@ -1,5 +1,6 @@
 import { getAuthenticatedAppUser } from '@/services/account/session.service';
 import { getBillingSummaryForTeam } from '@/services/billing/billing.service';
+import { listGatewayConfiguredModels } from '@/services/gateway/gateway-model.service';
 import { listPaymentOrders } from '@/services/billing/payment.service';
 import { listGatewayApiKeysForTeam } from '@/services/gateway/gateway-token.service';
 import { listGatewayUsageForTeam } from '@/services/gateway/gateway-usage.service';
@@ -78,6 +79,7 @@ export async function getDashboardPageBootstrap(
   const needsUsage = section === 'overview' || section === 'usage' || section === 'api-keys';
   const needsBillingSummary = section === 'overview' || section === 'billing';
   const needsPaymentOrders = section === 'overview' || section === 'billing';
+  const needsAvailableModels = section === 'api-keys';
 
   if (needsTeamWorkspace) {
     const workspace = await getTeamWorkspaceForUser(appUser.id, requestedTeamId);
@@ -171,11 +173,15 @@ export async function getDashboardPageBootstrap(
 
   const [
     apiKeys,
+    availableModels,
     usage,
     billingSummary,
     paymentOrders,
   ] = await Promise.all([
     needsApiKeys && selectedTeamId ? listGatewayApiKeysForTeam(selectedTeamId) : Promise.resolve([]),
+    needsAvailableModels
+      ? listGatewayConfiguredModels().catch(() => [])
+      : Promise.resolve([]),
     needsUsage && selectedTeamId
       ? listGatewayUsageForTeam({ teamId: selectedTeamId, page: 0, limit: 50 })
       : Promise.resolve({ logs: [], stats: null, page: 0, limit: 50 }),
@@ -208,7 +214,7 @@ export async function getDashboardPageBootstrap(
     dashboard: {
       team_id: selectedTeamId,
       api_keys: apiKeys,
-      available_models: [],
+      available_models: availableModels,
       usage,
       billing_summary: billingSummary,
       payment_orders: paymentOrders,

@@ -31,6 +31,18 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to send code';
-    return NextResponse.json({ error: message, code: 'ACCOUNT_CODE_FAILED' }, { status: 400 });
+    const status =
+      message === '短信服务未配置'
+        ? 500
+        : message.startsWith('短信发送失败')
+          ? 502
+          : 400;
+    const code =
+      message === '短信服务未配置'
+        ? 'SMS_NOT_CONFIGURED'
+        : message.startsWith('短信发送失败')
+          ? 'SMS_DELIVERY_FAILED'
+          : 'ACCOUNT_CODE_FAILED';
+    return NextResponse.json({ error: message, code }, { status });
   }
 }

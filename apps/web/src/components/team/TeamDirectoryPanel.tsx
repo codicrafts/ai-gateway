@@ -27,9 +27,9 @@ export default function TeamDirectoryPanel({
       <div className="flex flex-col gap-3 sm:gap-4 md:flex-row md:items-start md:justify-between">
         <div>
           <div className="eyebrow">{tr('团队目录', 'Team Directory')}</div>
-          <h3 className="mt-2 sm:mt-3 text-base sm:text-lg md:text-xl font-semibold">{tr('切换工作区', 'Switch Workspace')}</h3>
+          <h3 className="mt-2 sm:mt-3 text-base sm:text-lg md:text-xl font-semibold">{tr('切换团队', 'Switch Team')}</h3>
           <p className="mt-1.5 sm:mt-2 text-[0.7rem] sm:text-sm leading-5 sm:leading-6 md:leading-7 text-text-secondary">
-            {tr('集中查看你所属的团队，并切换到不同团队的控制台上下文。', 'Browse the teams you belong to and switch the control plane context directly.')}
+            {tr('查看你加入的团队，并在它们之间快速切换。', 'View the teams you belong to and switch between them quickly.')}
           </p>
         </div>
         <button
@@ -45,6 +45,7 @@ export default function TeamDirectoryPanel({
       <div className="mt-3 sm:mt-4 md:mt-5 grid gap-2.5 sm:gap-3 lg:grid-cols-2">
         {teams.map((team) => {
           const isCurrent = currentTeam?.id === team.id;
+          const tone = team.brand_color || '#A94B2B';
           return (
             <button
               key={team.id}
@@ -52,16 +53,25 @@ export default function TeamDirectoryPanel({
               onClick={() => onSelectTeam(team.id)}
               className={`rounded-md sm:rounded-lg md:rounded-xl border p-3 sm:p-4 text-left transition-all ${
                 isCurrent
-                  ? 'border-primary bg-[rgba(169,75,43,0.08)] shadow-soft'
+                  ? 'shadow-soft'
                   : 'border-border bg-white/72 hover:-translate-y-0.5 hover:shadow-soft'
               }`}
+              style={
+                isCurrent
+                  ? {
+                      borderColor: `${tone}5e`,
+                      backgroundColor: `${tone}0d`,
+                      boxShadow: `0 18px 40px ${tone}14`,
+                    }
+                  : undefined
+              }
             >
               <div className="flex items-start justify-between gap-2 sm:gap-3">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <div
                       className="flex h-9 w-9 sm:h-10 sm:w-10 md:h-11 md:w-11 items-center justify-center rounded-lg sm:rounded-xl text-base sm:text-lg font-semibold"
-                      style={{ backgroundColor: `${team.brand_color || '#A94B2B'}18`, color: team.brand_color || '#A94B2B' }}
+                      style={{ backgroundColor: `${tone}18`, color: tone }}
                     >
                       {(team.name || 'T').charAt(0).toUpperCase()}
                     </div>
@@ -77,7 +87,10 @@ export default function TeamDirectoryPanel({
                   )}
                 </div>
                 {isCurrent && (
-                  <span className="rounded-full bg-primary px-2 py-0.5 sm:px-3 sm:py-1 text-[0.65rem] sm:text-xs font-medium text-white flex-shrink-0">
+                  <span
+                    className="rounded-full px-2 py-0.5 sm:px-3 sm:py-1 text-[0.65rem] sm:text-xs font-medium text-white flex-shrink-0"
+                    style={{ backgroundColor: tone }}
+                  >
                     {tr('当前', 'Current')}
                   </span>
                 )}
@@ -110,8 +123,8 @@ export default function TeamDirectoryPanel({
       {teams.length === 1 && currentTeam && (
         <div className="mt-3 sm:mt-4 rounded-md sm:rounded-lg md:rounded-xl border border-dashed border-border bg-white/45 p-3 sm:p-4 text-xs sm:text-sm leading-5 sm:leading-6 md:leading-7 text-text-secondary">
           {currentUserRole === 'owner' || currentUserRole === 'admin'
-            ? tr('你当前只有一个团队，可继续创建新团队以区分测试、生产或不同业务线。', 'You currently have one team. Create more teams to separate staging, production, or business units.')
-            : tr('当前账号只加入了一个团队。若需要更多工作区，可联系团队所有者或管理员创建。', 'This account currently belongs to one team. Ask an owner or admin to create more workspaces if needed.')}
+            ? tr('你当前只有一个团队。如有需要，可以继续创建新的团队来区分不同项目。', 'You currently have one team. Create another one if you want to separate different projects.')
+            : tr('当前账号只加入了一个团队。如需更多团队，可联系所有者或管理员。', 'This account currently belongs to one team. Contact an owner or admin if you need another team.')}
         </div>
       )}
     </div>

@@ -215,6 +215,31 @@ export async function enqueueTeamUsagePullJob(teamId: string): Promise<OrgRuntim
   });
 }
 
+export async function listPendingOrgRuntimeSyncJobs(params?: {
+  entityType?: OrgRuntimeSyncJobRow['entity_type'];
+  limit?: number;
+}): Promise<OrgRuntimeSyncJobRow[]> {
+  const supabase = createServerAdminSupabaseClient();
+  let query = supabase
+    .from('org_runtime_sync_jobs')
+    .select('*')
+    .eq('status', 'pending')
+    .order('created_at', { ascending: true })
+    .limit(params?.limit ?? 20);
+
+  if (params?.entityType) {
+    query = query.eq('entity_type', params.entityType);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    throw new Error(error.message || '获取待处理同步任务失败');
+  }
+
+  return (data || []) as OrgRuntimeSyncJobRow[];
+}
+
 async function pullUsageForTeam(params: {
   teamId: string;
   runtimeUsername: string;
@@ -291,6 +316,25 @@ async function pullUsageForTeam(params: {
         currency: 'USD',
         status: isSuccessLog ? 'success' : 'failed',
         error_message: isSuccessLog ? null : (log.content || 'upstream_error'),
+        runtime_channel_id: Number.isFinite(Number(log.channel_id)) ? Number(log.channel_id) : null,
+        runtime_token_name: log.token_name || null,
+        runtime_request_id: log.request_id || null,
+        runtime_content: log.content || null,
+        runtime_use_time:
+          log.use_time !== undefined && Number.isFinite(Number(log.use_time))
+            ? Number(log.use_time)
+            : null,
+        runtime_is_stream: Boolean(log.is_stream),
+        runtime_other:
+          typeof log.other === 'string' && log.other.trim().length > 0
+            ? (() => {
+                try {
+                  return JSON.parse(log.other) as Record<string, unknown>;
+                } catch {
+                  return {};
+                }
+              })()
+            : {},
         occurred_at: new Date(usageLogCreatedAt(log) * 1000).toISOString(),
       } satisfies OrgUsageLedgerInsert;
 
@@ -320,7 +364,7 @@ async function pullUsageForTeam(params: {
     );
     const { data: existingRows, error: existingRowsError } = await supabase
       .from('org_usage_ledger')
-      .select('id,new_api_log_id,amount,prompt_tokens,completion_tokens,total_tokens,occurred_at,status,error_message')
+      .select('id,new_api_log_id,amount,prompt_tokens,completion_tokens,total_tokens,occurred_at,status,error_message,runtime_channel_id,runtime_token_name,runtime_request_id,runtime_content,runtime_use_time,runtime_is_stream,runtime_other')
       .eq('team_id', params.teamId)
       .in('new_api_log_id', logIds);
 
@@ -339,6 +383,13 @@ async function pullUsageForTeam(params: {
         occurred_at: string;
         status: 'success' | 'failed';
         error_message: string | null;
+        runtime_channel_id: number | null;
+        runtime_token_name: string | null;
+        runtime_request_id: string | null;
+        runtime_content: string | null;
+        runtime_use_time: number | null;
+        runtime_is_stream: boolean;
+        runtime_other: Record<string, unknown>;
       }>).map((row) => [Number(row.new_api_log_id), row])
     );
     const staleExistingIds = Array.from(staleLogIds)
@@ -388,8 +439,31 @@ async function pullUsageForTeam(params: {
       const sameOccurredAt = existing.occurred_at === update.occurred_at;
       const sameStatus = existing.status === update.status;
       const sameErrorMessage = (existing.error_message || null) === (update.error_message || null);
+      const sameRuntimeChannelId = Number(existing.runtime_channel_id || 0) === Number(update.runtime_channel_id || 0);
+      const sameRuntimeTokenName = (existing.runtime_token_name || null) === (update.runtime_token_name || null);
+      const sameRuntimeRequestId = (existing.runtime_request_id || null) === (update.runtime_request_id || null);
+      const sameRuntimeContent = (existing.runtime_content || null) === (update.runtime_content || null);
+      const sameRuntimeUseTime = Number(existing.runtime_use_time || 0) === Number(update.runtime_use_time || 0);
+      const sameRuntimeIsStream = Boolean(existing.runtime_is_stream) === Boolean(update.runtime_is_stream);
+      const sameRuntimeOther =
+        JSON.stringify(existing.runtime_other || {}) === JSON.stringify(update.runtime_other || {});
 
-      if (sameAmount && samePromptTokens && sameCompletionTokens && sameTotalTokens && sameOccurredAt && sameStatus && sameErrorMessage) {
+      if (
+        sameAmount &&
+        samePromptTokens &&
+        sameCompletionTokens &&
+        sameTotalTokens &&
+        sameOccurredAt &&
+        sameStatus &&
+        sameErrorMessage &&
+        sameRuntimeChannelId &&
+        sameRuntimeTokenName &&
+        sameRuntimeRequestId &&
+        sameRuntimeContent &&
+        sameRuntimeUseTime &&
+        sameRuntimeIsStream &&
+        sameRuntimeOther
+      ) {
         continue;
       }
 
@@ -402,6 +476,13 @@ async function pullUsageForTeam(params: {
           total_tokens: update.total_tokens,
           status: update.status,
           error_message: update.error_message,
+          runtime_channel_id: update.runtime_channel_id,
+          runtime_token_name: update.runtime_token_name,
+          runtime_request_id: update.runtime_request_id,
+          runtime_content: update.runtime_content,
+          runtime_use_time: update.runtime_use_time,
+          runtime_is_stream: update.runtime_is_stream,
+          runtime_other: update.runtime_other,
           occurred_at: update.occurred_at,
         } as never)
         .eq('id', existing.id);
@@ -549,6 +630,43 @@ export async function processOrgRuntimeSyncJob(jobId: number): Promise<OrgRuntim
       last_attempt_at: new Date().toISOString(),
     });
   }
+}
+
+export async function processPendingOrgRuntimeSyncJobs(params?: {
+  entityType?: OrgRuntimeSyncJobRow['entity_type'];
+  limit?: number;
+}): Promise<{
+  attempted: number;
+  processed: number;
+  skipped: number;
+  completed: number;
+  failed: number;
+}> {
+  const jobs = await listPendingOrgRuntimeSyncJobs(params);
+  const result = {
+    attempted: jobs.length,
+    processed: 0,
+    skipped: 0,
+    completed: 0,
+    failed: 0,
+  };
+
+  for (const job of jobs) {
+    const processedJob = await processOrgRuntimeSyncJob(job.id);
+    if (processedJob.status === 'pending') {
+      result.skipped += 1;
+      continue;
+    }
+
+    result.processed += 1;
+    if (processedJob.status === 'completed') {
+      result.completed += 1;
+    } else if (processedJob.status === 'failed') {
+      result.failed += 1;
+    }
+  }
+
+  return result;
 }
 
 export async function synchronizeTeamUsageLedgerNow(teamId: string): Promise<void> {

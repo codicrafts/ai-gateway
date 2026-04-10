@@ -122,10 +122,20 @@ export async function listGatewayUsageForTeam(options: {
       total_tokens: row.total_tokens,
       quota_cost: Number(row.amount),
       api_key_name:
+        row.runtime_token_name ||
         (row.org_api_key_id ? apiKeyNameMap.get(Number(row.org_api_key_id)) : null) ||
         `Key #${row.org_api_key_id ?? '-'}`,
       status: row.status,
       error_message: row.error_message,
+      runtime_channel_id: row.runtime_channel_id,
+      runtime_request_id: row.runtime_request_id,
+      runtime_content: row.runtime_content,
+      runtime_use_time: row.runtime_use_time,
+      runtime_is_stream: row.runtime_is_stream,
+      runtime_other:
+        row.runtime_other && typeof row.runtime_other === 'object'
+          ? row.runtime_other
+          : null,
       created_at: row.occurred_at,
     })),
     stats,

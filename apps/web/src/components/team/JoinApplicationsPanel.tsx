@@ -67,7 +67,7 @@ export default function JoinApplicationsPanel({
         <div className="eyebrow">{tr('加入团队', 'Join Team')}</div>
         <h3 className="mt-3 text-lg font-semibold sm:text-xl">{tr('通过团队标识提交加入申请', 'Apply to join a team by slug')}</h3>
         <p className="mt-2 text-sm leading-6 text-text-secondary sm:leading-7">
-          {tr('输入团队 slug，说明你的使用场景，团队管理员会在当前工作区审批。', 'Enter the team slug and your use case. Team admins can review the request in this workspace.')}
+          {tr('输入团队 slug，并简单说明加入原因，团队管理员会审核这条申请。', 'Enter the team slug and briefly explain why you want to join. Team admins will review the request.')}
         </p>
 
         <form onSubmit={handleApply} className="mt-4 grid gap-4 sm:mt-5">
@@ -100,7 +100,7 @@ export default function JoinApplicationsPanel({
               className="form-control min-h-[108px]"
               value={message}
               onChange={(event) => setMessage(event.target.value)}
-              placeholder={tr('说明你的团队归属、使用目的或交付背景。', 'Describe your team context, intended use, or delivery background.')}
+              placeholder={tr('补充说明你的加入原因或用途。', 'Add a short note about why you want to join.')}
             />
           </div>
           <div className="flex justify-end">
@@ -150,7 +150,7 @@ export default function JoinApplicationsPanel({
           <div className="eyebrow">{tr('审批队列', 'Review Queue')}</div>
           <h3 className="mt-3 text-lg font-semibold sm:text-xl">{tr('待审批加入申请', 'Pending Join Requests')}</h3>
           <p className="mt-2 text-sm leading-6 text-text-secondary sm:leading-7">
-            {tr('这里会显示申请加入当前团队的请求，可直接批准为成员或访客。', 'Requests to join the current team appear here and can be approved as member or guest.')}
+            {tr('待处理的加入申请会显示在这里，你可以直接批准或拒绝。', 'Pending join requests appear here, and you can approve or reject them directly.')}
           </p>
           <div className="mt-4 space-y-3 sm:mt-5">
             {applications.length === 0 ? (

@@ -21,6 +21,7 @@ const API_KEY_PERMISSION_SCOPES = [
   'embeddings',
   'images',
   'audio',
+  'video',
   'rerank',
   'models.read',
 ] as const;
@@ -585,4 +586,43 @@ export async function getGatewayApiKeySecret(params: {
   }
 
   return secret;
+}
+
+export async function getGatewayApiKeyRuntimeCredentials(params: {
+  userId: string;
+  teamId?: string | null;
+  id: number;
+}): Promise<{ secret: string; apiKey: GatewayApiKey }> {
+  const context = await resolveAccessibleTeamContext(params.userId, params.teamId);
+  const currentKey = await getLocalKeyOrThrow(params.id, context.teamId);
+
+  if (currentKey.status !== 'active') {
+    throw new Error('当前 API Key 已禁用');
+  }
+
+  if (currentKey.expires_at && new Date(currentKey.expires_at).getTime() <= Date.now()) {
+    throw new Error('当前 API Key 已过期');
+  }
+
+  const syncRow = await getSyncRecord(currentKey.id);
+
+  if (!syncRow?.new_api_token_id) {
+    throw new Error('运行时 API Key 尚未同步完成');
+  }
+
+  const runtimeAccount = await ensureTeamRuntimeAccount({
+    teamId: context.teamId,
+    actingUserId: params.userId,
+  });
+
+  const secret = await fetchGatewayRuntimeTokenKey(
+    runtimeAccount.newApiUserId,
+    runtimeAccount.accessToken,
+    syncRow.new_api_token_id
+  );
+
+  return {
+    secret,
+    apiKey: mapOrgApiKeyToGatewayApiKey(currentKey, syncRow),
+  };
 }

@@ -150,6 +150,11 @@ export interface UsageLog {
   channel_id: number
   token_id: number
   token_name: string
+  use_time?: number
+  is_stream?: boolean
+  request_id?: string
+  other?: string
+  username?: string
 }
 
 export interface UsageStats {
@@ -161,9 +166,15 @@ export interface UsageStats {
 export interface OneApiPricingModel {
   model_name: string
   description?: string
+  icon?: string
   tags?: string
   vendor_id?: number
   quota_type?: number
+  model_ratio?: number
+  model_price?: number
+  owner_by?: string
+  completion_ratio?: number
+  enable_groups?: string[]
   supported_endpoint_types?: string[]
 }
 

@@ -31,7 +31,8 @@ export async function POST(
     if (
       message === '充值订单不存在' ||
       message === '当前用户未绑定 new-api 账户' ||
-      message === '充值订单正在处理中，请稍后再试'
+      message === '充值订单正在处理中，请稍后再试' ||
+      message === '当前环境未启用手工确认充值订单'
     ) {
       return fail(message, 400);
     }

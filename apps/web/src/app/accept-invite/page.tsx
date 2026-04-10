@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useMemo, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -24,6 +25,8 @@ export default function AcceptInvitePage() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const currentUserEmail = currentUser?.email?.toLowerCase() ?? null;
+  const teamBrandColor = invitation?.team_brand_color || '#A94B2B';
+  const teamBrandSoft = `${teamBrandColor}18`;
 
   useEffect(() => {
     if (!token) {
@@ -123,6 +126,50 @@ export default function AcceptInvitePage() {
             </div>
           ) : invitation ? (
             <div className="mt-10 space-y-6">
+              <div
+                className="rounded-[24px] border border-border bg-white/70 p-5 sm:p-6"
+                style={{ boxShadow: `0 18px 44px ${teamBrandColor}14` }}
+              >
+                <div className="flex items-center gap-4">
+                  <div
+                    className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-[20px] border border-border bg-white"
+                    style={{ backgroundColor: teamBrandSoft }}
+                  >
+                    {invitation.team_logo ? (
+                      <Image
+                        src={invitation.team_logo}
+                        alt={`${invitation.team_name || 'Team'} logo`}
+                        width={64}
+                        height={64}
+                        unoptimized
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-2xl font-semibold" style={{ color: teamBrandColor }}>
+                        {(invitation.team_name || 'T').charAt(0).toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-xs uppercase tracking-[0.2em] text-text-secondary">团队品牌</div>
+                    <div className="mt-2 truncate text-xl font-semibold text-text-primary">
+                      {invitation.team_name || '未命名团队'}
+                    </div>
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-text-secondary">
+                      {invitation.team_slug ? (
+                        <span className="rounded-full border border-border bg-white/80 px-3 py-1">
+                          /{invitation.team_slug}
+                        </span>
+                      ) : null}
+                      <span className="inline-flex items-center gap-2 rounded-full border border-border bg-white/80 px-3 py-1">
+                        <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: teamBrandColor }} />
+                        {teamBrandColor}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <div className="grid gap-4 sm:grid-cols-3">
                 <div className="rounded-[24px] border border-border bg-white/70 p-5">
                   <div className="text-xs uppercase tracking-[0.2em] text-text-secondary">团队</div>

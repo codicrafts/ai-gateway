@@ -8,9 +8,20 @@ export type PaymentMethod = 'alipay' | 'wechat_pay' | 'credit_card' | 'paypal';
 export type PaymentWebhookProvider = PaymentMethod;
 export type PaymentRegion = 'domestic' | 'international';
 export type PaymentOrderStatus = 'pending' | 'paid' | 'failed' | 'cancelled' | 'expired';
+export type PaymentCheckoutMode = 'redirect' | 'qr_code' | 'manual_review';
 
 type PaymentOrderRow = Database['public']['Tables']['payment_orders']['Row'];
 type PaymentWebhookEventRow = Database['public']['Tables']['payment_webhook_events']['Row'];
+
+export type PaymentCheckoutAction = {
+  mode: PaymentCheckoutMode;
+  provider_label: string;
+  url: string | null;
+  display_url: string | null;
+  qr_code_value: string | null;
+  webhook_enabled: boolean;
+  manual_confirm_allowed: boolean;
+};
 
 export type PaymentOrder = {
   id: string;
@@ -27,6 +38,7 @@ export type PaymentOrder = {
   fulfilled_at: string | null;
   fulfilled_amount: number | null;
   fulfilled_new_api_user_id: number | null;
+  checkout_action: PaymentCheckoutAction | null;
   created_at: string;
   updated_at: string;
 };
@@ -36,6 +48,13 @@ const PAYMENT_METHOD_CONFIG: Record<PaymentMethod, { region: PaymentRegion; curr
   wechat_pay: { region: 'domestic', currency: 'CNY', label: '微信支付' },
   credit_card: { region: 'international', currency: 'USD', label: '信用卡' },
   paypal: { region: 'international', currency: 'USD', label: 'PayPal' },
+};
+
+const PAYMENT_CHECKOUT_URLS: Partial<Record<PaymentMethod, string | undefined>> = {
+  alipay: process.env.PAYMENT_ALIPAY_CHECKOUT_URL,
+  wechat_pay: process.env.PAYMENT_WECHAT_PAY_CHECKOUT_URL,
+  credit_card: process.env.PAYMENT_CREDIT_CARD_CHECKOUT_URL,
+  paypal: process.env.PAYMENT_PAYPAL_CHECKOUT_URL,
 };
 
 type NormalizedWebhookPayload = {
@@ -48,6 +67,8 @@ type NormalizedWebhookPayload = {
 };
 
 function mapPaymentOrder(order: PaymentOrderRow): PaymentOrder {
+  const metadata = (order.metadata || {}) as Record<string, unknown>;
+  const checkoutAction = extractPaymentCheckoutAction(order.payment_method as PaymentMethod, order, metadata);
   return {
     id: order.id,
     payment_method: order.payment_method as PaymentMethod,
@@ -63,6 +84,7 @@ function mapPaymentOrder(order: PaymentOrderRow): PaymentOrder {
     fulfilled_at: order.fulfilled_at,
     fulfilled_amount: order.fulfilled_amount === null ? null : Number(order.fulfilled_amount),
     fulfilled_new_api_user_id: order.fulfilled_new_api_user_id,
+    checkout_action: checkoutAction,
     created_at: order.created_at,
     updated_at: order.updated_at,
   };
@@ -82,6 +104,113 @@ export function isValidPaymentWebhookProvider(value: string): value is PaymentWe
 
 export function getPaymentMethodMeta(method: PaymentMethod) {
   return PAYMENT_METHOD_CONFIG[method];
+}
+
+function isPaymentWebhookConfigured(): boolean {
+  return Boolean(process.env.PAYMENT_WEBHOOK_SECRET);
+}
+
+function isManualPaymentConfirmationEnabled(): boolean {
+  return process.env.PAYMENT_MANUAL_CONFIRM_ENABLED === 'true';
+}
+
+function getPaymentCheckoutBaseUrl(method: PaymentMethod): string | null {
+  return PAYMENT_CHECKOUT_URLS[method]?.trim() || null;
+}
+
+function appendCheckoutParams(baseUrl: string, params: Record<string, string | null | undefined>): string {
+  const url = new URL(baseUrl);
+
+  for (const [key, value] of Object.entries(params)) {
+    if (value) {
+      url.searchParams.set(key, value);
+    }
+  }
+
+  return url.toString();
+}
+
+function buildPaymentCheckoutAction(params: {
+  method: PaymentMethod;
+  checkoutReference: string;
+  amount: number;
+  currency: 'CNY' | 'USD';
+  teamId?: string | null;
+  userId: string;
+}): PaymentCheckoutAction {
+  const providerLabel = getPaymentMethodMeta(params.method).label;
+  const checkoutBaseUrl = getPaymentCheckoutBaseUrl(params.method);
+
+  if (!checkoutBaseUrl) {
+    if (!isManualPaymentConfirmationEnabled()) {
+      throw new Error(`${providerLabel} 支付渠道未配置`);
+    }
+
+    return {
+      mode: 'manual_review',
+      provider_label: providerLabel,
+      url: null,
+      display_url: null,
+      qr_code_value: null,
+      webhook_enabled: false,
+      manual_confirm_allowed: true,
+    };
+  }
+
+  const checkoutUrl = appendCheckoutParams(checkoutBaseUrl, {
+    checkout_reference: params.checkoutReference,
+    amount: params.amount.toFixed(2),
+    currency: params.currency,
+    payment_method: params.method,
+    user_id: params.userId,
+    team_id: params.teamId || null,
+  });
+  const mode: PaymentCheckoutMode = params.method === 'alipay' || params.method === 'wechat_pay' ? 'qr_code' : 'redirect';
+
+  return {
+    mode,
+    provider_label: providerLabel,
+    url: checkoutUrl,
+    display_url: checkoutUrl,
+    qr_code_value: mode === 'qr_code' ? checkoutUrl : null,
+    webhook_enabled: isPaymentWebhookConfigured(),
+    manual_confirm_allowed: isManualPaymentConfirmationEnabled(),
+  };
+}
+
+function isPaymentCheckoutAction(value: unknown): value is PaymentCheckoutAction {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const candidate = value as Record<string, unknown>;
+  return (
+    (candidate.mode === 'redirect' || candidate.mode === 'qr_code' || candidate.mode === 'manual_review') &&
+    typeof candidate.provider_label === 'string'
+  );
+}
+
+function extractPaymentCheckoutAction(
+  method: PaymentMethod,
+  order: Pick<PaymentOrderRow, 'checkout_reference' | 'amount' | 'currency' | 'user_id' | 'team_id' | 'metadata'>,
+  metadata: Record<string, unknown>,
+): PaymentCheckoutAction | null {
+  if (isPaymentCheckoutAction(metadata.checkout_action)) {
+    return metadata.checkout_action;
+  }
+
+  try {
+    return buildPaymentCheckoutAction({
+      method,
+      checkoutReference: order.checkout_reference,
+      amount: Number(order.amount),
+      currency: order.currency as 'CNY' | 'USD',
+      teamId: order.team_id,
+      userId: order.user_id,
+    });
+  } catch {
+    return null;
+  }
 }
 
 export async function listPaymentOrders(userId: string, teamId?: string | null): Promise<PaymentOrder[]> {
@@ -119,6 +248,14 @@ export async function createPaymentOrder(params: {
   const methodMeta = getPaymentMethodMeta(params.paymentMethod);
   const checkoutReference = generateCheckoutReference();
   const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();
+  const checkoutAction = buildPaymentCheckoutAction({
+    method: params.paymentMethod,
+    checkoutReference,
+    amount,
+    currency: methodMeta.currency,
+    teamId: params.teamId,
+    userId: params.userId,
+  });
 
   const { data, error } = await supabase
     .from('payment_orders')
@@ -134,7 +271,8 @@ export async function createPaymentOrder(params: {
       expires_at: expiresAt,
       metadata: {
         payment_method_label: methodMeta.label,
-        settlement_mode: 'manual_pending_gateway_integration',
+        settlement_mode: checkoutAction.mode === 'manual_review' ? 'manual_review_fallback' : 'hosted_checkout_bridge',
+        checkout_action: checkoutAction,
         ...(params.teamId ? { team_id: params.teamId } : {}),
       },
     } as never)
@@ -342,7 +480,7 @@ async function updateWebhookEventStatus(params: {
     .eq('event_id', params.eventId);
 }
 
-export async function confirmPaymentOrder(params: {
+async function applyPaidPaymentOrder(params: {
   orderId: string;
   userId: string;
   externalOrderId?: string | null;
@@ -478,6 +616,18 @@ export async function confirmPaymentOrder(params: {
   return mapPaymentOrder(finalizedOrder);
 }
 
+export async function confirmPaymentOrder(params: {
+  orderId: string;
+  userId: string;
+  externalOrderId?: string | null;
+}): Promise<PaymentOrder> {
+  if (!isManualPaymentConfirmationEnabled()) {
+    throw new Error('当前环境未启用手工确认充值订单');
+  }
+
+  return applyPaidPaymentOrder(params);
+}
+
 async function resolvePaymentRuntimeTarget(params: {
   order: PaymentOrderRow;
   fallbackUserId: string;
@@ -592,7 +742,7 @@ export async function processPaymentWebhook(params: {
     };
   }
 
-  const confirmedOrder = await confirmPaymentOrder({
+  const confirmedOrder = await applyPaidPaymentOrder({
     orderId: order.id,
     userId: order.user_id,
     externalOrderId: normalized.externalOrderId,

@@ -24,6 +24,7 @@ import {
   hydrateDashboardSnapshot,
   updateApiKey,
   type PaymentMethod,
+  type PaymentOrder,
 } from '@/store/slices/dashboardSlice';
 import { showNotification } from '@/store/slices/notificationSlice';
 import {
@@ -61,6 +62,7 @@ import TwoFactorCard from '@/components/account/TwoFactorCard';
 import type { DashboardPageBootstrapPayload } from '@/services/dashboard/dashboard-page-bootstrap.service';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler, ArcElement } from 'chart.js';
 import { Line, Doughnut } from 'react-chartjs-2';
+import { QRCodeSVG } from 'qrcode.react';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler, ArcElement);
 
@@ -78,6 +80,7 @@ const API_KEY_PERMISSION_SCOPE_ITEMS = [
   { value: 'embeddings', zh: '向量嵌入', en: 'Embeddings' },
   { value: 'images', zh: '图像生成', en: 'Images' },
   { value: 'audio', zh: '音频接口', en: 'Audio' },
+  { value: 'video', zh: '视频生成', en: 'Video' },
   { value: 'rerank', zh: '重排序', en: 'Rerank' },
   { value: 'models.read', zh: '读取模型列表', en: 'Read Models' },
 ] as const;
@@ -89,7 +92,7 @@ export default function DashboardClient({
 }: DashboardClientProps) {
   const dispatch = useAppDispatch();
   const router = useRouter();
-  const { confirm: confirmDialog } = useAppDialog();
+  const { confirm: confirmDialog, alert: alertDialog } = useAppDialog();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { currentUser, isLoggedIn, loading: authLoading } = useAppSelector((s) => s.auth);
@@ -114,6 +117,66 @@ export default function DashboardClient({
         return 'PayPal';
     }
   }, [tr]);
+  const getUsageLogSummary = useCallback((log: { error_message?: string | null; runtime_content?: string | null; runtime_request_id?: string | null }) => {
+    const raw = log.error_message || log.runtime_content || log.runtime_request_id || '';
+    const compact = raw.replace(/\s+/g, ' ').trim();
+    if (!compact) {
+      return tr('暂无摘要', 'No summary');
+    }
+    return compact.length > 120 ? `${compact.slice(0, 117)}...` : compact;
+  }, [tr]);
+  const openUsageLogDetail = useCallback(async (log: {
+    id: number;
+    model: string;
+    status: 'success' | 'failed';
+    api_key_name: string;
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+    quota_cost: number;
+    created_at: string;
+    error_message?: string | null;
+    runtime_channel_id?: number | null;
+    runtime_request_id?: string | null;
+    runtime_content?: string | null;
+    runtime_use_time?: number | null;
+    runtime_is_stream?: boolean;
+    runtime_other?: Record<string, unknown> | null;
+  }) => {
+    const lines = [
+      `${tr('日志 ID', 'Log ID')}: ${log.id}`,
+      `${tr('时间', 'Time')}: ${formatDate(log.created_at)}`,
+      `${tr('模型', 'Model')}: ${log.model}`,
+      `${tr('状态', 'Status')}: ${log.status === 'failed' ? tr('失败', 'Failed') : tr('成功', 'Success')}`,
+      `${tr('API 密钥', 'API Key')}: ${log.api_key_name}`,
+      `${tr('输入 Token', 'Input Tokens')}: ${log.prompt_tokens.toLocaleString()}`,
+      `${tr('输出 Token', 'Output Tokens')}: ${log.completion_tokens.toLocaleString()}`,
+      `${tr('总 Token', 'Total Tokens')}: ${log.total_tokens.toLocaleString()}`,
+      `${tr('费用', 'Cost')}: ${formatCurrency(log.quota_cost)}`,
+      `${tr('渠道 ID', 'Channel ID')}: ${log.runtime_channel_id ?? '-'}`,
+      `${tr('请求 ID', 'Request ID')}: ${log.runtime_request_id || '-'}`,
+      `${tr('流式请求', 'Streaming')}: ${log.runtime_is_stream ? tr('是', 'Yes') : tr('否', 'No')}`,
+      `${tr('耗时', 'Latency')}: ${
+        typeof log.runtime_use_time === 'number' && Number.isFinite(log.runtime_use_time)
+          ? `${log.runtime_use_time} ms`
+          : '-'
+      }`,
+      `${tr('错误信息', 'Error')}: ${log.error_message || '-'}`,
+      '',
+      `${tr('原始摘要', 'Raw Summary')}:`,
+      log.runtime_content || tr('暂无原始内容', 'No raw summary'),
+    ];
+
+    if (log.runtime_other && Object.keys(log.runtime_other).length > 0) {
+      lines.push('', `${tr('附加信息', 'Additional Metadata')}:`, JSON.stringify(log.runtime_other, null, 2));
+    }
+
+    await alertDialog({
+      title: tr('请求日志详情', 'Request Log Detail'),
+      message: lines.join('\n'),
+      confirmText: tr('关闭', 'Close'),
+    });
+  }, [alertDialog, tr]);
   // 团队管理 Redux 状态
   const { 
     currentTeam, 
@@ -127,6 +190,7 @@ export default function DashboardClient({
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showKeyModal, setShowKeyModal] = useState(false);
   const [showRechargeModal, setShowRechargeModal] = useState(false);
+  const [checkoutOrder, setCheckoutOrder] = useState<PaymentOrder | null>(null);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showAvatarModal, setShowAvatarModal] = useState(false);
   const [avatarUploading, setAvatarUploading] = useState(false);
@@ -270,9 +334,22 @@ export default function DashboardClient({
   }, [selectedPaymentMethod, visiblePaymentMethods]);
 
   useEffect(() => {
+    if (!checkoutOrder) {
+      return;
+    }
+
+    const latestOrder = paymentOrders.find((order) => order.id === checkoutOrder.id);
+    if (latestOrder && latestOrder !== checkoutOrder) {
+      setCheckoutOrder(latestOrder);
+    }
+  }, [checkoutOrder, paymentOrders]);
+
+  useEffect(() => {
     if (!initialDataReady || !activeTeamId) return;
     if (!['overview', 'usage', 'billing', 'api-keys'].includes(section)) return;
+
     const requestKey = `${section}:${activeTeamId}`;
+    const syncFailedMessage = isZh ? '同步用量失败' : 'Failed to sync usage';
 
     if (usageSyncRequestKeyRef.current === requestKey) {
       return;
@@ -292,7 +369,7 @@ export default function DashboardClient({
         });
         const result = await response.json().catch(() => null);
         if (!response.ok || !result?.success) {
-          throw new Error(result?.error || tr('同步用量失败', 'Failed to sync usage'));
+          throw new Error(result?.error || syncFailedMessage);
         }
         if (!cancelled) {
           if (section === 'usage') {
@@ -321,7 +398,7 @@ export default function DashboardClient({
         usageSyncRequestKeyRef.current = null;
         if (!cancelled) {
           dispatch(showNotification({
-            message: getErrorMessage(error, tr('同步用量失败', 'Failed to sync usage')),
+            message: error instanceof Error ? error.message : syncFailedMessage,
             type: 'error',
           }));
         }
@@ -340,7 +417,7 @@ export default function DashboardClient({
         usageSyncRequestKeyRef.current = null;
       }
     };
-  }, [activeTeamId, dispatch, getErrorMessage, initialDataReady, section, tr]);
+  }, [activeTeamId, dispatch, initialDataReady, isZh, section]);
 
   // 获取当前用户在当前团队中的角色
   const getCurrentUserRole = useCallback((): TeamRole => {
@@ -672,10 +749,11 @@ export default function DashboardClient({
         payment_method: selectedPaymentMethod,
       })).unwrap();
 
+      setCheckoutOrder(order);
       dispatch(showNotification({
         message: isZh
-          ? `充值订单已创建：${getPaymentMethodLabel(order.payment_method)} / ${order.currency} ${order.amount.toFixed(2)}`
-          : `Top-up order created: ${getPaymentMethodLabel(order.payment_method)} / ${order.currency} ${order.amount.toFixed(2)}`,
+          ? `充值订单已创建，请继续完成 ${getPaymentMethodLabel(order.payment_method)} 支付`
+          : `Top-up order created. Continue with ${getPaymentMethodLabel(order.payment_method)} to complete payment.`,
       }));
       setShowRechargeModal(false);
     } catch (error) {
@@ -683,12 +761,37 @@ export default function DashboardClient({
     }
   }, [activeTeamId, dispatch, getErrorMessage, rechargeAmount, selectedPaymentMethod, isZh, getPaymentMethodLabel, tr]);
 
+  const handleOpenCheckoutOrder = useCallback((order: PaymentOrder) => {
+    setCheckoutOrder(order);
+  }, []);
+
+  const handleOpenCheckoutUrl = useCallback((order: PaymentOrder) => {
+    const checkoutUrl = order.checkout_action?.url;
+    if (!checkoutUrl) {
+      return;
+    }
+
+    window.open(checkoutUrl, '_blank', 'noopener,noreferrer');
+  }, []);
+
+  const handleRefreshPaymentStatus = useCallback(async () => {
+    try {
+      await Promise.all([
+        dispatch(fetchPaymentOrders(activeTeamId)).unwrap(),
+        dispatch(fetchBillingSummary(activeTeamId)).unwrap(),
+      ]);
+      dispatch(showNotification({ message: tr('已刷新支付状态', 'Payment status refreshed') }));
+    } catch (error) {
+      dispatch(showNotification({ message: getErrorMessage(error, tr('刷新支付状态失败', 'Failed to refresh payment status')), type: 'error' }));
+    }
+  }, [activeTeamId, dispatch, getErrorMessage, tr]);
+
   const ensureApiKeyModelOptionsLoaded = useCallback(async () => {
     if (apiKeyModelsRequestedRef.current) return;
     apiKeyModelsRequestedRef.current = true;
     setApiKeyModelOptionsLoading(true);
     try {
-      const response = await fetch('/api/catalog/models?limit=200');
+      const response = await fetch('/api/gateway/models');
       const result = await response.json();
       if (!response.ok || !result.success) {
         throw new Error(result.error || tr('获取模型列表失败', 'Failed to load models'));
@@ -714,6 +817,7 @@ export default function DashboardClient({
     try {
       await dispatch(confirmPaymentOrderAction(orderId)).unwrap();
       dispatch(showNotification({ message: tr('充值到账成功，可用额度已更新', 'Top-up applied and available balance updated') }));
+      setCheckoutOrder((current) => (current?.id === orderId ? null : current));
       refreshDashboardRoute(activeTeamId);
     } catch (error) {
       dispatch(showNotification({ message: getErrorMessage(error, tr('确认充值订单失败', 'Failed to confirm top-up order')), type: 'error' }));
@@ -1050,6 +1154,8 @@ export default function DashboardClient({
       borderWidth: 0
     }]
   };
+  const visibleFailedLogs = usageLogs.filter((log) => log.status === 'failed').length;
+  const visibleSuccessfulLogs = usageLogs.length - visibleFailedLogs;
   const chartOptions = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: 'rgba(51,65,85,0.3)' }, ticks: { color: '#94a3b8' } }, x: { grid: { display: false }, ticks: { color: '#94a3b8' } } } };
   const selectedTeamIdForLinks = activeTeamId;
   const tabs: { id: DashboardSection; label: string; icon: string; href: string }[] = [
@@ -1083,6 +1189,7 @@ export default function DashboardClient({
     }
   };
   const paymentRegionLabel = (region: string) => region === 'domestic' ? tr('国内', 'Domestic') : tr('国际', 'International');
+  const checkoutAction = checkoutOrder?.checkout_action || null;
 
   const dashboardBootstrapping = authLoading || (Boolean(currentUser) && !initialDataReady);
   const activeTab = section;
@@ -1146,7 +1253,7 @@ export default function DashboardClient({
             <div className="mb-4 sm:mb-6 md:mb-8 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:gap-6 lg:grid-cols-4">
               {[
                 { label: tr('组织余额', 'Org Balance'), value: formatCurrency(currentBalance), icon: 'fa-wallet', color: 'primary', change: null }, 
-                { label: tr('本月请求', 'Monthly Requests'), value: monthlyRequests.toLocaleString(), icon: 'fa-paper-plane', color: 'success', change: usageStats ? tr('来自当前团队账本', 'From current team ledger') : null }, 
+                { label: tr('本月请求', 'Monthly Requests'), value: monthlyRequests.toLocaleString(), icon: 'fa-paper-plane', color: 'success', change: usageStats ? tr('当前团队统计', 'Current team totals') : null }, 
                 { label: tr('本月消耗', 'Monthly Spend'), value: formatCurrency(currentMonthSpend), icon: 'fa-coins', color: 'warning', change: changePercentage === null ? null : `${changePercentage > 0 ? '+' : ''}${changePercentage}%` }, 
                 { label: tr('API 密钥', 'API Keys'), value: String(activeKeys.length), icon: 'fa-key', color: 'secondary', change: null }
               ].map((s) => (
@@ -1514,81 +1621,146 @@ export default function DashboardClient({
                   </span>
                 )}
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-6">{[
-                { label: tr('请求数', 'Requests'), value: (usageStats?.request_count ?? usageLogs.length).toLocaleString(), unit: tr('当前可见日志', 'Visible logs') },
-                { label: tr('输入 Token', 'Input Tokens'), value: totalPromptTokens.toLocaleString(), unit: tr('当前可见日志', 'Visible logs') },
-                { label: tr('输出 Token', 'Output Tokens'), value: totalCompletionTokens.toLocaleString(), unit: tr('当前可见日志', 'Visible logs') },
-                { label: tr('平均每次请求 Token', 'Avg Tokens / Request'), value: averageTokensPerRequest.toLocaleString(), unit: '' },
-                { label: tr('涉及模型数', 'Models Touched'), value: uniqueModelsUsed.toLocaleString(), unit: '' },
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5 sm:gap-4 md:gap-5">{[
+                { label: tr('请求数', 'Requests'), value: (usageStats?.request_count ?? usageLogs.length).toLocaleString(), unit: tr('当前可见日志', 'Visible logs'), tone: 'primary' },
+                { label: tr('输入 Token', 'Input Tokens'), value: totalPromptTokens.toLocaleString(), unit: tr('当前可见日志', 'Visible logs'), tone: 'amber' },
+                { label: tr('输出 Token', 'Output Tokens'), value: totalCompletionTokens.toLocaleString(), unit: tr('当前可见日志', 'Visible logs'), tone: 'emerald' },
+                { label: tr('平均每次请求 Token', 'Avg Tokens / Request'), value: averageTokensPerRequest.toLocaleString(), unit: tr('密度', 'Density'), tone: 'slate' },
+                { label: tr('涉及模型数', 'Models Touched'), value: uniqueModelsUsed.toLocaleString(), unit: tr('当前视图', 'Current view'), tone: 'rose' },
               ].map((m) => (
-                <div key={m.label} className="text-center p-4 sm:p-5 md:p-6 bg-white border border-border/60 rounded-xl sm:rounded-[1.5rem] shadow-sm hover:shadow-md transition-shadow group">
-                  <div className="text-xl sm:text-2xl md:text-2xl font-bold tracking-tight text-primary mb-0.5 sm:mb-1 group-hover:scale-105 transition-transform">{m.value}</div>
-                  <div className="text-[0.6rem] sm:text-[0.65rem] font-bold uppercase tracking-[0.16em] sm:tracking-[0.18em] text-text-secondary mb-0.5 sm:mb-1">{m.label}</div>
-                  {m.unit && <div className="text-[0.55rem] sm:text-[0.6rem] text-text-secondary/70 uppercase tracking-wider">{m.unit}</div>}
+                <div
+                  key={m.label}
+                  className="group relative overflow-hidden rounded-2xl border border-border/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(249,246,241,0.94))] p-4 sm:p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+                >
+                  <div className={`absolute inset-x-0 top-0 h-1 ${
+                    m.tone === 'amber'
+                      ? 'bg-warning/70'
+                      : m.tone === 'emerald'
+                        ? 'bg-success/70'
+                        : m.tone === 'rose'
+                          ? 'bg-danger/55'
+                          : m.tone === 'slate'
+                            ? 'bg-text-secondary/35'
+                            : 'bg-primary/70'
+                  }`} />
+                  <div className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-text-secondary">
+                    {m.label}
+                  </div>
+                  <div className="mt-3 text-2xl sm:text-[2rem] font-bold tracking-tight text-text-primary">
+                    {m.value}
+                  </div>
+                  <div className="mt-2 text-[0.68rem] uppercase tracking-[0.16em] text-text-secondary/70">
+                    {m.unit}
+                  </div>
                 </div>
               ))}</div>
             </div>
             <div className="bg-white border border-border rounded-xl sm:rounded-[1.5rem] md:rounded-[2rem] p-4 sm:p-6 md:p-8 shadow-sm">
-              <h3 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-text-primary mb-4 sm:mb-6">{tr('请求日志', 'Request Logs')}</h3>
-              <div className="-mx-3 px-3 sm:mx-0 sm:px-0">
-                <div className="flex flex-col gap-2.5 sm:gap-3 md:hidden">
-                  {usageLogs.length === 0 ? (
-                    <div className="text-center py-10 sm:py-12 text-text-secondary text-xs sm:text-sm">{tr('暂无记录', 'No records')}</div>
-                  ) : usageLogs.map((log, i) => (
-                    <div key={i} className="bg-dark-light/5 border border-border/50 rounded-lg sm:rounded-xl p-3 sm:p-4 flex flex-col gap-1.5 sm:gap-2">
-                      <div className="flex justify-between items-center">
-                        <span className="font-semibold text-text-primary text-xs sm:text-sm">{log.model}</span>
-                        <span className={`px-1.5 py-0.5 sm:px-2 rounded text-[0.6rem] font-bold uppercase tracking-wider ${log.status === 'failed' ? 'bg-danger/10 text-danger' : 'bg-success/10 text-success'}`}>
-                          {log.status === 'failed' ? tr('失败', 'Failed') : tr('成功', 'Success')}
-                        </span>
-                      </div>
-                      <div className="text-[0.7rem] sm:text-xs text-text-secondary flex justify-between">
-                        <span>{formatDate(log.created_at)}</span>
-                        <span className="truncate ml-2 max-w-[120px]">{log.api_key_name}</span>
-                      </div>
-                      <div className="text-[0.7rem] sm:text-xs text-text-secondary flex justify-between mt-0.5 sm:mt-1 border-t border-border/50 pt-1.5 sm:pt-2">
-                        <span>In: {log.prompt_tokens?.toLocaleString() || 0}</span>
-                        <span>Out: {log.completion_tokens?.toLocaleString() || 0}</span>
+              <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                <div>
+                  <h3 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-text-primary">{tr('请求日志', 'Request Logs')}</h3>
+                  <p className="mt-2 max-w-3xl text-sm leading-relaxed text-text-secondary">
+                    {tr('这里展示的是团队运行时请求日志，不只是账本金额。重点先看状态、摘要、耗时和详情入口，再决定是否需要继续排查渠道或 Provider。', 'This area shows runtime request logs rather than only billing rows. Start with status, summary, latency, and the detail entry before digging deeper into channel or provider issues.')}
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+                  <div className="rounded-2xl border border-success/20 bg-success/5 px-4 py-3">
+                    <div className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-text-secondary">{tr('成功', 'Success')}</div>
+                    <div className="mt-1 text-xl font-bold tracking-tight text-success">{visibleSuccessfulLogs}</div>
+                  </div>
+                  <div className="rounded-2xl border border-danger/20 bg-danger/5 px-4 py-3">
+                    <div className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-text-secondary">{tr('失败', 'Failed')}</div>
+                    <div className="mt-1 text-xl font-bold tracking-tight text-danger">{visibleFailedLogs}</div>
+                  </div>
+                </div>
+              </div>
+              {usageLogs.length === 0 ? (
+                <div className="rounded-[1.75rem] border border-dashed border-border/70 bg-dark-light/5 px-6 py-14 text-center text-sm text-text-secondary">
+                  {tr('暂无记录', 'No records')}
+                </div>
+              ) : (
+                <div className="space-y-3 sm:space-y-4">
+                  {usageLogs.map((log, i) => (
+                    <div
+                      key={i}
+                      className={`group overflow-hidden rounded-[1.5rem] border px-4 py-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md sm:px-5 sm:py-5 ${
+                        log.status === 'failed'
+                          ? 'border-danger/20 bg-[linear-gradient(180deg,rgba(255,251,250,0.98),rgba(255,245,243,0.94))]'
+                          : 'border-border/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(249,246,241,0.94))]'
+                      }`}
+                    >
+                      <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                            <div className="min-w-0">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="text-base font-bold tracking-tight text-text-primary sm:text-lg">
+                                  {log.model}
+                                </span>
+                                <span
+                                  className={`inline-flex items-center rounded-full px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-[0.16em] ${
+                                    log.status === 'failed'
+                                      ? 'bg-danger/10 text-danger'
+                                      : 'bg-success/10 text-success'
+                                  }`}
+                                >
+                                  {log.status === 'failed' ? tr('失败', 'Failed') : tr('成功', 'Success')}
+                                </span>
+                                {typeof log.runtime_use_time === 'number' ? (
+                                  <span className="inline-flex items-center rounded-full border border-border/60 bg-white/80 px-2.5 py-1 text-[0.65rem] font-semibold text-text-secondary">
+                                    <i className="fas fa-stopwatch mr-1.5 opacity-70" />
+                                    {log.runtime_use_time} ms
+                                  </span>
+                                ) : null}
+                              </div>
+                              <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-[0.72rem] text-text-secondary sm:text-xs">
+                                <span>{formatDate(log.created_at)}</span>
+                                <span>{tr('API 密钥', 'API Key')}: {log.api_key_name}</span>
+                                <span>{tr('渠道', 'Channel')} #{log.runtime_channel_id ?? '-'}</span>
+                                <span className="font-mono">{tr('请求 ID', 'Request ID')}: {log.runtime_request_id || '-'}</span>
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-3 gap-2 rounded-2xl border border-border/60 bg-white/70 p-2 sm:min-w-[260px]">
+                              {[
+                                { label: 'Input', value: log.prompt_tokens?.toLocaleString() || '0' },
+                                { label: 'Output', value: log.completion_tokens?.toLocaleString() || '0' },
+                                { label: tr('费用', 'Cost'), value: formatCurrency(log.quota_cost) },
+                              ].map((item) => (
+                                <div key={item.label} className="rounded-xl bg-white px-3 py-2 text-center">
+                                  <div className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-text-secondary">
+                                    {item.label}
+                                  </div>
+                                  <div className="mt-1 text-sm font-bold tracking-tight text-text-primary">
+                                    {item.value}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="mt-4 rounded-[1.25rem] border border-border/60 bg-white/85 px-4 py-3">
+                            <div className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-text-secondary">
+                              {tr('摘要', 'Summary')}
+                            </div>
+                            <div className="mt-2 text-sm leading-7 text-text-secondary">
+                              {getUsageLogSummary(log)}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex shrink-0 items-center xl:pl-4">
+                          <button
+                            type="button"
+                            onClick={() => void openUsageLogDetail(log)}
+                            className="inline-flex items-center justify-center rounded-full border border-border bg-white px-4 py-2.5 text-sm font-semibold text-text-primary transition-colors hover:border-primary/30 hover:text-primary"
+                          >
+                            <i className="fas fa-file-lines mr-2 opacity-70" />
+                            {tr('查看详情', 'View Detail')}
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ))}
                 </div>
-                <div className="hidden md:block overflow-x-auto">
-                  <table className="w-full min-w-[500px]">
-                    <thead>
-                      <tr className="border-b border-border/80">
-                        {[tr('时间', 'Time'), tr('模型', 'Model'), 'Input', 'Output', tr('API 密钥', 'API Key'), tr('状态', 'Status')].map(h => (
-                          <th key={h} className="text-left py-3 sm:py-4 px-3 sm:px-4 text-[0.65rem] font-bold uppercase tracking-[0.18em] text-text-secondary">{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {usageLogs.length === 0 ? (
-                        <tr><td colSpan={6} className="text-center py-12 text-text-secondary text-sm">{tr('暂无记录', 'No records')}</td></tr>
-                      ) : usageLogs.map((log, i) => (
-                        <tr key={i} className="border-b border-border/50 hover:bg-primary/5 transition-colors">
-                          <td className="py-3 px-3 sm:px-4 text-sm font-medium text-text-primary">{formatDate(log.created_at)}</td>
-                          <td className="py-3 px-3 sm:px-4 text-sm font-medium text-text-primary">{log.model}</td>
-                          <td className="py-3 px-3 sm:px-4 text-sm text-text-secondary">{log.prompt_tokens?.toLocaleString()}</td>
-                          <td className="py-3 px-3 sm:px-4 text-sm text-text-secondary">{log.completion_tokens?.toLocaleString()}</td>
-                          <td className="py-3 px-3 sm:px-4 text-sm text-text-secondary">{log.api_key_name}</td>
-                          <td className="py-3 px-3 sm:px-4">
-                            <span
-                              className={`px-2.5 py-1 rounded-md text-[0.65rem] font-bold uppercase tracking-wider ${
-                                log.status === 'failed'
-                                  ? 'bg-danger/10 text-danger'
-                                  : 'bg-success/10 text-success'
-                              }`}
-                            >
-                              {log.status === 'failed' ? tr('失败', 'Failed') : tr('成功', 'Success')}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+              )}
             </div>
           </div>
         )}
@@ -1745,8 +1917,8 @@ export default function DashboardClient({
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
                 <div>
                   <h3 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-text-primary mb-1.5 sm:mb-2">{tr('充值订单', 'Top-Up Orders')}</h3>
-                  <p className="text-text-secondary text-[0.7rem] sm:text-sm leading-relaxed">{tr('支付方式按产品文档收敛为国内与国际两组渠道，当前阶段先完成下单与记录。', 'Payment methods are currently grouped into domestic and international rails, with order creation and recording implemented first.')}</p>
-                  <p className="text-text-secondary text-[0.7rem] sm:text-sm leading-relaxed mt-0.5 sm:mt-1">{tr('确认入账后会写入账务流水，并更新可用额度。', 'After confirmation, the recharge will be written to the billing ledger and update the available balance.')}</p>
+                  <p className="text-text-secondary text-[0.7rem] sm:text-sm leading-relaxed">{tr('订单现在会生成真实支付动作，国内渠道展示二维码，国际渠道跳转到外部收银台。', 'Orders now generate a real checkout action: domestic rails show a QR code, while international rails redirect to an external checkout page.')}</p>
+                  <p className="text-text-secondary text-[0.7rem] sm:text-sm leading-relaxed mt-0.5 sm:mt-1">{tr('支付成功后优先由回调自动入账；只有显式启用手工补单时，才会开放人工确认。', 'Successful payments are credited primarily through gateway callbacks. Manual confirmation is only available when explicitly enabled as a fallback.')}</p>
                 </div>
               </div>
               {paymentOrders.length === 0 ? (
@@ -1782,10 +1954,10 @@ export default function DashboardClient({
                             <div className="mt-2">
                               {order.status === 'pending' ? (
                                 <button
-                                  onClick={() => handleConfirmPaymentOrder(order.id)}
+                                  onClick={() => handleOpenCheckoutOrder(order)}
                                   className="btn-secondary text-xs py-1 px-3 rounded-full shadow-sm hover:border-success hover:text-success hover:bg-success/5 transition-colors"
                                 >
-                                  {tr('确认入账', 'Confirm credit')}
+                                  {tr('继续支付', 'Continue payment')}
                                 </button>
                               ) : (
                                 <span className="text-[0.65rem] font-bold uppercase tracking-wider text-text-secondary">
@@ -1838,10 +2010,10 @@ export default function DashboardClient({
                             <td className="py-3 px-3 sm:px-4">
                               {order.status === 'pending' ? (
                                 <button
-                                  onClick={() => handleConfirmPaymentOrder(order.id)}
+                                  onClick={() => handleOpenCheckoutOrder(order)}
                                   className="btn-secondary text-xs py-1.5 px-4 rounded-full shadow-sm hover:border-success hover:text-success hover:bg-success/5 transition-colors"
                                 >
-                                  {tr('确认入账', 'Confirm credit')}
+                                  {tr('继续支付', 'Continue payment')}
                                 </button>
                               ) : (
                                 <span className="text-[0.65rem] font-bold uppercase tracking-wider text-text-secondary">
@@ -2233,12 +2405,159 @@ export default function DashboardClient({
             <div><label className="block text-sm text-text-secondary mb-2">{tr('IP 白名单', 'IP Allowlist')}</label><input type="text" className="form-control" placeholder={tr('多个 IP 用逗号分隔，留空则不限制', 'Separate multiple IPs with commas, leave empty for no restriction')} value={keyIpWhitelist} onChange={e => setKeyIpWhitelist(e.target.value)} /></div>
           </div>
           <div><label className="block text-sm text-text-secondary mb-2">{tr('允许的模型', 'Allowed Models')}</label><div className="flex flex-wrap gap-2">{apiKeyModelOptionsLoading ? <span className="text-text-secondary text-sm">{tr('正在加载模型列表...', 'Loading models...')}</span> : availableModelNames.length === 0 ? <span className="text-text-secondary text-sm">{tr('暂无可用模型，请稍后重试。', 'No models available yet. Try again later.')}</span> : availableModelNames.map(model => (<label key={model} className="flex items-center gap-2 px-3 py-2 bg-dark-light/50 rounded-lg cursor-pointer hover:bg-dark-light/70"><input type="checkbox" className="rounded" checked={keyModels.includes(model)} onChange={e => { if (e.target.checked) setKeyModels([...keyModels, model]); else setKeyModels(keyModels.filter(m => m !== model)); }} /><span className="text-sm">{model}</span></label>))}</div><p className="text-text-secondary text-xs mt-1">{tr('不选择则允许所有模型', 'Leave empty to allow all models')}</p></div>
-          <div><label className="block text-sm text-text-secondary mb-2">{tr('权限范围', 'Permission Scopes')}</label><div className="flex flex-wrap gap-2">{apiKeyPermissionScopeOptions.map(scope => (<label key={scope.value} className="flex items-center gap-2 px-3 py-2 bg-dark-light/50 rounded-lg cursor-pointer hover:bg-dark-light/70"><input type="checkbox" className="rounded" checked={keyPermissionScopes.includes(scope.value)} onChange={e => { if (e.target.checked) setKeyPermissionScopes([...keyPermissionScopes, scope.value]); else setKeyPermissionScopes(keyPermissionScopes.filter(item => item !== scope.value)); }} /><span className="text-sm">{scope.label}</span></label>))}</div><p className="text-text-secondary text-xs mt-1">{tr('当前用于组织治理与审计，可与模型范围、IP 白名单组合使用。', 'Currently used for organization governance and audit, alongside model range and IP allowlists.')}</p></div>
+          <div><label className="block text-sm text-text-secondary mb-2">{tr('权限范围', 'Permission Scopes')}</label><div className="flex flex-wrap gap-2">{apiKeyPermissionScopeOptions.map(scope => (<label key={scope.value} className="flex items-center gap-2 px-3 py-2 bg-dark-light/50 rounded-lg cursor-pointer hover:bg-dark-light/70"><input type="checkbox" className="rounded" checked={keyPermissionScopes.includes(scope.value)} onChange={e => { if (e.target.checked) setKeyPermissionScopes([...keyPermissionScopes, scope.value]); else setKeyPermissionScopes(keyPermissionScopes.filter(item => item !== scope.value)); }} /><span className="text-sm">{scope.label}</span></label>))}</div><p className="text-text-secondary text-xs mt-1">{tr('可与模型范围和 IP 白名单一起使用，进一步限制这枚密钥的访问范围。', 'Use together with model restrictions and IP allowlists to further limit what this key can access.')}</p></div>
         </div>
         <div className="flex gap-3"><button type="button" onClick={() => setShowCreateModal(false)} className="btn-secondary flex-1 justify-center">{tr('取消', 'Cancel')}</button><button type="submit" className="btn-primary flex-1 justify-center">{tr('创建密钥', 'Create Key')}</button></div>
       </form></div></div>)}
       {showKeyModal && (<div className="fixed inset-0 bg-black/70 z-[9999] flex items-center justify-center p-4" onClick={() => setShowKeyModal(false)}><div className="bg-white border border-border rounded-[2rem] shadow-xl p-6 sm:p-8 max-w-[500px] w-full" onClick={e => e.stopPropagation()}><h3 className="text-lg sm:text-xl font-semibold mb-4">{tr('保存您的 API 密钥', 'Save Your API Key')}</h3><div className="bg-danger/10 border border-danger rounded-lg p-3 sm:p-4 mb-4 text-xs sm:text-sm"><i className="fas fa-exclamation-triangle text-danger mr-2" />{tr('请立即复制并保存，密钥只显示一次！', 'Copy and save this key now. It will only be shown once!')}</div><div className="flex gap-2 mb-6"><input type="text" className="form-control font-mono text-xs sm:text-sm" readOnly value={newKeyValue} /><button className="btn-primary flex-shrink-0" onClick={() => { copyToClipboard(newKeyValue); dispatch(showNotification({ message: tr('已复制', 'Copied') })); }}><i className="fas fa-copy" /></button></div><button className="btn-secondary w-full justify-center" onClick={() => setShowKeyModal(false)}>{tr('我已保存', 'I have saved it')}</button></div></div>)}
-      {showRechargeModal && (<div className="fixed inset-0 bg-black/70 z-[9999] flex items-center justify-center p-4" onClick={() => setShowRechargeModal(false)}><div className="bg-white border border-border rounded-[2rem] shadow-xl p-6 sm:p-8 max-w-[520px] w-full" onClick={e => e.stopPropagation()}><div className="flex justify-between items-center mb-6"><h3 className="text-lg sm:text-xl font-semibold">{tr('账户充值', 'Top Up Account')}</h3><button onClick={() => setShowRechargeModal(false)} className="text-text-secondary hover:text-text-primary text-xl">&times;</button></div><div className="mb-6"><div className="text-sm text-text-secondary mb-3">{tr('快捷金额', 'Quick Amount')}</div><div className="grid grid-cols-3 gap-2 sm:gap-3">{[10, 50, 100, 200, 500, 1000].map((amount) => (<button key={amount} className={`py-2 sm:py-3 border rounded-lg transition-all text-sm sm:text-base ${Number(rechargeAmount) === amount ? 'border-primary text-primary bg-primary/10' : 'border-border hover:border-primary hover:text-primary'}`} onClick={() => setRechargeAmount(String(amount))}>${amount}</button>))}</div></div><div className="mb-6"><label className="block text-sm text-text-secondary mb-2">{tr('自定义金额', 'Custom Amount')}</label><input type="number" className="form-control" placeholder={tr('输入金额', 'Enter amount')} min="1" value={rechargeAmount} onChange={e => setRechargeAmount(e.target.value)} /></div><div className="mb-6"><div className="text-sm text-text-secondary mb-2">{paymentMethodGroupLabel}</div><div className="grid grid-cols-2 gap-3">{visiblePaymentMethods.map((method) => (<button key={method} onClick={() => setSelectedPaymentMethod(method)} className={`py-3 border rounded-lg text-sm transition-all ${selectedPaymentMethod === method ? 'border-primary text-primary bg-primary/10' : 'border-border hover:border-primary hover:text-primary'}`}>{getPaymentMethodLabel(method)}</button>))}</div></div><div className="bg-dark-light/40 border border-border rounded-lg p-4 mb-6 text-sm text-text-secondary"><div className="flex justify-between mb-2"><span>{tr('当前渠道', 'Selected Rail')}</span><span className="text-text-primary">{getPaymentMethodLabel(selectedPaymentMethod)}</span></div><div className="flex justify-between mb-2"><span>{tr('结算币种', 'Settlement Currency')}</span><span className="text-text-primary">{isDomesticAudience ? 'CNY' : 'USD'}</span></div><div className="flex justify-between"><span>{tr('说明', 'Notes')}</span><span className="text-text-primary">{tr('当前阶段创建待支付订单', 'This phase only creates a pending payment order')}</span></div></div><button className="btn-primary w-full justify-center" onClick={handleCreatePaymentOrder}><i className="fas fa-credit-card mr-2" />{tr('创建充值订单', 'Create Top-Up Order')}</button></div></div>)}
+      {showRechargeModal && (
+        <div className="fixed inset-0 bg-black/70 z-[9999] flex items-center justify-center p-4" onClick={() => setShowRechargeModal(false)}>
+          <div className="bg-white border border-border rounded-[2rem] shadow-xl p-6 sm:p-8 max-w-[520px] w-full" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg sm:text-xl font-semibold">{tr('账户充值', 'Top Up Account')}</h3>
+              <button onClick={() => setShowRechargeModal(false)} className="text-text-secondary hover:text-text-primary text-xl">&times;</button>
+            </div>
+            <div className="mb-6">
+              <div className="text-sm text-text-secondary mb-3">{tr('快捷金额', 'Quick Amount')}</div>
+              <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                {[10, 50, 100, 200, 500, 1000].map((amount) => (
+                  <button
+                    key={amount}
+                    className={`py-2 sm:py-3 border rounded-lg transition-all text-sm sm:text-base ${Number(rechargeAmount) === amount ? 'border-primary text-primary bg-primary/10' : 'border-border hover:border-primary hover:text-primary'}`}
+                    onClick={() => setRechargeAmount(String(amount))}
+                  >
+                    ${amount}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="mb-6">
+              <label className="block text-sm text-text-secondary mb-2">{tr('自定义金额', 'Custom Amount')}</label>
+              <input type="number" className="form-control" placeholder={tr('输入金额', 'Enter amount')} min="1" value={rechargeAmount} onChange={e => setRechargeAmount(e.target.value)} />
+            </div>
+            <div className="mb-6">
+              <div className="text-sm text-text-secondary mb-2">{paymentMethodGroupLabel}</div>
+              <div className="grid grid-cols-2 gap-3">
+                {visiblePaymentMethods.map((method) => (
+                  <button
+                    key={method}
+                    onClick={() => setSelectedPaymentMethod(method)}
+                    className={`py-3 border rounded-lg text-sm transition-all ${selectedPaymentMethod === method ? 'border-primary text-primary bg-primary/10' : 'border-border hover:border-primary hover:text-primary'}`}
+                  >
+                    {getPaymentMethodLabel(method)}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="bg-dark-light/40 border border-border rounded-lg p-4 mb-6 text-sm text-text-secondary space-y-2">
+              <div className="flex justify-between gap-4">
+                <span>{tr('当前渠道', 'Selected Rail')}</span>
+                <span className="text-text-primary">{getPaymentMethodLabel(selectedPaymentMethod)}</span>
+              </div>
+              <div className="flex justify-between gap-4">
+                <span>{tr('结算币种', 'Settlement Currency')}</span>
+                <span className="text-text-primary">{isDomesticAudience ? 'CNY' : 'USD'}</span>
+              </div>
+              <div className="flex justify-between gap-4">
+                <span>{tr('支付动作', 'Checkout Action')}</span>
+                <span className="text-text-primary">{isDomesticAudience ? tr('生成二维码', 'Generate QR code') : tr('跳转收银台', 'Redirect to checkout')}</span>
+              </div>
+            </div>
+            <button className="btn-primary w-full justify-center" onClick={handleCreatePaymentOrder}>
+              <i className="fas fa-credit-card mr-2" />
+              {tr('创建并继续支付', 'Create and continue to payment')}
+            </button>
+          </div>
+        </div>
+      )}
+      {checkoutOrder && (
+        <div className="fixed inset-0 bg-black/70 z-[9999] flex items-center justify-center p-4" onClick={() => setCheckoutOrder(null)}>
+          <div className="bg-white border border-border rounded-[2rem] shadow-xl p-6 sm:p-8 max-w-[620px] w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-start gap-4 mb-6">
+              <div>
+                <h3 className="text-lg sm:text-xl font-semibold text-text-primary">{tr('完成充值支付', 'Complete top-up payment')}</h3>
+                <p className="text-sm text-text-secondary mt-1">
+                  {tr('订单创建成功。请按照下面的支付动作完成付款，到账后可刷新当前状态。', 'The order was created successfully. Follow the checkout action below and refresh the status once payment completes.')}
+                </p>
+              </div>
+              <button onClick={() => setCheckoutOrder(null)} className="text-text-secondary hover:text-text-primary text-xl">&times;</button>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-3 mb-6">
+              <div className="rounded-2xl border border-border bg-dark-light/10 p-4 sm:col-span-2">
+                <div className="text-[0.7rem] uppercase tracking-[0.18em] text-text-secondary mb-2">{tr('订单金额', 'Amount')}</div>
+                <div className="text-2xl font-bold text-text-primary">{checkoutOrder.currency} {checkoutOrder.amount.toFixed(2)}</div>
+                <div className="mt-3 text-sm text-text-secondary">{getPaymentMethodLabel(checkoutOrder.payment_method)} · {paymentRegionLabel(checkoutOrder.payment_region)}</div>
+                <div className="mt-2 text-xs font-mono text-text-secondary break-all">{checkoutOrder.checkout_reference}</div>
+              </div>
+              <div className="rounded-2xl border border-border bg-dark-light/10 p-4">
+                <div className="text-[0.7rem] uppercase tracking-[0.18em] text-text-secondary mb-2">{tr('订单状态', 'Order Status')}</div>
+                <div className={`inline-flex px-2.5 py-1 rounded-md text-[0.65rem] font-bold uppercase tracking-wider ${
+                  checkoutOrder.status === 'paid'
+                    ? 'bg-success/10 text-success'
+                    : checkoutOrder.status === 'pending'
+                      ? 'bg-warning/10 text-warning'
+                      : 'bg-danger/10 text-danger'
+                }`}>
+                  {paymentStatusLabel(checkoutOrder.status)}
+                </div>
+                <div className="mt-3 text-xs text-text-secondary">{tr('过期时间', 'Expires at')}: {checkoutOrder.expires_at ? formatDate(checkoutOrder.expires_at) : '--'}</div>
+              </div>
+            </div>
+
+            {checkoutAction?.mode === 'qr_code' && checkoutAction.qr_code_value ? (
+              <div className="rounded-[1.5rem] border border-border bg-dark-light/5 p-5 mb-6">
+                <div className="flex flex-col items-center text-center">
+                  <div className="rounded-[1.5rem] bg-white p-4 shadow-sm">
+                    <QRCodeSVG value={checkoutAction.qr_code_value} size={208} includeMargin />
+                  </div>
+                  <p className="mt-4 text-sm text-text-secondary leading-6">
+                    {tr('请使用对应支付应用扫码完成付款。支付成功后，收银台会通过回调自动更新订单状态。', 'Scan this code with the selected payment app. After payment succeeds, the checkout page should update the order through a webhook callback.')}
+                  </p>
+                </div>
+              </div>
+            ) : null}
+
+            {checkoutAction?.display_url ? (
+              <div className="rounded-2xl border border-border bg-dark-light/5 p-4 mb-6">
+                <div className="text-[0.7rem] uppercase tracking-[0.18em] text-text-secondary mb-2">{tr('支付链接', 'Checkout link')}</div>
+                <div className="text-sm break-all leading-6 text-text-primary">{checkoutAction.display_url}</div>
+              </div>
+            ) : null}
+
+            {checkoutAction?.mode === 'manual_review' ? (
+              <div className="rounded-2xl border border-warning/30 bg-warning/5 p-4 mb-6 text-sm text-text-secondary leading-6">
+                {tr('当前渠道未配置外部收银台，订单保留为人工补单模式。只有在显式开启手工确认时，才允许直接入账。', 'This rail does not have an external checkout URL configured, so the order remains in manual fallback mode. Direct credit is only allowed when manual confirmation is explicitly enabled.')}
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-border bg-dark-light/5 p-4 mb-6 text-sm text-text-secondary leading-6">
+                {checkoutAction?.webhook_enabled
+                  ? tr('当前环境已启用支付回调。完成付款后，如状态未及时变化，可手动刷新订单状态。', 'Payment webhooks are enabled in this environment. If the status does not update immediately after payment, refresh the order status manually.')
+                  : tr('当前环境尚未配置支付回调。完成付款后需要通过手工补单开关来兜底确认。', 'Payment webhooks are not configured in this environment. After payment, manual fallback confirmation is required if it is enabled.')}
+              </div>
+            )}
+
+            <div className="flex flex-col sm:flex-row gap-3">
+              {checkoutAction?.url ? (
+                <button className="btn-primary flex-1 justify-center" onClick={() => handleOpenCheckoutUrl(checkoutOrder)}>
+                  <i className="fas fa-arrow-up-right-from-square mr-2" />
+                  {checkoutAction.mode === 'redirect' ? tr('打开收银台', 'Open checkout') : tr('打开支付链接', 'Open payment link')}
+                </button>
+              ) : null}
+              <button className="btn-secondary flex-1 justify-center" onClick={handleRefreshPaymentStatus}>
+                <i className="fas fa-rotate-right mr-2" />
+                {tr('刷新支付状态', 'Refresh payment status')}
+              </button>
+              {checkoutAction?.manual_confirm_allowed && checkoutOrder.status === 'pending' ? (
+                <button className="btn-secondary flex-1 justify-center" onClick={() => handleConfirmPaymentOrder(checkoutOrder.id)}>
+                  <i className="fas fa-receipt mr-2" />
+                  {tr('手工补单入账', 'Manual credit fallback')}
+                </button>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      )}
       {showPasswordModal && (<div className="fixed inset-0 bg-black/70 z-[9999] flex items-center justify-center p-4" onClick={() => setShowPasswordModal(false)}><div className="bg-white border border-border rounded-[2rem] shadow-xl p-6 sm:p-8 max-w-[450px] w-full" onClick={e => e.stopPropagation()}><div className="flex justify-between items-center mb-6"><h3 className="text-lg sm:text-xl font-semibold">{tr('修改密码', 'Change Password')}</h3><button onClick={() => setShowPasswordModal(false)} className="text-text-secondary hover:text-text-primary text-xl">&times;</button></div><form onSubmit={handleChangePassword}><div className="space-y-4 mb-6"><div><label className="block text-sm text-text-secondary mb-2">{tr('当前密码', 'Current Password')}</label><input type="password" className="form-control" required value={passwordData.current} onChange={e => setPasswordData({...passwordData, current: e.target.value})} /></div><div><label className="block text-sm text-text-secondary mb-2">{tr('新密码', 'New Password')}</label><input type="password" className="form-control" required minLength={6} value={passwordData.newPass} onChange={e => setPasswordData({...passwordData, newPass: e.target.value})} /></div><div><label className="block text-sm text-text-secondary mb-2">{tr('确认新密码', 'Confirm New Password')}</label><input type="password" className="form-control" required value={passwordData.confirm} onChange={e => setPasswordData({...passwordData, confirm: e.target.value})} /></div></div><button type="submit" className="btn-primary w-full justify-center">{tr('确认修改', 'Confirm Change')}</button></form></div></div>)}
       {showAvatarModal && (
         <div className="fixed inset-0 bg-black/70 z-[9999] flex items-center justify-center p-4" onClick={avatarUploading ? undefined : () => setShowAvatarModal(false)}>
@@ -2345,7 +2664,7 @@ export default function DashboardClient({
                       </label>
                     ))}
                   </div>
-                  <p className="text-text-secondary text-xs mt-1">{tr('当前用于组织治理与审计，可与模型范围、IP 白名单组合使用。', 'Currently used for organization governance and audit, alongside model range and IP allowlists.')}</p>
+                  <p className="text-text-secondary text-xs mt-1">{tr('可与模型范围和 IP 白名单一起使用，进一步限制这枚密钥的访问范围。', 'Use together with model restrictions and IP allowlists to further limit what this key can access.')}</p>
                 </div>
               </div>
               <div className="flex gap-3">

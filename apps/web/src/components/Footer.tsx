@@ -22,7 +22,7 @@ export default function Footer() {
           </div>
           <div>
             <h4 className="mb-4 text-[0.76rem] uppercase tracking-[0.22em] text-[#d7bea1]">{t.footer.company}</h4>
-            <Link href="/contact" className="mb-3 block text-[#f3e5d1] hover:text-white no-underline">{t.footer.about}</Link>
+            <Link href="/about" className="mb-3 block text-[#f3e5d1] hover:text-white no-underline">{t.footer.about}</Link>
             <Link href="/contact" className="mb-3 block text-[#f3e5d1] hover:text-white no-underline">{t.nav.contact}</Link>
           </div>
           <div>
