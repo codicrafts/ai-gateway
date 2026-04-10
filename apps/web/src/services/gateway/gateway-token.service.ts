@@ -4,7 +4,6 @@ import { createServerAdminSupabaseClient, type Database } from '@/lib/supabase';
 import { ensureNewApiLink, getAppUserById } from '@/services/account/app-user.service';
 import { ensureTeamRuntimeAccount } from '@/services/runtime-sync/org-runtime-account.service';
 import { syncOrgApiKeyNow } from '@/services/runtime-sync/org-api-key-sync.service';
-import type { TeamRole } from '@ai-gateway/shared-types/team';
 import { resolveGatewayScope, type GatewayScope } from './gateway-scope.service';
 import type {
   CreateGatewayApiKeyInput,

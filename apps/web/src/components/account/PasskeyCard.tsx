@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { browserSupportsPasskey, normalizeRegistrationOptions, serializeCredential } from '@/utils/passkey';
 
 interface PasskeyCardProps {
@@ -18,7 +18,7 @@ export default function PasskeyCard({ onNotify }: PasskeyCardProps) {
   const [working, setWorking] = useState(false);
   const passkeySupported = useMemo(() => browserSupportsPasskey(), []);
 
-  const loadStatus = async () => {
+  const loadStatus = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch('/api/account/passkey', { cache: 'no-store' });
@@ -32,11 +32,11 @@ export default function PasskeyCard({ onNotify }: PasskeyCardProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [onNotify]);
 
   useEffect(() => {
     void loadStatus();
-  }, []);
+  }, [loadStatus]);
 
   const lastUsedLabel = useMemo(() => {
     if (!status.last_used_at) {

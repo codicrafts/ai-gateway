@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import type { Model } from "@ai-gateway/shared-types";
 import Navbar from "@/components/Navbar";
@@ -90,7 +90,7 @@ export default function ModelsPageClient({
     [t],
   );
 
-  const priceMatches = (model: Model) => {
+  const priceMatches = useCallback((model: Model) => {
     if (!priceFilter) return true;
 
     if (priceFilter === "budget") {
@@ -104,7 +104,7 @@ export default function ModelsPageClient({
     }
 
     return true;
-  };
+  }, [priceFilter]);
 
   const filtered = useMemo(() => {
     const result = [...(models || [])].filter((model) => {
@@ -158,7 +158,7 @@ export default function ModelsPageClient({
     searchTerm,
     providerFilter,
     categoryFilter,
-    priceFilter,
+    priceMatches,
     capabilityFilter,
     sortFilter,
     locale,

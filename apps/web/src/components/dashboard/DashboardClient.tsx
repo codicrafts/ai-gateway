@@ -1258,8 +1258,6 @@ export default function DashboardClient({
     { id: 'overview', label: tr('概览', 'Overview'), icon: 'fa-chart-pie', href: '/dashboard/overview' },
     { id: 'api-keys', label: tr('API 密钥', 'API Keys'), icon: 'fa-key', href: '/dashboard/api-keys' },
     { id: 'usage', label: tr('用量统计', 'Usage'), icon: 'fa-chart-line', href: '/dashboard/usage' },
-    { id: 'providers', label: tr('供应商', 'Providers'), icon: 'fa-diagram-project', href: '/dashboard/providers' },
-    { id: 'routing', label: tr('路由策略', 'Routing'), icon: 'fa-route', href: '/dashboard/routing' },
     { id: 'billing', label: tr('账单', 'Billing'), icon: 'fa-receipt', href: '/dashboard/billing' },
     { id: 'team', label: tr('团队管理', 'Team'), icon: 'fa-users', href: '/dashboard/team' },
     { id: 'profile', label: tr('个人中心', 'Profile'), icon: 'fa-user', href: '/dashboard/profile' }

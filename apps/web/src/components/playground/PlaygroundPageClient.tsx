@@ -41,6 +41,32 @@ type StructuredResult = {
   text?: string;
 };
 
+type JsonRecord = Record<string, unknown>;
+
+function asRecord(value: unknown): JsonRecord | null {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as JsonRecord)
+    : null;
+}
+
+function readString(value: unknown): string {
+  return typeof value === 'string' ? value : '';
+}
+
+function readNestedString(value: unknown, path: string[]): string {
+  let current: unknown = value;
+  for (const key of path) {
+    const record = asRecord(current);
+    if (!record) return '';
+    current = record[key];
+  }
+  return readString(current);
+}
+
+function readArray(value: unknown): unknown[] {
+  return Array.isArray(value) ? value : [];
+}
+
 function getEndpointLabel(
   endpointType: PlaygroundEndpointType,
   t: ReturnType<typeof useTranslation>,
@@ -73,49 +99,63 @@ function getEndpointLabel(
   }
 }
 
-function extractTextResponse(endpointType: PlaygroundEndpointType, data: any): string {
+function extractTextResponse(endpointType: PlaygroundEndpointType, data: unknown): string {
   if (!data) {
     return '';
   }
 
   switch (endpointType) {
     case 'anthropic':
-      return Array.isArray(data.content)
-        ? data.content
-            .map((item: any) => item?.text)
-            .filter(Boolean)
-            .join('\n')
-        : '';
-    case 'openai-response':
-      if (typeof data.output_text === 'string' && data.output_text) {
-        return data.output_text;
+      return readArray(asRecord(data)?.content)
+        .map((item) => readNestedString(item, ['text']))
+        .filter(Boolean)
+        .join('\n');
+    case 'openai-response': {
+      const record = asRecord(data);
+      if (record && typeof record.output_text === 'string' && record.output_text) {
+        return record.output_text;
       }
-      return Array.isArray(data.output)
-        ? data.output
-            .flatMap((item: any) => item?.content || [])
-            .map((item: any) => item?.text || item?.content?.[0]?.text)
-            .filter(Boolean)
-            .join('\n')
-        : '';
+      return readArray(record?.output)
+        .flatMap((item) => readArray(asRecord(item)?.content))
+        .map((item) => readNestedString(item, ['text']) || readIndexString(item, ['content', 0, 'text']))
+        .filter(Boolean)
+        .join('\n');
+    }
     case 'gemini':
-      return Array.isArray(data.candidates)
-        ? data.candidates
-            .flatMap((candidate: any) => candidate?.content?.parts || [])
-            .map((part: any) => part?.text)
-            .filter(Boolean)
-            .join('\n')
-        : '';
+      return readArray(asRecord(data)?.candidates)
+        .flatMap((candidate) => readArray(asRecord(asRecord(candidate)?.content)?.parts))
+        .map((part) => readNestedString(part, ['text']))
+        .filter(Boolean)
+        .join('\n');
     case 'audio-transcriptions':
     case 'audio-translations':
-      return typeof data.text === 'string' ? data.text : '';
+      return readString(asRecord(data)?.text);
     case 'openai':
     default:
       return (
-        data.choices?.[0]?.message?.content ||
-        data.choices?.[0]?.text ||
+        readNestedString(data, ['choices', '0', 'message', 'content']) ||
+        readNestedString(data, ['choices', '0', 'text']) ||
         ''
       );
   }
+}
+
+function getIndexedValue(value: unknown, index: number): unknown {
+  return Array.isArray(value) ? value[index] : undefined;
+}
+
+function readIndexString(value: unknown, path: Array<string | number>): string {
+  let current: unknown = value;
+  for (const segment of path) {
+    if (typeof segment === 'number') {
+      current = getIndexedValue(current, segment);
+      continue;
+    }
+    const record = asRecord(current);
+    if (!record) return '';
+    current = record[segment];
+  }
+  return readString(current);
 }
 
 function buildCodeExample({
@@ -849,17 +889,16 @@ export default function PlaygroundPageClient({
           json: JSON.stringify(data, null, 2),
         });
       } else if (selectedEndpointKind === 'images') {
-        const images = Array.isArray(data.data)
-          ? data.data
-              .map((item: any) =>
-                item?.url
-                  ? item.url
-                  : item?.b64_json
-                    ? `data:image/png;base64,${item.b64_json}`
-                    : null,
-              )
-              .filter(Boolean)
-          : [];
+        const images = readArray(asRecord(data)?.data)
+          .map((item) => {
+            const itemRecord = asRecord(item);
+            const url = readString(itemRecord?.url);
+            const b64 = readString(itemRecord?.b64_json);
+            if (url) return url;
+            if (b64) return `data:image/png;base64,${b64}`;
+            return null;
+          })
+          .filter((value): value is string => Boolean(value));
         setStructuredResult({
           kind: 'images',
           summary: t.playgroundPage.imageResultSummary.replace(
@@ -897,27 +936,29 @@ export default function PlaygroundPageClient({
           json: JSON.stringify(data, null, 2),
         });
       } else if (selectedEndpointKind === 'audio-speech') {
+        const dataRecord = asRecord(data);
         const audioPayload = {
-          ...data,
-          data_url: data?.data_url ? '[omitted]' : undefined,
-          base64_data: data?.base64_data ? '[omitted]' : undefined,
+          ...(dataRecord || {}),
+          data_url: dataRecord?.data_url ? '[omitted]' : undefined,
+          base64_data: dataRecord?.base64_data ? '[omitted]' : undefined,
         };
         setStructuredResult({
           kind: 'audio',
           summary: t.playgroundPage.speechResultSummary.replace(
             '{format}',
-            data.content_type || audioResponseFormat,
+            readString(dataRecord?.content_type) || audioResponseFormat,
           ),
-          audioUrl: data.data_url,
+          audioUrl: readString(dataRecord?.data_url) || undefined,
           json: JSON.stringify(audioPayload, null, 2),
         });
       } else if (selectedEndpointKind === 'video') {
-        const taskId = data.id || data.task_id || '';
-        const status = data.status || 'submitted';
+        const dataRecord = asRecord(data);
+        const taskId = readString(dataRecord?.id) || readString(dataRecord?.task_id) || '';
+        const status = readString(dataRecord?.status) || 'submitted';
         const videoUrl =
-          data.url ||
-          data.video_url ||
-          data?.data?.[0]?.url ||
+          readString(dataRecord?.url) ||
+          readString(dataRecord?.video_url) ||
+          readIndexString(dataRecord?.data, [0, 'url']) ||
           null;
         setStructuredResult({
           kind: 'video',
