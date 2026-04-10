@@ -32,6 +32,8 @@ export type DashboardBootstrapSection =
   | 'overview'
   | 'api-keys'
   | 'usage'
+  | 'providers'
+  | 'routing'
   | 'billing'
   | 'profile'
   | 'team';

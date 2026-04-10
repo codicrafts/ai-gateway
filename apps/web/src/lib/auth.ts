@@ -14,6 +14,7 @@ import {
   upsertOAuthUser,
 } from '@/services/account/app-user.service';
 import { verifyEmailVerificationCode } from '@/services/account/email-auth.service';
+import { verifyPasskeyLoginToken } from '@/services/account/passkey-login-token.service';
 import { normalizePhoneForAuth, verifyPhoneVerificationCode } from '@/services/account/phone-auth.service';
 import { verifyTwoFactorChallenge } from '@/services/account/two-factor.service';
 import { isPhoneIdentifier, validateEmail, validatePassword } from '@/utils/helpers';
@@ -36,6 +37,7 @@ export const authOptions: NextAuthOptions = {
         identifier: { label: 'Email or phone', type: 'text' },
         password: { label: 'Password', type: 'password' },
         code: { label: 'Verification code', type: 'text' },
+        passkeyToken: { label: 'Passkey login token', type: 'text' },
         totp: { label: '2FA code', type: 'text' },
         recoveryCode: { label: 'Recovery code', type: 'text' },
         authMethod: { label: 'Auth method', type: 'text' },
@@ -44,9 +46,43 @@ export const authOptions: NextAuthOptions = {
         const identifier = credentials?.identifier?.trim();
         const password = credentials?.password;
         const code = credentials?.code?.trim();
+        const passkeyToken = credentials?.passkeyToken?.trim();
         const totp = credentials?.totp?.trim();
         const recoveryCode = credentials?.recoveryCode?.trim();
-        const authMethod = credentials?.authMethod === 'code' ? 'code' : 'password';
+        const authMethod =
+          credentials?.authMethod === 'code'
+            ? 'code'
+            : credentials?.authMethod === 'passkey'
+              ? 'passkey'
+              : 'password';
+
+        if (authMethod === 'passkey') {
+          if (!passkeyToken) {
+            return null;
+          }
+
+          const verified = verifyPasskeyLoginToken(passkeyToken);
+          if (!verified?.userId) {
+            return null;
+          }
+
+          const user = await getAppUserById(verified.userId);
+          if (!user) {
+            return null;
+          }
+
+          const linked = await ensureNewApiLink(user);
+          const appUser = sanitizeAppUser(linked);
+          return {
+            id: appUser.id,
+            email: appUser.email ?? undefined,
+            phone: appUser.phone ?? undefined,
+            name: appUser.name || appUser.username,
+            image: appUser.image,
+            provider: 'credentials',
+            newApiUserId: appUser.new_api_user_id ?? undefined,
+          };
+        }
 
         if (!identifier) {
           return null;

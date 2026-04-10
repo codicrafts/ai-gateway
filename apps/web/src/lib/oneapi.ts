@@ -326,6 +326,17 @@ export interface OneApiChannel {
   settings?: string
 }
 
+export interface OneApiChannelConfigVersion {
+  id: number
+  channel_id: number
+  version: number
+  action: string
+  summary: string
+  snapshot: string
+  operator_id?: number | null
+  created_at: number
+}
+
 export interface OneApiOption {
   key: string
   value: string
@@ -1082,6 +1093,20 @@ export async function deleteChannel(channelId: number): Promise<OneApiResponse<v
 
 export async function testChannel(channelId: number): Promise<OneApiResponse<unknown>> {
   return adminRequest<unknown>(`/api/channel/test/${channelId}`)
+}
+
+export async function listChannelVersions(channelId: number): Promise<OneApiResponse<{ items: OneApiChannelConfigVersion[] }>> {
+  return adminRequest<{ items: OneApiChannelConfigVersion[] }>(`/api/channel/${channelId}/versions`)
+}
+
+export async function rollbackChannelVersion(
+  channelId: number,
+  versionId: number
+): Promise<OneApiResponse<OneApiChannel>> {
+  return adminRequest<OneApiChannel>(`/api/channel/${channelId}/rollback/${versionId}`, {
+    method: 'POST',
+    body: JSON.stringify({}),
+  })
 }
 
 export async function fetchUpstreamChannelModels(channelId: number): Promise<OneApiResponse<unknown>> {

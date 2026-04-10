@@ -33,6 +33,9 @@ export type Database = {
           updated_at: string
           provider: string | null
           new_api_user_id: number | null
+          runtime_username: string | null
+          runtime_password: string | null
+          runtime_access_token: string | null
           two_factor_enabled: boolean
           two_factor_secret: string | null
           two_factor_enabled_at: string | null
@@ -54,6 +57,9 @@ export type Database = {
           updated_at?: string
           provider?: string | null
           new_api_user_id?: number | null
+          runtime_username?: string | null
+          runtime_password?: string | null
+          runtime_access_token?: string | null
           two_factor_enabled?: boolean
           two_factor_secret?: string | null
           two_factor_enabled_at?: string | null
@@ -75,6 +81,9 @@ export type Database = {
           updated_at?: string
           provider?: string | null
           new_api_user_id?: number | null
+          runtime_username?: string | null
+          runtime_password?: string | null
+          runtime_access_token?: string | null
           two_factor_enabled?: boolean
           two_factor_secret?: string | null
           two_factor_enabled_at?: string | null

@@ -11,6 +11,11 @@ import type { AuthAudience } from '@/lib/auth-region';
 import ProviderOrbit from '@/components/auth/ProviderOrbit';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { useTranslation } from '@/hooks/useTranslation';
+import {
+  browserSupportsPasskey,
+  normalizeAuthenticationOptions,
+  serializeCredential,
+} from '@/utils/passkey';
 
 type LoginStep = 'account' | 'method' | 'verify';
 type AuthMethod = 'code' | 'password';
@@ -45,6 +50,7 @@ export default function LoginPageClient({
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [oauthLoading, setOauthLoading] = useState<string | null>(null);
+  const [passkeyLoading, setPasskeyLoading] = useState(false);
   const [sendingCode, setSendingCode] = useState(false);
   const [countdown, setCountdown] = useState(0);
 
@@ -53,6 +59,7 @@ export default function LoginPageClient({
   const isCodeLogin = authMethod === 'code';
   const isPasswordLogin = authMethod === 'password';
   const requiresTwoFactor = Boolean(authProfile?.requiresTwoFactor && isPasswordLogin);
+  const passkeySupported = useMemo(() => browserSupportsPasskey(), []);
 
   useEffect(() => {
     if (currentUser?.id) {
@@ -106,6 +113,60 @@ export default function LoginPageClient({
     } catch {
       dispatch(showNotification({ message: t.auth.oauthLoginFallback, type: 'error' }));
       setOauthLoading(null);
+    }
+  };
+
+  const handlePasskeyLogin = async () => {
+    if (!passkeySupported) {
+      dispatch(showNotification({ message: t.auth.passkeyUnsupported || '当前设备或浏览器不支持 Passkey', type: 'error' }));
+      return;
+    }
+
+    setPasskeyLoading(true);
+    try {
+      const beginResponse = await fetch('/api/account/passkey/login/begin', { method: 'POST' });
+      const beginResult = await beginResponse.json().catch(() => null);
+      if (!beginResponse.ok || !beginResult?.success || !beginResult.data?.options) {
+        throw new Error(beginResult?.error || t.auth.passkeyLoginFailed || t.auth.loginFailed);
+      }
+
+      const credential = await navigator.credentials.get(normalizeAuthenticationOptions(beginResult.data.options));
+      if (!credential) {
+        throw new Error(t.auth.passkeyLoginCancelled || 'Passkey 登录已取消');
+      }
+
+      const finishResponse = await fetch('/api/account/passkey/login/finish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(serializeCredential(credential as PublicKeyCredential)),
+      });
+      const finishResult = await finishResponse.json().catch(() => null);
+      if (!finishResponse.ok || !finishResult?.success || !finishResult.data?.loginToken) {
+        throw new Error(finishResult?.error || t.auth.passkeyLoginFailed || t.auth.loginFailed);
+      }
+
+      const result = await signIn('credentials', {
+        authMethod: 'passkey',
+        passkeyToken: finishResult.data.loginToken,
+        redirect: false,
+        callbackUrl,
+      });
+
+      if (result?.error) {
+        throw new Error(t.auth.passkeyLoginFailed || t.auth.loginFailed);
+      }
+
+      dispatch(showNotification({ message: t.auth.loginSuccess }));
+      setTimeout(() => {
+        window.location.href = result?.url || callbackUrl;
+      }, 800);
+    } catch (error) {
+      dispatch(showNotification({
+        message: error instanceof Error ? error.message : t.auth.passkeyLoginFailed || t.auth.loginFailed,
+        type: 'error',
+      }));
+    } finally {
+      setPasskeyLoading(false);
     }
   };
 
@@ -372,6 +433,25 @@ export default function LoginPageClient({
                   t.auth.continueAction
                 )}
               </button>
+
+              <button
+                type="button"
+                onClick={handlePasskeyLogin}
+                disabled={passkeyLoading || loading || !passkeySupported}
+                className="w-full py-3.5 border border-border rounded-xl font-semibold text-base bg-white text-text-primary shadow-sm hover:bg-slate-50 transition-all disabled:opacity-50 disabled:hover:bg-white flex items-center justify-center gap-2"
+              >
+                <i className={`fas ${passkeyLoading ? 'fa-spinner fa-spin' : 'fa-fingerprint'}`} />
+                <span>{t.auth.passkeyLogin || '使用 Passkey 登录'}</span>
+              </button>
+              {!passkeySupported ? (
+                <p className="text-xs leading-6 text-text-secondary">
+                  {t.auth.passkeyUnsupported || '当前设备或浏览器不支持 Passkey。'}
+                </p>
+              ) : (
+                <p className="text-xs leading-6 text-text-secondary">
+                  {t.auth.passkeyLoginHint || '如果你已经在个人中心注册过 Passkey，可以直接免密登录。'}
+                </p>
+              )}
 
               {!isDomestic && (
                 <>

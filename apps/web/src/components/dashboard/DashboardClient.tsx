@@ -59,7 +59,10 @@ import TransferOwnerModal from '@/components/team/TransferOwnerModal';
 import JoinApplicationsPanel from '@/components/team/JoinApplicationsPanel';
 import TeamDirectoryPanel from '@/components/team/TeamDirectoryPanel';
 import PhoneBindingCard from '@/components/account/PhoneBindingCard';
+import PasskeyCard from '@/components/account/PasskeyCard';
 import TwoFactorCard from '@/components/account/TwoFactorCard';
+import ProviderAdminPanel from '@/components/dashboard/ProviderAdminPanel';
+import RouterAdminPanel from '@/components/dashboard/RouterAdminPanel';
 import type { DashboardPageBootstrapPayload } from '@/services/dashboard/dashboard-page-bootstrap.service';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler, ArcElement } from 'chart.js';
 import { Line, Doughnut } from 'react-chartjs-2';
@@ -67,7 +70,7 @@ import { QRCodeSVG } from 'qrcode.react';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler, ArcElement);
 
-export type DashboardSection = 'overview' | 'api-keys' | 'usage' | 'billing' | 'profile' | 'team';
+export type DashboardSection = 'overview' | 'api-keys' | 'usage' | 'providers' | 'routing' | 'billing' | 'profile' | 'team';
 
 type DashboardClientProps = {
   section: DashboardSection;
@@ -1255,6 +1258,8 @@ export default function DashboardClient({
     { id: 'overview', label: tr('概览', 'Overview'), icon: 'fa-chart-pie', href: '/dashboard/overview' },
     { id: 'api-keys', label: tr('API 密钥', 'API Keys'), icon: 'fa-key', href: '/dashboard/api-keys' },
     { id: 'usage', label: tr('用量统计', 'Usage'), icon: 'fa-chart-line', href: '/dashboard/usage' },
+    { id: 'providers', label: tr('供应商', 'Providers'), icon: 'fa-diagram-project', href: '/dashboard/providers' },
+    { id: 'routing', label: tr('路由策略', 'Routing'), icon: 'fa-route', href: '/dashboard/routing' },
     { id: 'billing', label: tr('账单', 'Billing'), icon: 'fa-receipt', href: '/dashboard/billing' },
     { id: 'team', label: tr('团队管理', 'Team'), icon: 'fa-users', href: '/dashboard/team' },
     { id: 'profile', label: tr('个人中心', 'Profile'), icon: 'fa-user', href: '/dashboard/profile' }
@@ -2376,6 +2381,14 @@ export default function DashboardClient({
           </div>
         )}
 
+        {activeTab === 'providers' && (
+          <ProviderAdminPanel teamId={activeTeamId} tr={tr} isZh={isZh} />
+        )}
+
+        {activeTab === 'routing' && (
+          <RouterAdminPanel teamId={activeTeamId} tr={tr} />
+        )}
+
         {activeTab === 'team' && (
           <div className="space-y-3 sm:space-y-4 md:space-y-6">
             {teams.length === 0 && !teamLoading && (
@@ -2670,6 +2683,10 @@ export default function DashboardClient({
                   currentUser={currentUser}
                   currentTeamId={currentTeam?.id || null}
                   onUserUpdated={handleUserUpdated}
+                  onNotify={(message, type = 'success') => dispatch(showNotification({ message, type }))}
+                />
+
+                <PasskeyCard
                   onNotify={(message, type = 'success') => dispatch(showNotification({ message, type }))}
                 />
 
