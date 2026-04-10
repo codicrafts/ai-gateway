@@ -461,7 +461,7 @@ export default function PlaygroundPageClient({
   const selectedEndpointKind = getPlaygroundEndpointKind(selectedEndpoint);
 
   useEffect(() => {
-    const modelParam = searchParams.get('model');
+    const modelParam = searchParams?.get('model');
     const matchedModel =
       availableModels.find(
         (model) => model.model_name === modelParam || model.id === modelParam,

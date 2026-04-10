@@ -169,17 +169,6 @@ export async function getAppUserById(id: string): Promise<UserRow | null> {
   return data;
 }
 
-export async function getAppUserByNewApiUserId(newApiUserId: number): Promise<UserRow | null> {
-  const supabase = createServerAdminSupabaseClient();
-  const { data } = await supabase
-    .from('users')
-    .select('*')
-    .eq('new_api_user_id', newApiUserId)
-    .maybeSingle();
-
-  return data;
-}
-
 async function generateUniqueUsername(seed: string): Promise<string> {
   const supabase = createServerSupabaseClient();
   const base = slugifyUsername(seed);

@@ -3,11 +3,20 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
-      "@ai-gateway/shared-types": ["../../packages/shared-types/src/index.ts"],
-      "@ai-gateway/shared-types/*": ["../../packages/shared-types/src/*"],
-      "@ai-gateway/model-catalog": ["../../packages/model-catalog/catalog.json"]
-    }
+      "@/*": [
+        "./src/*"
+      ],
+      "@ai-gateway/shared-types": [
+        "../../packages/shared-types/src/index.ts"
+      ],
+      "@ai-gateway/shared-types/*": [
+        "../../packages/shared-types/src/*"
+      ],
+      "@ai-gateway/model-catalog": [
+        "../../packages/model-catalog/catalog.json"
+      ]
+    },
+    "strictNullChecks": true
   },
   "include": [
     "next-env.d.ts",
@@ -17,5 +26,7 @@
     "../../packages/shared-types/src/**/*.ts",
     "../../packages/model-catalog/catalog.json"
   ],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules"
+  ]
 }

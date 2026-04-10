@@ -17,7 +17,7 @@ export default function AcceptInvitePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { currentUser } = useAppSelector((state) => state.auth);
-  const token = searchParams.get('token') || '';
+  const token = searchParams?.get('token') || '';
   const callbackUrl = useMemo(() => `/accept-invite?token=${token}`, [token]);
 
   const [loading, setLoading] = useState(true);

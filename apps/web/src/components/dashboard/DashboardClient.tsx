@@ -59,7 +59,6 @@ import TransferOwnerModal from '@/components/team/TransferOwnerModal';
 import JoinApplicationsPanel from '@/components/team/JoinApplicationsPanel';
 import TeamDirectoryPanel from '@/components/team/TeamDirectoryPanel';
 import PhoneBindingCard from '@/components/account/PhoneBindingCard';
-import PasskeyCard from '@/components/account/PasskeyCard';
 import TwoFactorCard from '@/components/account/TwoFactorCard';
 import ProviderAdminPanel from '@/components/dashboard/ProviderAdminPanel';
 import RouterAdminPanel from '@/components/dashboard/RouterAdminPanel';
@@ -265,9 +264,10 @@ export default function DashboardClient({
   }, [searchParams]);
 
   const refreshDashboardRoute = useCallback((nextTeamId?: string | null, nextPathname?: string) => {
-    const targetPath = nextPathname || pathname;
+    const currentPath = pathname || '/dashboard';
+    const targetPath = nextPathname || currentPath;
     const currentTeamId = searchParams?.get('team') ?? initialBootstrap?.dashboard.team_id ?? currentTeam?.id ?? null;
-    const currentHref = buildDashboardHref(pathname, currentTeamId);
+    const currentHref = buildDashboardHref(currentPath, currentTeamId);
     const nextHref = buildDashboardHref(targetPath, nextTeamId ?? currentTeamId);
 
     setInitialDataReady(false);
@@ -2681,10 +2681,6 @@ export default function DashboardClient({
                   currentUser={currentUser}
                   currentTeamId={currentTeam?.id || null}
                   onUserUpdated={handleUserUpdated}
-                  onNotify={(message, type = 'success') => dispatch(showNotification({ message, type }))}
-                />
-
-                <PasskeyCard
                   onNotify={(message, type = 'success') => dispatch(showNotification({ message, type }))}
                 />
 
