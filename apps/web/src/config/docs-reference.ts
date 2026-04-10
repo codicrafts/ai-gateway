@@ -9,6 +9,11 @@ export const DOCS_ENDPOINT_LABELS: Record<string, string> = {
   '/v1/messages': 'Anthropic Messages',
   '/v1/embeddings': 'Embeddings',
   '/v1/images/generations': 'Image Generation',
+  '/v1/rerank': 'Rerank',
+  '/v1/audio/speech': 'Audio Speech',
+  '/v1/audio/transcriptions': 'Audio Transcriptions',
+  '/v1/audio/translations': 'Audio Translations',
+  '/v1beta/models/{model}:generateContent': 'Gemini Generate Content',
 };
 
 export const DOCS_STATUS_CODES: DocsStatusCodeReference[] = [

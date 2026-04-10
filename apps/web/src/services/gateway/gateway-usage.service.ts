@@ -1,5 +1,5 @@
 import { createServerAdminSupabaseClient, type Database } from '@/lib/supabase';
-import { resolveAccessibleTeamContext } from '@/services/team/team-context.service';
+import { resolveGatewayScope } from './gateway-scope.service';
 import type { GatewayUsageStats } from './gateway-types';
 
 export type ListGatewayUsageOptions = {
@@ -144,12 +144,127 @@ export async function listGatewayUsageForTeam(options: {
   };
 }
 
+async function listGatewayUsageForScope(options: {
+  scope: Awaited<ReturnType<typeof resolveGatewayScope>>;
+  page?: number;
+  limit?: number;
+  tokenId?: number;
+  model?: string;
+}) {
+  const { scope, page = 0, limit = 20, tokenId, model } = options;
+  const supabase = createServerAdminSupabaseClient();
+  let resolvedOrgApiKeyId: number | null = null;
+  if (tokenId) {
+    const { data: syncRowData, error: syncError } = await supabase
+      .from('org_api_key_sync')
+      .select('org_api_key_id')
+      .eq('new_api_token_id', tokenId)
+      .maybeSingle();
+    const syncRow = syncRowData as Pick<OrgApiKeySyncRow, 'org_api_key_id'> | null;
+
+    if (syncError) {
+      throw new Error('获取组织用量日志失败');
+    }
+
+    if (syncRow?.org_api_key_id) {
+      resolvedOrgApiKeyId = syncRow.org_api_key_id;
+    }
+  }
+
+  const buildLedgerQuery = <TSelect extends string>(select: TSelect) => {
+    let query = supabase.from('org_usage_ledger').select(select);
+
+    query =
+      scope.kind === 'team'
+        ? query.eq('team_id', scope.teamId)
+        : query.is('team_id', null).eq('user_id', scope.userId);
+
+    if (model) {
+      query = query.eq('model', model);
+    }
+
+    if (resolvedOrgApiKeyId) {
+      query = query.eq('org_api_key_id', resolvedOrgApiKeyId);
+    }
+
+    return query;
+  };
+
+  let keyRowsQuery = supabase
+    .from('org_api_keys')
+    .select('id, name, quota, used_quota, unlimited_quota')
+    .eq('status', 'active');
+  keyRowsQuery =
+    scope.kind === 'team'
+      ? keyRowsQuery.eq('team_id', scope.teamId)
+      : keyRowsQuery.is('team_id', null).eq('user_id', scope.userId);
+
+  const [usageRowsResult, statRowsResult, keyRowsResult] = await Promise.all([
+    buildLedgerQuery('*')
+      .order('occurred_at', { ascending: false })
+      .range(page * limit, page * limit + limit - 1),
+    buildLedgerQuery('amount, request_count'),
+    keyRowsQuery,
+  ]);
+
+  const { data: usageRows, error } = usageRowsResult;
+  if (error) {
+    throw new Error('获取组织用量日志失败');
+  }
+
+  const { data: statRows, error: statError } = statRowsResult;
+  if (statError) {
+    throw new Error('获取组织用量统计失败');
+  }
+
+  const { data: keyRows, error: keyRowsError } = keyRowsResult;
+  if (keyRowsError) {
+    throw new Error('获取组织用量统计失败');
+  }
+
+  const rows = (usageRows || []) as OrgUsageLedgerRow[];
+  const usageStatRows = (statRows || []) as Array<Pick<OrgUsageLedgerRow, 'amount' | 'request_count'>>;
+  const activeKeys = (keyRows || []) as Array<Pick<OrgApiKeyRow, 'id' | 'name' | 'quota' | 'used_quota' | 'unlimited_quota'>>;
+  const stats = buildUsageStats({ usageRows: usageStatRows, activeKeys });
+  const apiKeyNameMap = new Map(activeKeys.map((key) => [Number(key.id), key.name]));
+
+  return {
+    logs: rows.map((row) => ({
+      id: row.new_api_log_id ?? row.id,
+      model: row.model,
+      prompt_tokens: row.prompt_tokens,
+      completion_tokens: row.completion_tokens,
+      total_tokens: row.total_tokens,
+      quota_cost: Number(row.amount),
+      api_key_name:
+        row.runtime_token_name ||
+        (row.org_api_key_id ? apiKeyNameMap.get(Number(row.org_api_key_id)) : null) ||
+        `Key #${row.org_api_key_id ?? '-'}`,
+      status: row.status,
+      error_message: row.error_message,
+      runtime_channel_id: row.runtime_channel_id,
+      runtime_request_id: row.runtime_request_id,
+      runtime_content: row.runtime_content,
+      runtime_use_time: row.runtime_use_time,
+      runtime_is_stream: row.runtime_is_stream,
+      runtime_other:
+        row.runtime_other && typeof row.runtime_other === 'object'
+          ? row.runtime_other
+          : null,
+      created_at: row.occurred_at,
+    })),
+    stats,
+    page,
+    limit,
+  };
+}
+
 export async function listGatewayUsage(options: ListGatewayUsageOptions) {
   const { userId, teamId, page = 0, limit = 20, tokenId, model } = options;
-  const teamContext = await resolveAccessibleTeamContext(userId, teamId);
+  const scope = await resolveGatewayScope(userId, teamId);
 
-  return listGatewayUsageForTeam({
-    teamId: teamContext.teamId,
+  return listGatewayUsageForScope({
+    scope,
     page,
     limit,
     tokenId,

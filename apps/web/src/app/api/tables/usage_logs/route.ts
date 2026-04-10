@@ -1,7 +1,6 @@
 import { NextRequest } from 'next/server';
 import { getAuthenticatedAppUser } from '@/services/account/session.service';
-import { listGatewayUsageForTeam } from '@/services/gateway/gateway-usage.service';
-import { resolveAccessibleTeamContext } from '@/services/team/team-context.service';
+import { listGatewayUsage } from '@/services/gateway/gateway-usage.service';
 import { fail, ok } from '@/server/api/responses';
 
 export const dynamic = 'force-dynamic';
@@ -28,11 +27,9 @@ export async function GET(request: NextRequest) {
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20', 10)));
     const tokenId = searchParams.get('token_id');
     const model = searchParams.get('model');
-    const teamId = searchParams.get('team_id');
-    const teamContext = await resolveAccessibleTeamContext(appUser.id, teamId);
-
-    const result = await listGatewayUsageForTeam({
-      teamId: teamContext.teamId,
+    const result = await listGatewayUsage({
+      userId: appUser.id,
+      teamId: searchParams.get('team_id'),
       page,
       limit,
       tokenId: tokenId ? parseInt(tokenId, 10) : undefined,

@@ -1,6 +1,6 @@
 import { createServerAdminSupabaseClient, type Database } from '@/lib/supabase';
 import type { AppUser } from '@/services/account/app-user.service';
-import { resolveAccessibleTeamContext } from '@/services/team/team-context.service';
+import { resolveGatewayScope } from '@/services/gateway/gateway-scope.service';
 
 export type BillingEntry = {
   id: string;
@@ -63,6 +63,7 @@ function preserveSmallAmount(value: number): number {
 
 type OrgUsageLedgerRow = Database['public']['Tables']['org_usage_ledger']['Row'];
 type OrgBillingLedgerRow = Database['public']['Tables']['org_billing_ledger']['Row'];
+type BillingTransactionRow = Database['public']['Tables']['billing_transactions']['Row'];
 
 function mapOrgBillingEntry(row: OrgBillingLedgerRow): BillingEntry {
   const metadata = row.metadata as Record<string, unknown>;
@@ -84,6 +85,20 @@ function mapOrgBillingEntry(row: OrgBillingLedgerRow): BillingEntry {
     status: 'settled',
     currency: 'USD',
     reference: row.reference_id || undefined,
+  };
+}
+
+function mapPersonalRechargeEntry(row: BillingTransactionRow): BillingEntry {
+  return {
+    id: `recharge-${row.id}`,
+    type: 'recharge',
+    title: '账户充值',
+    description: row.description || row.source_id,
+    amount: Number(row.amount),
+    created_at: row.created_at,
+    status: row.status === 'reversed' ? 'failed' : 'settled',
+    currency: row.currency,
+    reference: row.source_id,
   };
 }
 
@@ -240,8 +255,122 @@ export async function getBillingSummaryForTeam(teamId: string): Promise<BillingS
 }
 
 export async function getBillingSummary(appUser: AppUser, teamId?: string | null): Promise<BillingSummary> {
-  const teamContext = await resolveAccessibleTeamContext(appUser.id, teamId);
-  return getBillingSummaryForTeam(teamContext.teamId);
+  const scope = await resolveGatewayScope(appUser.id, teamId);
+  if (scope.kind === 'team') {
+    return getBillingSummaryForTeam(scope.teamId);
+  }
+
+  const supabase = createServerAdminSupabaseClient();
+  const [usageRowsResult, usageAggregateRowsResult, rechargeRowsResult, apiKeyNamesResult] = await Promise.all([
+    supabase
+      .from('org_usage_ledger')
+      .select('*')
+      .is('team_id', null)
+      .eq('user_id', appUser.id)
+      .order('occurred_at', { ascending: false })
+      .limit(100),
+    supabase
+      .from('org_usage_ledger')
+      .select('amount, occurred_at')
+      .is('team_id', null)
+      .eq('user_id', appUser.id)
+      .eq('status', 'success'),
+    supabase
+      .from('billing_transactions')
+      .select('*')
+      .is('team_id', null)
+      .eq('user_id', appUser.id)
+      .order('created_at', { ascending: false })
+      .limit(100),
+    supabase
+      .from('org_api_keys')
+      .select('id, name')
+      .is('team_id', null)
+      .eq('user_id', appUser.id),
+  ]);
+
+  const { data: usageRowsData, error: usageError } = usageRowsResult;
+  if (usageError) {
+    throw new Error('获取个人账单失败');
+  }
+
+  const { data: usageAggregateRowsData, error: usageAggregateError } = usageAggregateRowsResult;
+  if (usageAggregateError) {
+    throw new Error('获取个人用量聚合数据失败');
+  }
+
+  const { data: rechargeRowsData, error: rechargeRowsError } = rechargeRowsResult;
+  if (rechargeRowsError) {
+    throw new Error('获取个人充值流水失败');
+  }
+
+  const { data: apiKeyNamesData, error: apiKeyNamesError } = apiKeyNamesResult;
+  if (apiKeyNamesError) {
+    throw new Error('获取个人 API Key 名称失败');
+  }
+
+  const usageRows = (usageRowsData || []) as OrgUsageLedgerRow[];
+  const usageAggregateRows = (usageAggregateRowsData || []) as Array<Pick<OrgUsageLedgerRow, 'amount' | 'occurred_at'>>;
+  const rechargeRows = (rechargeRowsData || []) as BillingTransactionRow[];
+  const apiKeyNameMap = new Map(
+    ((apiKeyNamesData || []) as Array<{ id: number; name: string }>).map((row) => [Number(row.id), row.name]),
+  );
+  const now = new Date();
+  const previousMonth = getPreviousMonth(now);
+  const recentThirtyDaysStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+  const usageEntries: BillingEntry[] = usageRows.map((row) => ({
+    id: `usage-${row.new_api_log_id ?? row.id}`,
+    type: 'usage',
+    title: row.status === 'failed' ? '调用失败' : '模型调用',
+    description:
+      row.status === 'failed'
+        ? ''
+        : (row.provider ? `${row.model} / ${row.provider}` : row.model),
+    amount: row.status === 'failed' ? 0 : -Number(row.amount || 0),
+    created_at: row.occurred_at,
+    status: row.status === 'failed' ? 'failed' : 'settled',
+    model: row.model,
+    token_name: row.org_api_key_id
+      ? apiKeyNameMap.get(Number(row.org_api_key_id)) || `Key #${row.org_api_key_id}`
+      : undefined,
+    total_tokens: Number(row.total_tokens || 0),
+  }));
+  const rechargeEntries = rechargeRows.map(mapPersonalRechargeEntry);
+
+  const currentMonthSpend = usageAggregateRows
+    .filter((row) => isSameMonth(new Date(row.occurred_at), now))
+    .reduce((sum, row) => sum + Math.abs(Number(row.amount || 0)), 0);
+
+  const previousMonthSpend = usageAggregateRows
+    .filter((row) => isSameMonth(new Date(row.occurred_at), previousMonth))
+    .reduce((sum, row) => sum + Math.abs(Number(row.amount || 0)), 0);
+
+  const recentThirtyDaySpend = usageAggregateRows
+    .filter((row) => new Date(row.occurred_at) >= recentThirtyDaysStart)
+    .reduce((sum, row) => sum + Math.abs(Number(row.amount || 0)), 0);
+
+  const averageDailySpend = roundToTwo(recentThirtyDaySpend / 30);
+  const currentBalance = roundToTwo(Number(appUser.balance || 0));
+  const estimatedAvailableDays = averageDailySpend > 0 ? Math.max(0, Math.floor(currentBalance / averageDailySpend)) : null;
+  const changePercentage = previousMonthSpend > 0
+    ? roundToTwo(((currentMonthSpend - previousMonthSpend) / previousMonthSpend) * 100)
+    : null;
+
+  const recentEntries = [...usageEntries, ...rechargeEntries]
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .slice(0, 20);
+
+  return {
+    current_balance: currentBalance,
+    current_month_spend: preserveSmallAmount(currentMonthSpend),
+    previous_month_spend: preserveSmallAmount(previousMonthSpend),
+    change_percentage: changePercentage,
+    average_daily_spend: preserveSmallAmount(averageDailySpend),
+    estimated_available_days: estimatedAvailableDays,
+    recent_entries: recentEntries,
+    currency: 'USD',
+  };
 }
 
 export async function getBillingExportRows(appUser: AppUser, teamId?: string | null): Promise<BillingExportRow[]> {

@@ -1,8 +1,13 @@
 import {
+  createTokenForUser,
   createRuntimeUserToken,
+  deleteTokenForUser,
   deleteRuntimeUserToken,
+  getUserTokens,
   getRuntimeUserTokens,
+  setTokenStatusForUser,
   setRuntimeUserTokenStatus,
+  updateTokenForUser,
   updateRuntimeUserToken,
   type CreateTokenRequest,
   type OneApiToken,
@@ -10,6 +15,7 @@ import {
 } from '@/lib/oneapi';
 import { createServerAdminSupabaseClient, type Database } from '@/lib/supabase';
 import type { GatewayApiKey } from '@/services/gateway/gateway-types';
+import { ensureNewApiLink, getAppUserById } from '@/services/account/app-user.service';
 import { createOrgRuntimeSyncJob, updateOrgRuntimeSyncJob } from './org-runtime-sync.service';
 import { ensureTeamRuntimeAccount } from './org-runtime-account.service';
 
@@ -120,8 +126,58 @@ async function updateLocalKey(
   return data as OrgApiKeyRow;
 }
 
-async function loadRuntimeTokens(newApiUserId: number, accessToken: string): Promise<OneApiToken[]> {
-  const result = await getRuntimeUserTokens(newApiUserId, accessToken);
+type RuntimeTarget =
+  | {
+      kind: 'team';
+      newApiUserId: number;
+      accessToken: string;
+    }
+  | {
+      kind: 'personal';
+      newApiUserId: number;
+    };
+
+async function resolveRuntimeTarget(
+  key: Pick<OrgApiKeyRow, 'team_id' | 'user_id'>,
+  actingUserId: string,
+): Promise<RuntimeTarget> {
+  if (key.team_id) {
+    const runtimeAccount = await ensureTeamRuntimeAccount({
+      teamId: key.team_id,
+      actingUserId,
+    });
+    return {
+      kind: 'team',
+      newApiUserId: runtimeAccount.newApiUserId,
+      accessToken: runtimeAccount.accessToken,
+    };
+  }
+
+  if (!key.user_id) {
+    throw new Error('API Key 归属信息缺失');
+  }
+
+  const appUser = await getAppUserById(key.user_id);
+  if (!appUser) {
+    throw new Error('API Key 归属用户不存在');
+  }
+
+  const linkedUser = await ensureNewApiLink(appUser);
+  if (!linkedUser.new_api_user_id) {
+    throw new Error('个人运行时账户映射失败');
+  }
+
+  return {
+    kind: 'personal',
+    newApiUserId: linkedUser.new_api_user_id,
+  };
+}
+
+async function loadRuntimeTokens(target: RuntimeTarget): Promise<OneApiToken[]> {
+  const result =
+    target.kind === 'team'
+      ? await getRuntimeUserTokens(target.newApiUserId, target.accessToken)
+      : await getUserTokens(target.newApiUserId);
   if (!result.success) {
     throw new Error(result.message || '获取运行时 Token 列表失败');
   }
@@ -130,12 +186,11 @@ async function loadRuntimeTokens(newApiUserId: number, accessToken: string): Pro
 }
 
 async function resolveRuntimeToken(params: {
-  newApiUserId: number;
-  accessToken: string;
+  target: RuntimeTarget;
   tokenId: number | null;
   name: string;
 }): Promise<OneApiToken | null> {
-  const tokens = await loadRuntimeTokens(params.newApiUserId, params.accessToken);
+  const tokens = await loadRuntimeTokens(params.target);
 
   if (params.tokenId !== null) {
     const exact = tokens.find((token) => token.id === params.tokenId);
@@ -154,7 +209,6 @@ async function resolveRuntimeToken(params: {
 type SyncOrgApiKeyNowParams = {
   orgApiKeyId: number;
   actingUserId: string;
-  teamId: string;
   action: 'create' | 'update' | 'delete' | 'resync';
 };
 
@@ -170,6 +224,7 @@ type SyncOrgApiKeyNowResult =
     };
 
 export async function syncOrgApiKeyNow(params: SyncOrgApiKeyNowParams): Promise<SyncOrgApiKeyNowResult> {
+  const currentKey = await getLocalKey(params.orgApiKeyId);
   const job = await createOrgRuntimeSyncJob({
     entity_type: 'api_key',
     entity_id: params.orgApiKeyId,
@@ -177,7 +232,8 @@ export async function syncOrgApiKeyNow(params: SyncOrgApiKeyNowParams): Promise<
     status: 'processing',
     request_payload: {
       org_api_key_id: params.orgApiKeyId,
-      team_id: params.teamId,
+      team_id: currentKey.team_id,
+      owner_user_id: currentKey.user_id,
       user_id: params.actingUserId,
     },
     attempt_count: 1,
@@ -185,20 +241,22 @@ export async function syncOrgApiKeyNow(params: SyncOrgApiKeyNowParams): Promise<
   });
 
   try {
-    const currentKey = await getLocalKey(params.orgApiKeyId);
     const currentSync = await getSyncRecord(params.orgApiKeyId);
+    const runtimeTarget = await resolveRuntimeTarget(currentKey, params.actingUserId);
 
     if (params.action === 'delete') {
       if (currentSync?.new_api_token_id) {
-        const runtimeAccount = await ensureTeamRuntimeAccount({
-          teamId: params.teamId,
-          actingUserId: params.actingUserId,
-        });
-        const runtimeDelete = await deleteRuntimeUserToken(
-          runtimeAccount.newApiUserId,
-          runtimeAccount.accessToken,
-          currentSync.new_api_token_id
-        );
+        const runtimeDelete =
+          runtimeTarget.kind === 'team'
+            ? await deleteRuntimeUserToken(
+                runtimeTarget.newApiUserId,
+                runtimeTarget.accessToken,
+                currentSync.new_api_token_id,
+              )
+            : await deleteTokenForUser(
+                runtimeTarget.newApiUserId,
+                currentSync.new_api_token_id,
+              );
         if (!runtimeDelete.success) {
           throw new Error(runtimeDelete.message || '删除运行时 API Key 失败');
         }
@@ -224,12 +282,6 @@ export async function syncOrgApiKeyNow(params: SyncOrgApiKeyNowParams): Promise<
       sync_error: null,
     });
 
-    const runtimeAccount = await ensureTeamRuntimeAccount({
-      teamId: params.teamId,
-      actingUserId: params.actingUserId,
-    });
-    const runtimeUserId = runtimeAccount.newApiUserId;
-    const runtimeAccessToken = runtimeAccount.accessToken;
     const shouldCreateRuntimeToken = !currentSync?.new_api_token_id || params.action === 'create';
 
     let runtimeToken: OneApiToken | null = null;
@@ -245,7 +297,14 @@ export async function syncOrgApiKeyNow(params: SyncOrgApiKeyNowParams): Promise<
         expired_time: toUnixTimestamp(currentKey.expires_at),
       };
 
-      const createResult = await createRuntimeUserToken(runtimeUserId, runtimeAccessToken, tokenRequest);
+      const createResult =
+        runtimeTarget.kind === 'team'
+          ? await createRuntimeUserToken(
+              runtimeTarget.newApiUserId,
+              runtimeTarget.accessToken,
+              tokenRequest,
+            )
+          : await createTokenForUser(runtimeTarget.newApiUserId, tokenRequest);
       if (!createResult.success) {
         throw new Error(createResult.message || '同步到运行时失败');
       }
@@ -253,8 +312,7 @@ export async function syncOrgApiKeyNow(params: SyncOrgApiKeyNowParams): Promise<
       runtimeToken =
         createResult.data ||
         (await resolveRuntimeToken({
-          newApiUserId: runtimeUserId,
-          accessToken: runtimeAccessToken,
+          target: runtimeTarget,
           tokenId: null,
           name: currentKey.name,
         }));
@@ -269,12 +327,19 @@ export async function syncOrgApiKeyNow(params: SyncOrgApiKeyNowParams): Promise<
       }
 
       if (currentKey.status !== undefined) {
-        const statusResult = await setRuntimeUserTokenStatus(
-          runtimeUserId,
-          runtimeAccessToken,
-          runtimeTokenId,
-          currentKey.status === 'active' ? 1 : 2
-        );
+        const statusResult =
+          runtimeTarget.kind === 'team'
+            ? await setRuntimeUserTokenStatus(
+                runtimeTarget.newApiUserId,
+                runtimeTarget.accessToken,
+                runtimeTokenId,
+                currentKey.status === 'active' ? 1 : 2,
+              )
+            : await setTokenStatusForUser(
+                runtimeTarget.newApiUserId,
+                runtimeTokenId,
+                currentKey.status === 'active' ? 1 : 2,
+              );
         if (!statusResult.success) {
           throw new Error(statusResult.message || '更新运行时 API Key 状态失败');
         }
@@ -291,14 +356,20 @@ export async function syncOrgApiKeyNow(params: SyncOrgApiKeyNowParams): Promise<
         expired_time: toUnixTimestamp(currentKey.expires_at),
       };
 
-      const updateResult = await updateRuntimeUserToken(runtimeUserId, runtimeAccessToken, tokenUpdate);
+      const updateResult =
+        runtimeTarget.kind === 'team'
+          ? await updateRuntimeUserToken(
+              runtimeTarget.newApiUserId,
+              runtimeTarget.accessToken,
+              tokenUpdate,
+            )
+          : await updateTokenForUser(runtimeTarget.newApiUserId, tokenUpdate);
       if (!updateResult.success) {
         throw new Error(updateResult.message || '同步更新运行时 API Key 失败');
       }
 
       runtimeToken = await resolveRuntimeToken({
-        newApiUserId: runtimeUserId,
-        accessToken: runtimeAccessToken,
+        target: runtimeTarget,
         tokenId: runtimeTokenId,
         name: currentKey.name,
       });

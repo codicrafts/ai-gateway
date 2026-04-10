@@ -817,7 +817,8 @@ export type Database = {
       org_api_keys: {
         Row: {
           id: number
-          team_id: string
+          team_id: string | null
+          user_id: string | null
           name: string
           remark: string | null
           subnet: string | null
@@ -837,7 +838,8 @@ export type Database = {
         }
         Insert: {
           id?: number
-          team_id: string
+          team_id?: string | null
+          user_id?: string | null
           name: string
           remark?: string | null
           subnet?: string | null
@@ -857,7 +859,8 @@ export type Database = {
         }
         Update: {
           id?: number
-          team_id?: string
+          team_id?: string | null
+          user_id?: string | null
           name?: string
           remark?: string | null
           subnet?: string | null
@@ -970,7 +973,7 @@ export type Database = {
       org_usage_ledger: {
         Row: {
           id: number
-          team_id: string
+          team_id: string | null
           user_id: string | null
           org_api_key_id: number | null
           new_api_log_id: number | null
@@ -996,7 +999,7 @@ export type Database = {
         }
         Insert: {
           id?: number
-          team_id: string
+          team_id?: string | null
           user_id?: string | null
           org_api_key_id?: number | null
           new_api_log_id?: number | null
@@ -1022,7 +1025,7 @@ export type Database = {
         }
         Update: {
           id?: number
-          team_id?: string
+          team_id?: string | null
           user_id?: string | null
           org_api_key_id?: number | null
           new_api_log_id?: number | null

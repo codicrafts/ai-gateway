@@ -191,6 +191,68 @@ export interface OneApiPricingResponse {
   vendors?: OneApiPricingVendor[]
 }
 
+export interface OneApiMonitoringSummary {
+  window_hours: number
+  total_requests_24h: number
+  successful_requests_24h: number
+  error_requests_24h: number
+  success_rate_24h: number
+  avg_latency_ms_24h: number
+  p95_latency_ms_24h: number
+  latency_sample_size_24h: number
+  prompt_tokens_24h: number
+  completion_tokens_24h: number
+  total_tokens_24h: number
+  enabled_channels: number
+  auto_disabled_channels: number
+  manually_disabled_channels: number
+  slow_channels: number
+  last_minute_rpm: number
+  last_minute_tpm: number
+  alert_count: number
+  generated_at: number
+}
+
+export interface OneApiMonitoringAlert {
+  id: string
+  level: 'critical' | 'warning' | 'info' | string
+  type: string
+  title: string
+  detail: string
+  entity_type?: string
+  entity_id?: number
+  occurred_at: number
+}
+
+export interface OneApiMonitoringTrendPoint {
+  timestamp: number
+  label: string
+  requests: number
+  successful_requests: number
+  error_requests: number
+  success_rate: number
+  avg_latency_ms: number
+  total_tokens: number
+}
+
+export interface OneApiMonitoringChannelHealth {
+  channel_id: number
+  name: string
+  group: string
+  status: number
+  response_time: number
+  last_test_at: number
+  auto_ban: number
+  models: string
+  successful_requests_24h: number
+  error_requests_24h: number
+  total_requests_24h: number
+  success_rate_24h: number
+  avg_latency_ms_24h: number
+  p95_latency_ms_24h: number
+  total_tokens_24h: number
+}
+
 export interface OneApiPagedData<T> {
   items: T[]
   total: number
@@ -665,6 +727,57 @@ export async function createTokenForUser(
   })
 }
 
+export async function updateTokenForUser(
+  userId: number,
+  tokenData: UpdateTokenRequest
+): Promise<OneApiResponse<OneApiToken>> {
+  return adminRequest<OneApiToken>('/api/token/', {
+    method: 'PUT',
+    headers: {
+      'New-Api-User': String(userId),
+    },
+    body: JSON.stringify({
+      ...tokenData,
+      permission_scopes: serializePermissionScopes(tokenData.permission_scopes),
+    }),
+  })
+}
+
+export async function deleteTokenForUser(
+  userId: number,
+  tokenId: number
+): Promise<OneApiResponse<void>> {
+  return adminRequest<void>(`/api/token/${tokenId}`, {
+    method: 'DELETE',
+    headers: {
+      'New-Api-User': String(userId),
+    },
+  })
+}
+
+export async function getUserTokenKey(
+  userId: number,
+  tokenId: number
+): Promise<OneApiResponse<OneApiTokenKeyResponse>> {
+  return adminRequest<OneApiTokenKeyResponse>(`/api/token/${tokenId}/key`, {
+    method: 'POST',
+    headers: {
+      'New-Api-User': String(userId),
+    },
+  })
+}
+
+export async function fetchUserTokenKey(
+  userId: number,
+  tokenId: number
+): Promise<string> {
+  const response = await getUserTokenKey(userId, tokenId)
+  if (!response.success || !response.data?.key) {
+    throw new Error(response.message || 'Failed to fetch user token key')
+  }
+  return response.data.key
+}
+
 export async function createRuntimeUserToken(
   userId: number,
   accessToken: string,
@@ -771,6 +884,17 @@ export async function setTokenStatus(
       id: tokenId,
       action: status === 1 ? 'enable' : 'disable',
     }),
+  })
+}
+
+export async function setTokenStatusForUser(
+  userId: number,
+  tokenId: number,
+  status: 1 | 2
+): Promise<OneApiResponse<OneApiToken>> {
+  return updateTokenForUser(userId, {
+    id: tokenId,
+    status,
   })
 }
 
@@ -1040,6 +1164,26 @@ export async function deleteModelMeta(modelId: number): Promise<OneApiResponse<v
 
 export async function getOptions(): Promise<OneApiResponse<OneApiOption[]>> {
   return adminRequest<OneApiOption[]>('/api/option/')
+}
+
+export async function getMonitoringSummary(): Promise<OneApiResponse<OneApiMonitoringSummary>> {
+  return adminRequest<OneApiMonitoringSummary>('/api/monitor/summary')
+}
+
+export async function getMonitoringAlerts(): Promise<OneApiResponse<{ items: OneApiMonitoringAlert[] }>> {
+  return adminRequest<{ items: OneApiMonitoringAlert[] }>('/api/monitor/alerts')
+}
+
+export async function getMonitoringTrends(
+  hours: number = 24
+): Promise<OneApiResponse<{ items: OneApiMonitoringTrendPoint[] }>> {
+  return adminRequest<{ items: OneApiMonitoringTrendPoint[] }>(`/api/monitor/trends?hours=${hours}`)
+}
+
+export async function getMonitoringChannels(
+  limit: number = 12
+): Promise<OneApiResponse<{ items: OneApiMonitoringChannelHealth[] }>> {
+  return adminRequest<{ items: OneApiMonitoringChannelHealth[] }>(`/api/monitor/channels?limit=${limit}`)
 }
 
 export async function updateOption(key: string, value: string | number | boolean): Promise<OneApiResponse<void>> {

@@ -1,4 +1,3 @@
-import catalog from '@ai-gateway/model-catalog';
 import type { Model } from '@ai-gateway/shared-types';
 import type { AuthAudience } from '@/lib/auth-region';
 import {
@@ -8,11 +7,10 @@ import {
 } from '@/config/docs-reference';
 import { PRICING_RAILS, PRICING_RULES } from '@/config/pricing-reference';
 import { listModelCatalog } from '@/services/catalog/model-catalog.service';
-
-type RawCatalogModel = Model & {
-  vendor_name?: string;
-  endpoints?: Record<string, { path: string; method: string } | undefined>;
-};
+import {
+  normalizeModelEndpointTypes,
+  type PlaygroundEndpointType,
+} from '@/services/playground/playground-endpoints';
 
 export type DocsEndpointReference = {
   key: string;
@@ -77,13 +75,72 @@ export type DocsReference = {
   billingRails: DocsBillingRailReference[];
 };
 
-const RAW_MODELS = ((catalog.models || []) as unknown) as RawCatalogModel[];
+const RUNTIME_ENDPOINT_REFERENCE: Record<
+  PlaygroundEndpointType,
+  { key: string; method: string; path: string }
+> = {
+  openai: {
+    key: 'openai',
+    method: 'POST',
+    path: '/v1/chat/completions',
+  },
+  anthropic: {
+    key: 'anthropic',
+    method: 'POST',
+    path: '/v1/messages',
+  },
+  'openai-response': {
+    key: 'openai-response',
+    method: 'POST',
+    path: '/v1/responses',
+  },
+  gemini: {
+    key: 'gemini',
+    method: 'POST',
+    path: '/v1beta/models/{model}:generateContent',
+  },
+  embeddings: {
+    key: 'embeddings',
+    method: 'POST',
+    path: '/v1/embeddings',
+  },
+  'image-generation': {
+    key: 'image-generation',
+    method: 'POST',
+    path: '/v1/images/generations',
+  },
+  'jina-rerank': {
+    key: 'jina-rerank',
+    method: 'POST',
+    path: '/v1/rerank',
+  },
+  'audio-speech': {
+    key: 'audio-speech',
+    method: 'POST',
+    path: '/v1/audio/speech',
+  },
+  'audio-transcriptions': {
+    key: 'audio-transcriptions',
+    method: 'POST',
+    path: '/v1/audio/transcriptions',
+  },
+  'audio-translations': {
+    key: 'audio-translations',
+    method: 'POST',
+    path: '/v1/audio/translations',
+  },
+  'openai-video': {
+    key: 'openai-video',
+    method: 'POST',
+    path: '/v1/videos',
+  },
+};
 
 function getEndpointLabel(path: string) {
   return DOCS_ENDPOINT_LABELS[path] || path.replace(/^\/v1\//, '').replace(/^\/v1beta\//, '');
 }
 
-function buildEndpointReference(models: RawCatalogModel[], availableModelNames: Set<string>) {
+function buildEndpointReference(models: Model[]) {
   const endpointMap = new Map<
     string,
     {
@@ -98,13 +155,14 @@ function buildEndpointReference(models: RawCatalogModel[], availableModelNames: 
 
   for (const model of models) {
     const modelName = model.model_name || model.id;
-    if (!availableModelNames.has(modelName) || !model.endpoints) continue;
+    const endpointTypes = normalizeModelEndpointTypes(model);
 
-    for (const [key, endpoint] of Object.entries(model.endpoints)) {
+    for (const endpointType of endpointTypes) {
+      const endpoint = RUNTIME_ENDPOINT_REFERENCE[endpointType];
       if (!endpoint) continue;
       const lookup = `${endpoint.method}:${endpoint.path}`;
       const existing = endpointMap.get(lookup) || {
-        key,
+        key: endpoint.key,
         label: getEndpointLabel(endpoint.path),
         method: endpoint.method,
         path: endpoint.path,
@@ -131,7 +189,6 @@ function buildEndpointReference(models: RawCatalogModel[], availableModelNames: 
 
 export async function getDocsReference(baseOrigin?: string, audience: AuthAudience = 'global'): Promise<DocsReference> {
   const models = await listModelCatalog({ limit: 500 });
-  const availableModelNames = new Set(models.map((model) => model.model_name));
   const providers = Array.from(new Set(models.map((model) => model.provider))).sort();
   const featuredTextModel = models.find((model) => model.category === 'text');
   const featuredImageModel = models.find((model) => model.category === 'image');
@@ -153,8 +210,8 @@ export async function getDocsReference(baseOrigin?: string, audience: AuthAudien
       sourceUrl: model.source_url,
     }));
 
-  const baseUrl =
-    `${(process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || baseOrigin || 'http://localhost:3000').replace(/\/$/, '')}/api/openai/v1`;
+  const runtimeBaseOrigin = (process.env.ONE_API_URL || '').replace(/\/$/, '');
+  const baseUrl = `${(runtimeBaseOrigin || process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || baseOrigin || 'http://localhost:3001').replace(/\/$/, '')}/v1`;
 
   return {
     baseUrl,
@@ -163,7 +220,7 @@ export async function getDocsReference(baseOrigin?: string, audience: AuthAudien
     supportedModelCount: models.length,
     providerCount: providers.length,
     providers,
-    endpoints: buildEndpointReference(RAW_MODELS, availableModelNames),
+    endpoints: buildEndpointReference(models).filter((endpoint) => endpoint.path !== '/v1/videos'),
     models: referenceModels,
     statusCodes: DOCS_STATUS_CODES,
     rateLimits: DOCS_RATE_LIMITS,

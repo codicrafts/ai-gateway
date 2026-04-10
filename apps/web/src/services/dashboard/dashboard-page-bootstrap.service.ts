@@ -1,10 +1,11 @@
 import { getAuthenticatedAppUser } from '@/services/account/session.service';
-import { getBillingSummaryForTeam } from '@/services/billing/billing.service';
+import { getBillingSummary } from '@/services/billing/billing.service';
 import { listGatewayConfiguredModels } from '@/services/gateway/gateway-model.service';
 import { listPaymentOrders } from '@/services/billing/payment.service';
-import { listGatewayApiKeysForTeam } from '@/services/gateway/gateway-token.service';
-import { listGatewayUsageForTeam } from '@/services/gateway/gateway-usage.service';
-import { resolveAccessibleTeamContext } from '@/services/team/team-context.service';
+import { listGatewayApiKeys } from '@/services/gateway/gateway-token.service';
+import { listGatewayUsage } from '@/services/gateway/gateway-usage.service';
+import { resolveGatewayScope } from '@/services/gateway/gateway-scope.service';
+import { getRuntimeMonitoringSnapshot } from '@/services/monitoring/runtime-monitoring.service';
 import { listTeamAuditLogs } from '@/services/team/team-audit.service';
 import { listTeamInvitations } from '@/services/team/team-invitation.service';
 import { listTeamJoinApplications, listUserJoinApplications } from '@/services/team/team-join-application.service';
@@ -21,6 +22,7 @@ import type {
   ApiKey,
   BillingSummary,
   PaymentOrder,
+  RuntimeMonitoringSnapshot,
   UsageLog,
   UsageStats,
 } from '@/store/slices/dashboardSlice';
@@ -57,6 +59,7 @@ export type DashboardPageBootstrapPayload = {
     };
     billing_summary: BillingSummary;
     payment_orders: PaymentOrder[];
+    monitoring: RuntimeMonitoringSnapshot | null;
   };
 };
 
@@ -112,6 +115,7 @@ export async function getDashboardPageBootstrap(
             currency: 'USD',
           },
           payment_orders: [],
+          monitoring: null,
         },
       };
     }
@@ -159,17 +163,13 @@ export async function getDashboardPageBootstrap(
           currency: 'USD',
         },
         payment_orders: [],
+        monitoring: null,
       },
     };
   }
 
-  let selectedTeamId: string | null = null;
-  try {
-    const teamContext = await resolveAccessibleTeamContext(appUser.id, requestedTeamId);
-    selectedTeamId = teamContext.teamId;
-  } catch {
-    selectedTeamId = null;
-  }
+  const scope = await resolveGatewayScope(appUser.id, requestedTeamId);
+  const selectedTeamId = scope.kind === 'team' ? scope.teamId : null;
 
   const [
     apiKeys,
@@ -177,16 +177,19 @@ export async function getDashboardPageBootstrap(
     usage,
     billingSummary,
     paymentOrders,
+    monitoring,
   ] = await Promise.all([
-    needsApiKeys && selectedTeamId ? listGatewayApiKeysForTeam(selectedTeamId) : Promise.resolve([]),
+    needsApiKeys
+      ? listGatewayApiKeys({ userId: appUser.id, teamId: requestedTeamId || null })
+      : Promise.resolve([]),
     needsAvailableModels
       ? listGatewayConfiguredModels().catch(() => [])
       : Promise.resolve([]),
-    needsUsage && selectedTeamId
-      ? listGatewayUsageForTeam({ teamId: selectedTeamId, page: 0, limit: 50 })
+    needsUsage
+      ? listGatewayUsage({ userId: appUser.id, teamId: requestedTeamId || null, page: 0, limit: 50 })
       : Promise.resolve({ logs: [], stats: null, page: 0, limit: 50 }),
-    needsBillingSummary && selectedTeamId
-      ? getBillingSummaryForTeam(selectedTeamId)
+    needsBillingSummary
+      ? getBillingSummary(appUser, requestedTeamId || null)
       : Promise.resolve({
           current_balance: 0,
           current_month_spend: 0,
@@ -197,7 +200,10 @@ export async function getDashboardPageBootstrap(
           recent_entries: [],
           currency: 'USD' as const,
         }),
-    needsPaymentOrders && selectedTeamId ? listPaymentOrders(appUser.id, selectedTeamId) : Promise.resolve([]),
+    needsPaymentOrders ? listPaymentOrders(appUser.id, selectedTeamId) : Promise.resolve([]),
+    needsUsage
+      ? getRuntimeMonitoringSnapshot({ hours: 24, channelLimit: 10 }).catch(() => null)
+      : Promise.resolve(null),
   ]);
 
   return {
@@ -218,6 +224,7 @@ export async function getDashboardPageBootstrap(
       usage,
       billing_summary: billingSummary,
       payment_orders: paymentOrders,
+      monitoring,
     },
   };
 }

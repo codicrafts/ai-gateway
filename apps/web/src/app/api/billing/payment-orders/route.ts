@@ -5,7 +5,7 @@ import {
   listPaymentOrders,
   type PaymentMethod,
 } from '@/services/billing/payment.service';
-import { resolveAccessibleTeamContext } from '@/services/team/team-context.service';
+import { resolveGatewayScope } from '@/services/gateway/gateway-scope.service';
 import { fail, ok } from '@/server/api/responses';
 
 export const dynamic = 'force-dynamic';
@@ -18,8 +18,11 @@ export async function GET(request: Request) {
     }
 
     const teamId = new URL(request.url).searchParams.get('team_id');
-    const teamContext = await resolveAccessibleTeamContext(appUser.id, teamId);
-    const orders = await listPaymentOrders(appUser.id, teamContext.teamId);
+    const scope = await resolveGatewayScope(appUser.id, teamId);
+    const orders = await listPaymentOrders(
+      appUser.id,
+      scope.kind === 'team' ? scope.teamId : null,
+    );
     return ok(orders);
   } catch (error) {
     console.error('获取充值订单异常:', error);
@@ -48,10 +51,10 @@ export async function POST(request: Request) {
       return fail('支付方式无效', 400);
     }
 
-    const teamContext = await resolveAccessibleTeamContext(appUser.id, body.team_id || null);
+    const scope = await resolveGatewayScope(appUser.id, body.team_id || null);
     const order = await createPaymentOrder({
       userId: appUser.id,
-      teamId: teamContext.teamId,
+      teamId: scope.kind === 'team' ? scope.teamId : null,
       amount,
       paymentMethod: body.payment_method as PaymentMethod,
     });

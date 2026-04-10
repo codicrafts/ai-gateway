@@ -20,6 +20,7 @@ import {
   fetchApiKeys,
   fetchBillingSummary,
   fetchPaymentOrders,
+  fetchRuntimeMonitoring,
   fetchUsageLogs,
   hydrateDashboardSnapshot,
   updateApiKey,
@@ -96,7 +97,7 @@ export default function DashboardClient({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { currentUser, isLoggedIn, loading: authLoading } = useAppSelector((s) => s.auth);
-  const { apiKeys, availableModels, usageLogs, usageStats, monthlyRequests, monthlyCost, billingSummary, paymentOrders } = useAppSelector((s) => s.dashboard);
+  const { apiKeys, availableModels, usageLogs, usageStats, monthlyRequests, monthlyCost, billingSummary, paymentOrders, monitoring } = useAppSelector((s) => s.dashboard);
   const locale = useAppSelector((s) => s.locale.locale);
   const isZh = locale === 'zh';
   const tr = useCallback((zh: string, en: string) => (isZh ? zh : en), [isZh]);
@@ -117,14 +118,14 @@ export default function DashboardClient({
         return 'PayPal';
     }
   }, [tr]);
-  const getUsageLogSummary = useCallback((log: { error_message?: string | null; runtime_content?: string | null; runtime_request_id?: string | null }) => {
-    const raw = log.error_message || log.runtime_content || log.runtime_request_id || '';
+  const getUsageLogSummary = useCallback((log: { error_message?: string | null; runtime_content?: string | null }) => {
+    const raw = log.error_message || log.runtime_content || '';
     const compact = raw.replace(/\s+/g, ' ').trim();
     if (!compact) {
-      return tr('暂无摘要', 'No summary');
+      return null;
     }
     return compact.length > 120 ? `${compact.slice(0, 117)}...` : compact;
-  }, [tr]);
+  }, []);
   const openUsageLogDetail = useCallback(async (log: {
     id: number;
     model: string;
@@ -312,11 +313,20 @@ export default function DashboardClient({
       usageStats: initialBootstrap.dashboard.usage.stats,
       billingSummary: initialBootstrap.dashboard.billing_summary,
       paymentOrders: initialBootstrap.dashboard.payment_orders,
+      monitoring: initialBootstrap.dashboard.monitoring,
     }));
 
     setRouteRefreshing(false);
     setInitialDataReady(true);
   }, [dispatch, initialBootstrap]);
+
+  useEffect(() => {
+    if (!initialDataReady || section !== 'usage') {
+      return;
+    }
+
+    void dispatch(fetchRuntimeMonitoring());
+  }, [dispatch, initialDataReady, section]);
 
   useEffect(() => {
     if (availableModels.length === 0) return;
@@ -345,7 +355,10 @@ export default function DashboardClient({
   }, [checkoutOrder, paymentOrders]);
 
   useEffect(() => {
-    if (!initialDataReady || !activeTeamId) return;
+    if (!initialDataReady || !activeTeamId) {
+      setUsageSyncing(false);
+      return;
+    }
     if (!['overview', 'usage', 'billing', 'api-keys'].includes(section)) return;
 
     const requestKey = `${section}:${activeTeamId}`;
@@ -373,7 +386,10 @@ export default function DashboardClient({
         }
         if (!cancelled) {
           if (section === 'usage') {
-            await dispatch(fetchUsageLogs(activeTeamId)).unwrap();
+            await Promise.all([
+              dispatch(fetchUsageLogs(activeTeamId)).unwrap(),
+              dispatch(fetchRuntimeMonitoring()).unwrap(),
+            ]);
           } else if (section === 'billing') {
             await Promise.all([
               dispatch(fetchUsageLogs(activeTeamId)).unwrap(),
@@ -677,11 +693,11 @@ export default function DashboardClient({
 
   const handleCreateKey = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentUser || !activeTeamId) return;
+    if (!currentUser) return;
     
     try {
       const result = await dispatch(createApiKey({
-        team_id: activeTeamId,
+        team_id: activeTeamId ?? null,
         name: keyName,
         remark: keyRemark || null,
         subnet: keyIpWhitelist || null,
@@ -707,8 +723,6 @@ export default function DashboardClient({
   }, [activeTeamId, currentUser, keyExpiry, keyIpWhitelist, keyModels, keyName, keyPermissionScopes, keyRemark, dispatch, getErrorMessage, tr]);
 
   const handleCopyFullKey = useCallback(async (keyId: number) => {
-    if (!activeTeamId) return;
-
     try {
       const cachedKey = apiKeys.find((item) => item.id === keyId)?.plain_key;
       if (cachedKey) {
@@ -720,7 +734,7 @@ export default function DashboardClient({
       setCopyingFullKeyId(keyId);
       const result = await dispatch(fetchApiKeySecret({
         id: keyId,
-        team_id: activeTeamId,
+        team_id: activeTeamId ?? null,
       })).unwrap();
 
       copyToClipboard(result.plain_key);
@@ -744,7 +758,7 @@ export default function DashboardClient({
 
     try {
       const order = await dispatch(createPaymentOrderAction({
-        team_id: activeTeamId,
+        team_id: activeTeamId ?? null,
         amount,
         payment_method: selectedPaymentMethod,
       })).unwrap();
@@ -777,8 +791,8 @@ export default function DashboardClient({
   const handleRefreshPaymentStatus = useCallback(async () => {
     try {
       await Promise.all([
-        dispatch(fetchPaymentOrders(activeTeamId)).unwrap(),
-        dispatch(fetchBillingSummary(activeTeamId)).unwrap(),
+        dispatch(fetchPaymentOrders(activeTeamId ?? null)).unwrap(),
+        dispatch(fetchBillingSummary(activeTeamId ?? null)).unwrap(),
       ]);
       dispatch(showNotification({ message: tr('已刷新支付状态', 'Payment status refreshed') }));
     } catch (error) {
@@ -825,10 +839,9 @@ export default function DashboardClient({
   }, [activeTeamId, dispatch, getErrorMessage, refreshDashboardRoute, tr]);
 
   const handleToggleKeyStatus = useCallback(async (key: typeof apiKeys[0]) => {
-    if (!activeTeamId) return;
     const newStatus = key.status === 'active' ? 'disabled' : 'active';
     try {
-      await dispatch(updateApiKey({ id: key.id, team_id: activeTeamId, status: newStatus })).unwrap();
+      await dispatch(updateApiKey({ id: key.id, team_id: activeTeamId ?? null, status: newStatus })).unwrap();
       dispatch(showNotification({ message: isZh ? `密钥已${newStatus === 'active' ? '启用' : '禁用'}` : `Key ${newStatus === 'active' ? 'enabled' : 'disabled'}` }));
     } catch (error) {
       dispatch(showNotification({ message: getErrorMessage(error, tr('操作失败', 'Action failed')), type: 'error' }));
@@ -849,12 +862,12 @@ export default function DashboardClient({
 
   const handleSaveKeyEdit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingKey || !activeTeamId) return;
+    if (!editingKey) return;
 
     try {
       await dispatch(updateApiKey({
         id: editingKey.id,
-        team_id: activeTeamId,
+        team_id: activeTeamId ?? null,
         name: keyName,
         remark: keyRemark || null,
         subnet: keyIpWhitelist || null,
@@ -876,7 +889,6 @@ export default function DashboardClient({
   }, [activeTeamId, dispatch, editKeyStatus, editingKey, getErrorMessage, keyIpWhitelist, keyModels, keyName, keyPermissionScopes, keyRemark, tr]);
 
   const handleDeleteKey = useCallback(async (keyId: number, name: string) => {
-    if (!activeTeamId) return;
     const confirmed = await confirmDialog({
       title: tr('删除 API 密钥', 'Delete API key'),
       message: isZh ? `确定删除密钥 "${name}"？` : `Delete key "${name}"?`,
@@ -886,7 +898,7 @@ export default function DashboardClient({
     });
     if (!confirmed) return;
     try {
-      await dispatch(deleteApiKeyAction({ keyId, teamId: activeTeamId })).unwrap();
+      await dispatch(deleteApiKeyAction({ keyId, teamId: activeTeamId ?? null })).unwrap();
       dispatch(showNotification({ message: tr('已删除', 'Deleted') }));
     } catch (error) {
       dispatch(showNotification({ message: getErrorMessage(error, tr('删除失败', 'Delete failed')), type: 'error' }));
@@ -999,6 +1011,41 @@ export default function DashboardClient({
       dispatch(showNotification({ message: tr('账单导出成功', 'Billing export completed') }));
     } catch (error) {
       dispatch(showNotification({ message: getErrorMessage(error, tr('导出账单失败', 'Failed to export billing data')), type: 'error' }));
+    }
+  }, [activeTeamId, dispatch, getErrorMessage, tr]);
+
+  const handleExportUsageLogs = useCallback(async (format: 'csv' | 'pdf') => {
+    try {
+      const query = new URLSearchParams();
+      if (activeTeamId) {
+        query.set('team_id', activeTeamId);
+      }
+      query.set('format', format);
+      query.set('limit', '200');
+
+      const response = await fetch(`/api/gateway/usage/export?${query.toString()}`);
+      if (!response.ok) {
+        const result = await response.json().catch(() => null);
+        throw new Error(result?.error || tr('导出请求日志失败', 'Failed to export request logs'));
+      }
+
+      const blob = await response.blob();
+      const downloadUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `request-logs-${new Date().toISOString().slice(0, 10)}.${format}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(downloadUrl);
+
+      dispatch(showNotification({
+        message: format === 'pdf'
+          ? tr('请求日志 PDF 导出成功', 'Request log PDF export completed')
+          : tr('请求日志 CSV 导出成功', 'Request log CSV export completed'),
+      }));
+    } catch (error) {
+      dispatch(showNotification({ message: getErrorMessage(error, tr('导出请求日志失败', 'Failed to export request logs')), type: 'error' }));
     }
   }, [activeTeamId, dispatch, getErrorMessage, tr]);
 
@@ -1153,6 +1200,52 @@ export default function DashboardClient({
       backgroundColor: ['#6366f1', '#8b5cf6', '#10b981', '#f59e0b'],
       borderWidth: 0
     }]
+  };
+  const monitoringSummary = monitoring?.summary ?? null;
+  const monitoringAlerts = monitoring?.alerts ?? [];
+  const monitoringTrends = monitoring?.trends ?? [];
+  const monitoringChannels = monitoring?.channels ?? [];
+  const formatMonitoringPercent = (value: number | null | undefined) => (
+    typeof value === 'number' ? `${(value * 100).toFixed(1)}%` : '--'
+  );
+  const getMonitoringAlertTone = (level: string) => {
+    if (level === 'critical') return 'border-danger/20 bg-danger/5 text-danger';
+    if (level === 'warning') return 'border-warning/20 bg-warning/5 text-warning';
+    return 'border-primary/20 bg-primary/5 text-primary';
+  };
+  const getChannelStatusMeta = (status: number) => {
+    if (status === 1) {
+      return { label: tr('在线', 'Online'), tone: 'border-success/20 bg-success/10 text-success' };
+    }
+    if (status === 3) {
+      return { label: tr('自动禁用', 'Auto Disabled'), tone: 'border-danger/20 bg-danger/10 text-danger' };
+    }
+    if (status === 2) {
+      return { label: tr('手动禁用', 'Manual Disabled'), tone: 'border-text-secondary/15 bg-dark-light/40 text-text-secondary' };
+    }
+    return { label: tr('未知', 'Unknown'), tone: 'border-border/70 bg-dark-light/30 text-text-secondary' };
+  };
+  const monitoringTrendData = {
+    labels: monitoringTrends.length > 0 ? monitoringTrends.map((point) => point.label) : [tr('暂无数据', 'No data')],
+    datasets: [
+      {
+        label: tr('请求数', 'Requests'),
+        data: monitoringTrends.length > 0 ? monitoringTrends.map((point) => point.requests) : [0],
+        borderColor: '#b4532a',
+        backgroundColor: 'rgba(180,83,42,0.1)',
+        tension: 0.35,
+        fill: true,
+      },
+      {
+        label: tr('错误数', 'Errors'),
+        data: monitoringTrends.length > 0 ? monitoringTrends.map((point) => point.error_requests) : [0],
+        borderColor: '#dc2626',
+        backgroundColor: 'rgba(220,38,38,0.06)',
+        tension: 0.3,
+        fill: false,
+        borderDash: [6, 4],
+      },
+    ],
   };
   const visibleFailedLogs = usageLogs.filter((log) => log.status === 'failed').length;
   const visibleSuccessfulLogs = usageLogs.length - visibleFailedLogs;
@@ -1610,18 +1703,18 @@ export default function DashboardClient({
         )}
 
         {activeTab === 'usage' && (
-          <div className="space-y-4 sm:space-y-6 md:space-y-8">
-            <div className="bg-white border border-border rounded-xl sm:rounded-[1.5rem] md:rounded-[2rem] p-4 sm:p-6 md:p-8 shadow-sm">
-              <div className="flex items-center justify-between gap-2 sm:gap-3 mb-4 sm:mb-6">
-                <h3 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-text-primary">{tr('实时监控', 'Live Metrics')}</h3>
+          <div className="space-y-3 sm:space-y-4 md:space-y-6">
+            <div className="bg-white border border-border rounded-xl sm:rounded-[1.5rem] md:rounded-[2rem] p-3 sm:p-4 md:p-6 lg:p-8 shadow-sm">
+              <div className="flex items-center justify-between gap-2 mb-3 sm:mb-4 md:mb-6">
+                <h3 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold tracking-tight text-text-primary">{tr('实时监控', 'Live Metrics')}</h3>
                 {usageSyncing && (
-                  <span className="inline-flex items-center gap-1.5 sm:gap-2 rounded-full border border-border/70 bg-primary/5 px-2 py-0.5 sm:px-3 sm:py-1 text-[0.65rem] sm:text-xs font-medium text-text-secondary">
-                    <span className="h-1.5 w-1.5 sm:h-2 sm:w-2 animate-pulse rounded-full bg-primary" />
+                  <span className="inline-flex items-center gap-1 sm:gap-1.5 rounded-full border border-border/70 bg-primary/5 px-2 py-0.5 sm:px-2.5 sm:py-1 text-[0.6rem] sm:text-[0.65rem] font-medium text-text-secondary">
+                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
                     {tr('正在同步最新用量…', 'Syncing latest usage...')}
                   </span>
                 )}
               </div>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5 sm:gap-4 md:gap-5">{[
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-5 sm:gap-3 md:gap-4">{[
                 { label: tr('请求数', 'Requests'), value: (usageStats?.request_count ?? usageLogs.length).toLocaleString(), unit: tr('当前可见日志', 'Visible logs'), tone: 'primary' },
                 { label: tr('输入 Token', 'Input Tokens'), value: totalPromptTokens.toLocaleString(), unit: tr('当前可见日志', 'Visible logs'), tone: 'amber' },
                 { label: tr('输出 Token', 'Output Tokens'), value: totalCompletionTokens.toLocaleString(), unit: tr('当前可见日志', 'Visible logs'), tone: 'emerald' },
@@ -1630,9 +1723,9 @@ export default function DashboardClient({
               ].map((m) => (
                 <div
                   key={m.label}
-                  className="group relative overflow-hidden rounded-2xl border border-border/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(249,246,241,0.94))] p-4 sm:p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+                  className="group relative overflow-hidden rounded-lg sm:rounded-xl md:rounded-[1.125rem] border border-border/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(249,246,241,0.94))] p-3 sm:p-4 md:p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
                 >
-                  <div className={`absolute inset-x-0 top-0 h-1 ${
+                  <div className={`absolute inset-x-0 top-0 h-0.5 sm:h-1 ${
                     m.tone === 'amber'
                       ? 'bg-warning/70'
                       : m.tone === 'emerald'
@@ -1643,62 +1736,311 @@ export default function DashboardClient({
                             ? 'bg-text-secondary/35'
                             : 'bg-primary/70'
                   }`} />
-                  <div className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-text-secondary">
+                  <div className="text-[0.58rem] sm:text-[0.62rem] font-bold uppercase tracking-[0.16em] sm:tracking-[0.18em] text-text-secondary">
                     {m.label}
                   </div>
-                  <div className="mt-3 text-2xl sm:text-[2rem] font-bold tracking-tight text-text-primary">
+                  <div className="mt-2 sm:mt-3 text-xl sm:text-2xl md:text-[2rem] font-bold tracking-tight text-text-primary">
                     {m.value}
                   </div>
-                  <div className="mt-2 text-[0.68rem] uppercase tracking-[0.16em] text-text-secondary/70">
+                  <div className="mt-1.5 sm:mt-2 text-[0.62rem] sm:text-[0.68rem] uppercase tracking-[0.14em] sm:tracking-[0.16em] text-text-secondary/70">
                     {m.unit}
                   </div>
                 </div>
               ))}</div>
             </div>
-            <div className="bg-white border border-border rounded-xl sm:rounded-[1.5rem] md:rounded-[2rem] p-4 sm:p-6 md:p-8 shadow-sm">
-              <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div className="grid grid-cols-1 gap-3 sm:gap-4 md:gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(300px,0.85fr)]">
+              <div className="space-y-3 sm:space-y-4 md:space-y-6">
+                <div className="bg-white border border-border rounded-xl sm:rounded-[1.5rem] md:rounded-[2rem] p-3 sm:p-4 md:p-6 lg:p-8 shadow-sm">
+                  <div className="mb-4 sm:mb-5 md:mb-6 flex flex-col gap-2 sm:gap-3 lg:flex-row lg:items-start lg:justify-between">
+                    <div>
+                      <h3 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold tracking-tight text-text-primary">{tr('运行时监控', 'Runtime Monitoring')}</h3>
+                      <p className="mt-1 sm:mt-1.5 max-w-3xl text-[0.7rem] sm:text-xs leading-relaxed text-text-secondary">
+                        {tr('这里集中展示当前平台的请求成功率、延迟、吞吐和渠道状态，方便你快速判断整体运行是否稳定。', 'This section summarizes platform success rate, latency, throughput, and channel health so you can quickly judge whether runtime behavior is stable.')}
+                      </p>
+                    </div>
+                    <div className="inline-flex items-center rounded-full border border-border/70 bg-dark-light/10 px-2.5 py-1 sm:px-3 sm:py-1.5 text-[0.6rem] sm:text-[0.65rem] font-semibold text-text-secondary whitespace-nowrap">
+                      <i className="fas fa-clock mr-1 sm:mr-1.5 opacity-70" />
+                      {monitoring?.refreshed_at ? formatDate(monitoring.refreshed_at) : tr('暂未刷新', 'Not refreshed yet')}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4 sm:gap-2.5 md:gap-3">
+                    {[
+                      {
+                        label: tr('24 小时请求', '24h Requests'),
+                        value: monitoringSummary?.total_requests_24h?.toLocaleString() || '--',
+                        meta: tr('成功 {{success}} / 失败 {{error}}', 'Success {{success}} / Failed {{error}}')
+                          .replace('{{success}}', String(monitoringSummary?.successful_requests_24h ?? 0))
+                          .replace('{{error}}', String(monitoringSummary?.error_requests_24h ?? 0)),
+                        tone: 'primary',
+                      },
+                      {
+                        label: tr('24 小时成功率', '24h Success Rate'),
+                        value: formatMonitoringPercent(monitoringSummary?.success_rate_24h),
+                        meta: tr('当前告警 {{count}} 条', '{{count}} active alerts')
+                          .replace('{{count}}', String(monitoringSummary?.alert_count ?? 0)),
+                        tone: 'emerald',
+                      },
+                      {
+                        label: tr('平均 / P95 延迟', 'Avg / P95 Latency'),
+                        value: typeof monitoringSummary?.avg_latency_ms_24h === 'number'
+                          ? `${Math.round(monitoringSummary.avg_latency_ms_24h)} / ${Math.round(monitoringSummary.p95_latency_ms_24h || 0)} ms`
+                          : '--',
+                        meta: tr('样本 {{count}} 条', '{{count}} samples')
+                          .replace('{{count}}', String(monitoringSummary?.latency_sample_size_24h ?? 0)),
+                        tone: 'amber',
+                      },
+                      {
+                        label: tr('最近一分钟吞吐', 'Last Min Throughput'),
+                        value: typeof monitoringSummary?.last_minute_rpm === 'number'
+                          ? `${monitoringSummary.last_minute_rpm} RPM`
+                          : '--',
+                        meta: typeof monitoringSummary?.last_minute_tpm === 'number'
+                          ? `${monitoringSummary.last_minute_tpm.toLocaleString()} TPM`
+                          : tr('暂无数据', 'No data'),
+                        tone: 'rose',
+                      },
+                    ].map((item) => (
+                      <div key={item.label} className="rounded-lg sm:rounded-xl border border-border/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(249,246,241,0.94))] p-2.5 sm:p-3 md:p-4 shadow-sm">
+                        <div className="text-[0.55rem] sm:text-[0.58rem] font-bold uppercase tracking-[0.14em] sm:tracking-[0.16em] text-text-secondary">
+                          {item.label}
+                        </div>
+                        <div className={`mt-1.5 sm:mt-2 text-base sm:text-lg md:text-xl font-bold tracking-tight ${
+                          item.tone === 'emerald'
+                            ? 'text-success'
+                            : item.tone === 'amber'
+                              ? 'text-warning'
+                              : item.tone === 'rose'
+                                ? 'text-danger'
+                                : 'text-text-primary'
+                        }`}>
+                          {item.value}
+                        </div>
+                        <div className="mt-1 sm:mt-1.5 text-[0.62rem] sm:text-[0.68rem] leading-4 sm:leading-5 text-text-secondary">
+                          {item.meta}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-3 sm:mt-4 md:mt-5 grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1.4fr)_minmax(240px,0.6fr)]">
+                    <div className="rounded-lg sm:rounded-xl border border-border/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,245,239,0.94))] p-3 sm:p-4">
+                      <div className="mb-2.5 sm:mb-3 flex items-center justify-between gap-3">
+                        <div>
+                          <div className="text-[0.58rem] sm:text-[0.62rem] font-bold uppercase tracking-[0.14em] sm:tracking-[0.16em] text-text-secondary">
+                            {tr('24 小时趋势', '24h Trend')}
+                          </div>
+                          <div className="mt-0.5 sm:mt-1 text-xs sm:text-sm font-semibold text-text-primary">
+                            {tr('请求压力与错误波动', 'Request pressure and error spikes')}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="relative h-[180px] sm:h-[210px]">
+                        <Line
+                          data={monitoringTrendData}
+                          options={{
+                            ...chartOptions,
+                            plugins: {
+                              ...chartOptions.plugins,
+                              legend: {
+                                display: true,
+                                position: 'top',
+                                labels: {
+                                  usePointStyle: true,
+                                  pointStyle: 'circle',
+                                  color: '#64748b',
+                                  font: { size: 9, weight: 600 },
+                                },
+                              },
+                            },
+                            scales: {
+                              x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 8 } } },
+                              y: { grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { color: '#94a3b8', font: { size: 8 }, padding: 6 }, beginAtZero: true },
+                            },
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <div className="rounded-lg sm:rounded-xl border border-border/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,245,239,0.94))] p-3 sm:p-4">
+                      <div className="text-[0.58rem] sm:text-[0.62rem] font-bold uppercase tracking-[0.14em] sm:tracking-[0.16em] text-text-secondary">
+                        {tr('渠道压力概览', 'Channel Pressure')}
+                      </div>
+                      <div className="mt-2.5 sm:mt-3 space-y-2">
+                        {[
+                          { label: tr('在线渠道', 'Enabled'), value: monitoringSummary?.enabled_channels ?? 0, tone: 'text-success bg-success/10 border-success/20' },
+                          { label: tr('自动禁用', 'Auto Disabled'), value: monitoringSummary?.auto_disabled_channels ?? 0, tone: 'text-danger bg-danger/10 border-danger/20' },
+                          { label: tr('手动禁用', 'Manual Disabled'), value: monitoringSummary?.manually_disabled_channels ?? 0, tone: 'text-text-secondary bg-dark-light/30 border-border/60' },
+                          { label: tr('慢渠道', 'Slow'), value: monitoringSummary?.slow_channels ?? 0, tone: 'text-warning bg-warning/10 border-warning/20' },
+                        ].map((item) => (
+                          <div key={item.label} className={`flex items-center justify-between rounded-md sm:rounded-lg border px-2.5 py-2 sm:px-3 sm:py-2.5 ${item.tone}`}>
+                            <span className="text-[0.7rem] sm:text-xs font-medium">{item.label}</span>
+                            <span className="text-sm sm:text-base font-bold tracking-tight">{item.value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-white border border-border rounded-xl sm:rounded-[1.5rem] md:rounded-[2rem] p-3 sm:p-4 md:p-6 lg:p-8 shadow-sm">
+                  <div className="mb-3 sm:mb-4 flex items-center justify-between gap-3">
+                    <div>
+                      <h3 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold tracking-tight text-text-primary">{tr('渠道状态', 'Channel Health')}</h3>
+                      <p className="mt-1 sm:mt-1.5 text-[0.7rem] sm:text-xs leading-relaxed text-text-secondary">
+                        {tr('这里会显示各渠道的可用性、成功率和响应速度，便于定位异常渠道并观察整体健康度。', 'This list shows channel availability, success rate, and response speed so you can spot unstable channels and review overall health.')}
+                      </p>
+                    </div>
+                    <div className="rounded-full border border-border/70 bg-dark-light/10 px-2.5 py-1 sm:px-3 sm:py-1.5 text-[0.6rem] sm:text-[0.65rem] font-semibold text-text-secondary whitespace-nowrap">
+                      {monitoringChannels.length} {tr('条', 'ch')}
+                    </div>
+                  </div>
+                  {monitoringChannels.length === 0 ? (
+                    <div className="rounded-lg sm:rounded-xl md:rounded-[1.125rem] border border-dashed border-border/70 bg-dark-light/5 px-4 py-10 text-center text-xs sm:text-sm text-text-secondary">
+                      {tr('当前没有可展示的渠道健康数据', 'No channel health data is available yet')}
+                    </div>
+                  ) : (
+                    <div className="space-y-2.5 sm:space-y-3">
+                      {monitoringChannels.map((channel) => {
+                        const statusMeta = getChannelStatusMeta(channel.status);
+                        return (
+                          <div key={channel.channel_id} className="rounded-lg sm:rounded-xl md:rounded-[1.125rem] border border-border/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(249,246,241,0.94))] px-3 py-3 sm:px-4 sm:py-4 shadow-sm">
+                            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                              <div className="min-w-0">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <span className="text-sm sm:text-base font-bold tracking-tight text-text-primary">{channel.name}</span>
+                                  <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[0.62rem] sm:text-[0.65rem] font-bold uppercase tracking-[0.14em] ${statusMeta.tone}`}>
+                                    {statusMeta.label}
+                                  </span>
+                                  <span className="inline-flex items-center rounded-full border border-border/60 bg-white/80 px-2.5 py-1 text-[0.62rem] sm:text-[0.65rem] font-semibold text-text-secondary">
+                                    {channel.group || 'default'}
+                                  </span>
+                                </div>
+                                <div className="mt-1.5 text-[0.7rem] sm:text-xs leading-5 text-text-secondary">
+                                  ID #{channel.channel_id} · {tr('模型', 'Models')}: {channel.models || tr('未标注', 'Unknown')}
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:min-w-[420px]">
+                                {[
+                                  { label: tr('成功率', 'Success Rate'), value: formatMonitoringPercent(channel.success_rate_24h) },
+                                  { label: tr('24h 平均延迟', '24h Avg Latency'), value: `${Math.round(channel.avg_latency_ms_24h || 0)} ms` },
+                                  { label: tr('24h P95', '24h P95'), value: `${Math.round(channel.p95_latency_ms_24h || 0)} ms` },
+                                  { label: tr('当前响应', 'Current Response'), value: `${Math.round(channel.response_time || 0)} ms` },
+                                ].map((item) => (
+                                  <div key={item.label} className="rounded-md sm:rounded-lg border border-border/60 bg-white/85 px-2.5 py-2 text-center">
+                                    <div className="text-[0.55rem] sm:text-[0.58rem] font-bold uppercase tracking-[0.14em] text-text-secondary">{item.label}</div>
+                                    <div className="mt-1 text-xs sm:text-sm font-bold tracking-tight text-text-primary">{item.value}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="bg-white border border-border rounded-xl sm:rounded-[1.5rem] md:rounded-[2rem] p-3 sm:p-4 md:p-6 lg:p-8 shadow-sm">
+                <div className="mb-4 sm:mb-5 md:mb-6 flex items-start justify-between gap-3">
+                  <div>
+                    <h3 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold tracking-tight text-text-primary">{tr('运行提醒', 'Runtime Alerts')}</h3>
+                    <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm leading-relaxed text-text-secondary">
+                      {tr('当请求成功率、延迟或渠道状态出现异常时，会在这里给出提醒，方便你及时排查。', 'This area highlights issues in success rate, latency, or channel status so you can respond before they affect more traffic.')}
+                    </p>
+                  </div>
+                  <div className="rounded-full border border-border/70 bg-dark-light/10 px-3 py-1.5 text-[0.65rem] sm:text-xs font-semibold text-text-secondary">
+                    {monitoringAlerts.length} {tr('条告警', 'alerts')}
+                  </div>
+                </div>
+                {monitoringAlerts.length === 0 ? (
+                  <div className="rounded-lg sm:rounded-xl md:rounded-[1.125rem] border border-dashed border-border/70 bg-dark-light/5 px-4 py-12 text-center text-xs sm:text-sm text-text-secondary">
+                    {tr('当前没有需要处理的告警', 'There are no active alerts to handle right now')}
+                  </div>
+                ) : (
+                  <div className="space-y-2.5 sm:space-y-3">
+                    {monitoringAlerts.map((alert) => (
+                      <div key={alert.id} className="rounded-lg sm:rounded-xl md:rounded-[1.125rem] border border-border/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(249,246,241,0.94))] p-3 sm:p-4 shadow-sm">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="text-sm sm:text-base font-bold tracking-tight text-text-primary">{alert.title}</div>
+                            <div className="mt-1.5 text-xs sm:text-sm leading-6 text-text-secondary">{alert.detail}</div>
+                          </div>
+                          <span className={`inline-flex shrink-0 items-center rounded-full border px-2.5 py-1 text-[0.62rem] sm:text-[0.65rem] font-bold uppercase tracking-[0.14em] ${getMonitoringAlertTone(alert.level)}`}>
+                            {alert.level}
+                          </span>
+                        </div>
+                        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[0.68rem] sm:text-[0.72rem] text-text-secondary">
+                          <span>{typeof alert.occurred_at === 'number' ? formatDate(new Date(alert.occurred_at * 1000).toISOString()) : '-'}</span>
+                          <span>{alert.type}</span>
+                          {typeof alert.entity_id === 'number' ? <span>ID #{alert.entity_id}</span> : null}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="bg-white border border-border rounded-xl sm:rounded-[1.5rem] md:rounded-[2rem] p-3 sm:p-4 md:p-6 lg:p-8 shadow-sm">
+              <div className="mb-4 sm:mb-5 flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-end lg:justify-between">
                 <div>
-                  <h3 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-text-primary">{tr('请求日志', 'Request Logs')}</h3>
-                  <p className="mt-2 max-w-3xl text-sm leading-relaxed text-text-secondary">
-                    {tr('这里展示的是团队运行时请求日志，不只是账本金额。重点先看状态、摘要、耗时和详情入口，再决定是否需要继续排查渠道或 Provider。', 'This area shows runtime request logs rather than only billing rows. Start with status, summary, latency, and the detail entry before digging deeper into channel or provider issues.')}
+                  <h3 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold tracking-tight text-text-primary">{tr('请求日志', 'Request Logs')}</h3>
+                  <p className="mt-1.5 sm:mt-2 max-w-3xl text-xs sm:text-sm leading-relaxed text-text-secondary">
+                    {tr('这里展示的是团队运行时请求日志，不只是账本金额。重点先看状态、耗时和详情入口，再决定是否需要继续排查渠道或 Provider。', 'This area shows runtime request logs rather than only billing rows. Start with status, latency, and the detail entry before digging deeper into channel or provider issues.')}
                   </p>
                 </div>
-                <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
-                  <div className="rounded-2xl border border-success/20 bg-success/5 px-4 py-3">
-                    <div className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-text-secondary">{tr('成功', 'Success')}</div>
-                    <div className="mt-1 text-xl font-bold tracking-tight text-success">{visibleSuccessfulLogs}</div>
-                  </div>
-                  <div className="rounded-2xl border border-danger/20 bg-danger/5 px-4 py-3">
-                    <div className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-text-secondary">{tr('失败', 'Failed')}</div>
-                    <div className="mt-1 text-xl font-bold tracking-tight text-danger">{visibleFailedLogs}</div>
+                <div className="rounded-lg sm:rounded-xl md:rounded-[1.125rem] border border-border/70 bg-[linear-gradient(180deg,rgba(252,249,244,0.96),rgba(255,255,255,0.98))] p-2 sm:p-2.5 shadow-sm sm:min-w-[316px]">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="rounded-md sm:rounded-lg border border-success/20 bg-success/5 px-2.5 py-2 sm:px-3 sm:py-2.5">
+                        <div className="text-[0.55rem] sm:text-[0.58rem] font-bold uppercase tracking-[0.14em] sm:tracking-[0.16em] text-text-secondary">{tr('成功', 'Success')}</div>
+                        <div className="mt-0.5 sm:mt-1 text-base sm:text-lg font-bold tracking-tight text-success">{visibleSuccessfulLogs}</div>
+                      </div>
+                      <div className="rounded-md sm:rounded-lg border border-danger/20 bg-danger/5 px-2.5 py-2 sm:px-3 sm:py-2.5">
+                        <div className="text-[0.55rem] sm:text-[0.58rem] font-bold uppercase tracking-[0.14em] sm:tracking-[0.16em] text-text-secondary">{tr('失败', 'Failed')}</div>
+                        <div className="mt-0.5 sm:mt-1 text-base sm:text-lg font-bold tracking-tight text-danger">{visibleFailedLogs}</div>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        className="inline-flex flex-1 sm:flex-initial sm:min-w-[108px] items-center justify-center rounded-full border border-border bg-white px-3 py-2 sm:px-4 sm:py-2.5 text-[0.7rem] sm:text-xs font-semibold text-text-primary shadow-sm transition-colors hover:border-primary/30 hover:text-primary"
+                        onClick={() => void handleExportUsageLogs('csv')}
+                      >
+                        <i className="fas fa-file-csv mr-1.5 sm:mr-2 opacity-70" />CSV
+                      </button>
+                      <button
+                        className="inline-flex flex-1 sm:flex-initial sm:min-w-[108px] items-center justify-center rounded-full border border-border bg-white px-3 py-2 sm:px-4 sm:py-2.5 text-[0.7rem] sm:text-xs font-semibold text-text-primary shadow-sm transition-colors hover:border-primary/30 hover:text-primary"
+                        onClick={() => void handleExportUsageLogs('pdf')}
+                      >
+                        <i className="fas fa-file-pdf mr-1.5 sm:mr-2 opacity-70" />PDF
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
               {usageLogs.length === 0 ? (
-                <div className="rounded-[1.75rem] border border-dashed border-border/70 bg-dark-light/5 px-6 py-14 text-center text-sm text-text-secondary">
+                <div className="rounded-lg sm:rounded-xl md:rounded-[1.125rem] border border-dashed border-border/70 bg-dark-light/5 px-4 py-10 sm:px-6 sm:py-14 text-center text-xs sm:text-sm text-text-secondary">
                   {tr('暂无记录', 'No records')}
                 </div>
               ) : (
-                <div className="space-y-3 sm:space-y-4">
-                  {usageLogs.map((log, i) => (
+                <div className="space-y-2 sm:space-y-3 md:space-y-4">
+                  {usageLogs.map((log, i) => {
+                    const summary = getUsageLogSummary(log);
+                    return (
                     <div
                       key={i}
-                      className={`group overflow-hidden rounded-[1.5rem] border px-4 py-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md sm:px-5 sm:py-5 ${
+                      className={`group overflow-hidden rounded-lg sm:rounded-xl md:rounded-[1.125rem] border px-3 py-3 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md sm:px-4 sm:py-4 md:px-5 md:py-5 ${
                         log.status === 'failed'
                           ? 'border-danger/20 bg-[linear-gradient(180deg,rgba(255,251,250,0.98),rgba(255,245,243,0.94))]'
                           : 'border-border/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(249,246,241,0.94))]'
                       }`}
                     >
-                      <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+                      <div className="flex flex-col gap-3 sm:gap-4 xl:flex-row xl:items-start xl:justify-between">
                         <div className="min-w-0 flex-1">
-                          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                          <div className="flex flex-col gap-2 sm:gap-3 lg:flex-row lg:items-start lg:justify-between">
                             <div className="min-w-0">
-                              <div className="flex flex-wrap items-center gap-2">
-                                <span className="text-base font-bold tracking-tight text-text-primary sm:text-lg">
+                              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                                <span className="text-sm sm:text-base md:text-lg font-bold tracking-tight text-text-primary">
                                   {log.model}
                                 </span>
                                 <span
-                                  className={`inline-flex items-center rounded-full px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-[0.16em] ${
+                                  className={`inline-flex items-center rounded-full px-2 py-0.5 sm:px-2.5 sm:py-1 text-[0.6rem] sm:text-[0.65rem] font-bold uppercase tracking-[0.14em] sm:tracking-[0.16em] ${
                                     log.status === 'failed'
                                       ? 'bg-danger/10 text-danger'
                                       : 'bg-success/10 text-success'
@@ -1707,58 +2049,60 @@ export default function DashboardClient({
                                   {log.status === 'failed' ? tr('失败', 'Failed') : tr('成功', 'Success')}
                                 </span>
                                 {typeof log.runtime_use_time === 'number' ? (
-                                  <span className="inline-flex items-center rounded-full border border-border/60 bg-white/80 px-2.5 py-1 text-[0.65rem] font-semibold text-text-secondary">
-                                    <i className="fas fa-stopwatch mr-1.5 opacity-70" />
+                                  <span className="inline-flex items-center rounded-full border border-border/60 bg-white/80 px-2 py-0.5 sm:px-2.5 sm:py-1 text-[0.6rem] sm:text-[0.65rem] font-semibold text-text-secondary">
+                                    <i className="fas fa-stopwatch mr-1 sm:mr-1.5 opacity-70" />
                                     {log.runtime_use_time} ms
                                   </span>
                                 ) : null}
                               </div>
-                              <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-[0.72rem] text-text-secondary sm:text-xs">
+                              <div className="mt-1.5 sm:mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 sm:gap-x-4 sm:gap-y-2 text-[0.68rem] sm:text-[0.72rem] md:text-xs text-text-secondary">
                                 <span>{formatDate(log.created_at)}</span>
                                 <span>{tr('API 密钥', 'API Key')}: {log.api_key_name}</span>
                                 <span>{tr('渠道', 'Channel')} #{log.runtime_channel_id ?? '-'}</span>
                                 <span className="font-mono">{tr('请求 ID', 'Request ID')}: {log.runtime_request_id || '-'}</span>
                               </div>
                             </div>
-                            <div className="grid grid-cols-3 gap-2 rounded-2xl border border-border/60 bg-white/70 p-2 sm:min-w-[260px]">
+                            <div className="grid grid-cols-3 gap-1.5 sm:gap-2 rounded-lg sm:rounded-xl md:rounded-[1.125rem] border border-border/60 bg-white/70 p-1.5 sm:p-2 sm:min-w-[260px]">
                               {[
                                 { label: 'Input', value: log.prompt_tokens?.toLocaleString() || '0' },
                                 { label: 'Output', value: log.completion_tokens?.toLocaleString() || '0' },
                                 { label: tr('费用', 'Cost'), value: formatCurrency(log.quota_cost) },
                               ].map((item) => (
-                                <div key={item.label} className="rounded-xl bg-white px-3 py-2 text-center">
-                                  <div className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-text-secondary">
+                                <div key={item.label} className="rounded-md sm:rounded-lg bg-white px-2 py-1.5 sm:px-3 sm:py-2 text-center">
+                                  <div className="text-[0.58rem] sm:text-[0.62rem] font-bold uppercase tracking-[0.14em] sm:tracking-[0.16em] text-text-secondary">
                                     {item.label}
                                   </div>
-                                  <div className="mt-1 text-sm font-bold tracking-tight text-text-primary">
+                                  <div className="mt-0.5 sm:mt-1 text-xs sm:text-sm font-bold tracking-tight text-text-primary">
                                     {item.value}
                                   </div>
                                 </div>
                               ))}
                             </div>
                           </div>
-                          <div className="mt-4 rounded-[1.25rem] border border-border/60 bg-white/85 px-4 py-3">
-                            <div className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-text-secondary">
-                              {tr('摘要', 'Summary')}
+                          {summary ? (
+                            <div className="mt-3 sm:mt-4 rounded-md sm:rounded-lg md:rounded-xl border border-border/60 bg-white/85 px-3 py-2 sm:px-4 sm:py-3">
+                              <div className="text-[0.58rem] sm:text-[0.62rem] font-bold uppercase tracking-[0.14em] sm:tracking-[0.16em] text-text-secondary">
+                                {tr('摘要', 'Summary')}
+                              </div>
+                              <div className="mt-1.5 sm:mt-2 text-xs sm:text-sm leading-6 sm:leading-7 text-text-secondary">
+                                {summary}
+                              </div>
                             </div>
-                            <div className="mt-2 text-sm leading-7 text-text-secondary">
-                              {getUsageLogSummary(log)}
-                            </div>
-                          </div>
+                          ) : null}
                         </div>
                         <div className="flex shrink-0 items-center xl:pl-4">
                           <button
                             type="button"
                             onClick={() => void openUsageLogDetail(log)}
-                            className="inline-flex items-center justify-center rounded-full border border-border bg-white px-4 py-2.5 text-sm font-semibold text-text-primary transition-colors hover:border-primary/30 hover:text-primary"
+                            className="w-full sm:w-auto inline-flex items-center justify-center rounded-full border border-border bg-white px-3 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm font-semibold text-text-primary transition-colors hover:border-primary/30 hover:text-primary"
                           >
-                            <i className="fas fa-file-lines mr-2 opacity-70" />
+                            <i className="fas fa-file-lines mr-1.5 sm:mr-2 opacity-70" />
                             {tr('查看详情', 'View Detail')}
                           </button>
                         </div>
                       </div>
                     </div>
-                  ))}
+                  )})}
                 </div>
               )}
             </div>

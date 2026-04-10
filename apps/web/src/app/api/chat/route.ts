@@ -2,7 +2,6 @@ import { NextRequest } from 'next/server'
 import { getAuthenticatedAppUser } from '@/services/account/session.service'
 import { listGatewayConfiguredModels } from '@/services/gateway/gateway-model.service'
 import { getGatewayApiKeyRuntimeCredentials } from '@/services/gateway/gateway-token.service'
-import { resolveAccessibleTeamContext } from '@/services/team/team-context.service'
 
 const ONE_API_URL = process.env.ONE_API_URL || 'http://localhost:3001'
 const ONE_API_KEY = process.env.ONE_API_KEY || ''
@@ -28,10 +27,9 @@ export async function POST(request: NextRequest) {
         return Response.json({ error: '请选择可用的 API 密钥' }, { status: 400 })
       }
 
-      const teamContext = await resolveAccessibleTeamContext(appUser.id, team_id ?? null)
       const { secret, apiKey } = await getGatewayApiKeyRuntimeCredentials({
         userId: appUser.id,
-        teamId: teamContext.teamId,
+        teamId: team_id ?? null,
         id: keyId,
       })
 

@@ -1,6 +1,5 @@
 import { getAuthenticatedAppUser } from '@/services/account/session.service';
 import { buildBillingExportCsv, getBillingExportRows } from '@/services/billing/billing.service';
-import { resolveAccessibleTeamContext } from '@/services/team/team-context.service';
 import { fail } from '@/server/api/responses';
 
 export const dynamic = 'force-dynamic';
@@ -13,8 +12,7 @@ export async function GET(request: Request) {
     }
 
     const teamId = new URL(request.url).searchParams.get('team_id');
-    const teamContext = await resolveAccessibleTeamContext(appUser.id, teamId);
-    const rows = await getBillingExportRows(appUser, teamContext.teamId);
+    const rows = await getBillingExportRows(appUser, teamId);
     const csv = buildBillingExportCsv(rows);
     const filename = `billing-export-${new Date().toISOString().slice(0, 10)}.csv`;
 

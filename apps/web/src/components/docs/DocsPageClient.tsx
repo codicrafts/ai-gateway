@@ -122,7 +122,7 @@ export default function DocsPageClient({
 
   const featuredTextModel = reference?.featuredModel || 'gpt-4.1';
   const featuredImageModel = reference?.imageModel || 'dall-e-3';
-  const baseUrl = reference?.baseUrl || 'https://api.aigateway.com/api/openai/v1';
+  const baseUrl = reference?.baseUrl || 'http://localhost:3001/v1';
   const endpointRows = reference?.endpoints || [];
   const modelRows = reference?.models || [];
   const statusCodes = reference?.statusCodes || [];

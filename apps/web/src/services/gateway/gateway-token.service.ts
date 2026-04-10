@@ -1,10 +1,11 @@
 import { createAuditLog, type ClientInfo } from '@/lib/auditLog';
+import { fetchGatewayRuntimeTokenKey, fetchUserTokenKey } from '@/lib/oneapi';
 import { createServerAdminSupabaseClient, type Database } from '@/lib/supabase';
-import { fetchGatewayRuntimeTokenKey } from '@/lib/oneapi';
-import { resolveAccessibleTeamContext } from '@/services/team/team-context.service';
+import { ensureNewApiLink, getAppUserById } from '@/services/account/app-user.service';
 import { ensureTeamRuntimeAccount } from '@/services/runtime-sync/org-runtime-account.service';
 import { syncOrgApiKeyNow } from '@/services/runtime-sync/org-api-key-sync.service';
 import type { TeamRole } from '@ai-gateway/shared-types/team';
+import { resolveGatewayScope, type GatewayScope } from './gateway-scope.service';
 import type {
   CreateGatewayApiKeyInput,
   GatewayApiKey,
@@ -28,8 +29,8 @@ const API_KEY_PERMISSION_SCOPES = [
 
 type ApiKeyPermissionScope = (typeof API_KEY_PERMISSION_SCOPES)[number];
 
-function ensureManagePermission(role: TeamRole) {
-  if (role !== 'owner' && role !== 'admin') {
+function ensureManagePermission(scope: GatewayScope) {
+  if (scope.kind === 'team' && scope.role !== 'owner' && scope.role !== 'admin') {
     throw new Error('当前角色无权管理 API Key');
   }
 }
@@ -87,8 +88,8 @@ function normalizeModels(models?: string[] | null): string[] {
     new Set(
       models
         .map((model) => model.trim())
-        .filter((model) => model.length > 0)
-    )
+        .filter((model) => model.length > 0),
+    ),
   ).sort((left, right) => left.localeCompare(right));
 }
 
@@ -119,8 +120,8 @@ function normalizeSubnet(value?: string | null): string | null {
       normalized
         .split(',')
         .map((entry) => entry.trim())
-        .filter((entry) => entry.length > 0)
-    )
+        .filter((entry) => entry.length > 0),
+    ),
   );
 
   if (entries.length === 0) {
@@ -155,15 +156,19 @@ function toAuditSnapshot(key: OrgApiKeyRow, sync: OrgApiKeySyncRow | null) {
 
 async function writeApiKeyAuditLog(params: {
   action: 'api_key.create' | 'api_key.update' | 'api_key.delete' | 'api_key.reveal';
-  teamId: string;
+  scope: GatewayScope;
   userId: string;
   keyId: number;
   oldValue?: Record<string, unknown> | null;
   newValue?: Record<string, unknown> | null;
   clientInfo?: ClientInfo;
 }) {
+  if (params.scope.kind !== 'team') {
+    return;
+  }
+
   await createAuditLog({
-    team_id: params.teamId,
+    team_id: params.scope.teamId,
     user_id: params.userId,
     action: params.action,
     target_type: 'api_key',
@@ -175,15 +180,20 @@ async function writeApiKeyAuditLog(params: {
   });
 }
 
-export async function listGatewayApiKeysForTeam(teamId: string): Promise<GatewayApiKey[]> {
+async function listGatewayApiKeysForScope(scope: GatewayScope): Promise<GatewayApiKey[]> {
   const supabase = createServerAdminSupabaseClient();
-
-  const { data: keyRows, error } = await supabase
+  let keysQuery = supabase
     .from('org_api_keys')
     .select('*')
-    .eq('team_id', teamId)
     .order('created_at', { ascending: false });
-  const keys = (keyRows || []) as unknown as OrgApiKeyRow[];
+
+  keysQuery =
+    scope.kind === 'team'
+      ? keysQuery.eq('team_id', scope.teamId)
+      : keysQuery.is('team_id', null).eq('user_id', scope.userId);
+
+  const { data: keyRows, error } = await keysQuery;
+  const keys = (keyRows || []) as OrgApiKeyRow[];
 
   if (error) {
     throw new Error('获取 API Key 列表失败');
@@ -197,18 +207,24 @@ export async function listGatewayApiKeysForTeam(teamId: string): Promise<Gateway
     .from('org_api_key_sync')
     .select('*')
     .in('org_api_key_id', keys.map((key) => key.id));
-  const syncRows = (syncData || []) as unknown as OrgApiKeySyncRow[];
+  const syncRows = (syncData || []) as OrgApiKeySyncRow[];
 
   if (syncError) {
     throw new Error('获取 API Key 同步信息失败');
   }
 
-  const { data: usageRowsData, error: usageRowsError } = await supabase
+  let usageQuery = supabase
     .from('org_usage_ledger')
     .select('org_api_key_id,amount,total_tokens,request_count')
-    .eq('team_id', teamId)
     .eq('status', 'success')
     .in('org_api_key_id', keys.map((key) => key.id));
+
+  usageQuery =
+    scope.kind === 'team'
+      ? usageQuery.eq('team_id', scope.teamId)
+      : usageQuery.is('team_id', null).eq('user_id', scope.userId);
+
+  const { data: usageRowsData, error: usageRowsError } = await usageQuery;
 
   if (usageRowsError) {
     throw new Error('获取 API Key 用量统计失败');
@@ -246,10 +262,9 @@ export async function listGatewayApiKeysForTeam(teamId: string): Promise<Gateway
   });
 }
 
-
 async function updateLocalKey(
   id: number,
-  input: Database['public']['Tables']['org_api_keys']['Update']
+  input: Database['public']['Tables']['org_api_keys']['Update'],
 ): Promise<OrgApiKeyRow> {
   const supabase = createServerAdminSupabaseClient();
   const { data: keyData, error } = await supabase
@@ -258,7 +273,7 @@ async function updateLocalKey(
     .eq('id', id)
     .select('*')
     .single();
-  const data = keyData as unknown as OrgApiKeyRow | null;
+  const data = keyData as OrgApiKeyRow | null;
 
   if (error || !data) {
     throw new Error(error?.message || '更新组织 API Key 失败');
@@ -267,15 +282,20 @@ async function updateLocalKey(
   return data;
 }
 
-async function getLocalKeyOrThrow(id: number, teamId: string): Promise<OrgApiKeyRow> {
+async function getLocalKeyOrThrow(id: number, scope: GatewayScope): Promise<OrgApiKeyRow> {
   const supabase = createServerAdminSupabaseClient();
-  const { data: keyData, error } = await supabase
+  let query = supabase
     .from('org_api_keys')
     .select('*')
-    .eq('id', id)
-    .eq('team_id', teamId)
-    .maybeSingle();
-  const data = keyData as unknown as OrgApiKeyRow | null;
+    .eq('id', id);
+
+  query =
+    scope.kind === 'team'
+      ? query.eq('team_id', scope.teamId)
+      : query.is('team_id', null).eq('user_id', scope.userId);
+
+  const { data: keyData, error } = await query.maybeSingle();
+  const data = keyData as OrgApiKeyRow | null;
 
   if (error) {
     throw new Error('获取组织 API Key 失败');
@@ -303,12 +323,56 @@ async function getSyncRecord(orgApiKeyId: number): Promise<OrgApiKeySyncRow | nu
   return (data as OrgApiKeySyncRow | null) || null;
 }
 
+async function getRuntimeSecretForKey(
+  key: OrgApiKeyRow,
+  runtimeTokenId: number,
+  actingUserId: string,
+): Promise<string> {
+  if (key.team_id) {
+    const runtimeAccount = await ensureTeamRuntimeAccount({
+      teamId: key.team_id,
+      actingUserId,
+    });
+
+    return fetchGatewayRuntimeTokenKey(
+      runtimeAccount.newApiUserId,
+      runtimeAccount.accessToken,
+      runtimeTokenId,
+    );
+  }
+
+  if (!key.user_id) {
+    throw new Error('API Key 归属信息缺失');
+  }
+
+  const owner = await getAppUserById(key.user_id);
+  if (!owner) {
+    throw new Error('API Key 归属用户不存在');
+  }
+
+  const linkedOwner = await ensureNewApiLink(owner);
+  if (!linkedOwner.new_api_user_id) {
+    throw new Error('个人运行时账户映射失败');
+  }
+
+  return fetchUserTokenKey(linkedOwner.new_api_user_id, runtimeTokenId);
+}
+
+export async function listGatewayApiKeysForTeam(teamId: string): Promise<GatewayApiKey[]> {
+  return listGatewayApiKeysForScope({
+    kind: 'team',
+    teamId,
+    userId: '',
+    role: 'owner',
+  });
+}
+
 export async function listGatewayApiKeys(params: {
   userId: string;
   teamId?: string | null;
 }): Promise<GatewayApiKey[]> {
-  const context = await resolveAccessibleTeamContext(params.userId, params.teamId);
-  return listGatewayApiKeysForTeam(context.teamId);
+  const scope = await resolveGatewayScope(params.userId, params.teamId);
+  return listGatewayApiKeysForScope(scope);
 }
 
 export async function createGatewayApiKey(params: {
@@ -318,8 +382,8 @@ export async function createGatewayApiKey(params: {
   clientInfo?: ClientInfo;
 }): Promise<GatewayApiKey> {
   const { input } = params;
-  const context = await resolveAccessibleTeamContext(params.userId, params.teamId);
-  ensureManagePermission(context.role);
+  const scope = await resolveGatewayScope(params.userId, params.teamId);
+  ensureManagePermission(scope);
 
   const normalizedName = normalizeName(input.name);
   const normalizedRemark = normalizeRemark(input.remark);
@@ -333,7 +397,8 @@ export async function createGatewayApiKey(params: {
 
   const supabase = createServerAdminSupabaseClient();
   const insertPayload: OrgApiKeyInsert = {
-    team_id: context.teamId,
+    team_id: scope.kind === 'team' ? scope.teamId : null,
+    user_id: scope.kind === 'personal' ? scope.userId : null,
     name: normalizedName,
     remark: normalizedRemark,
     subnet: normalizedSubnet,
@@ -353,7 +418,7 @@ export async function createGatewayApiKey(params: {
     .insert(insertPayload as never)
     .select('*')
     .single();
-  const createdKey = createdKeyData as unknown as OrgApiKeyRow | null;
+  const createdKey = createdKeyData as OrgApiKeyRow | null;
 
   if (createError || !createdKey) {
     throw new Error(createError?.message || '创建组织 API Key 失败');
@@ -373,7 +438,6 @@ export async function createGatewayApiKey(params: {
   const syncResult = await syncOrgApiKeyNow({
     orgApiKeyId: createdKey.id,
     actingUserId: params.userId,
-    teamId: context.teamId,
     action: 'create',
   });
 
@@ -388,7 +452,7 @@ export async function createGatewayApiKey(params: {
     try {
       const fullKey = await getGatewayApiKeySecret({
         userId: params.userId,
-        teamId: context.teamId,
+        teamId: params.teamId ?? null,
         id: createdKey.id,
         clientInfo: params.clientInfo,
         skipAudit: true,
@@ -401,7 +465,7 @@ export async function createGatewayApiKey(params: {
 
   await writeApiKeyAuditLog({
     action: 'api_key.create',
-    teamId: context.teamId,
+    scope,
     userId: params.userId,
     keyId: createdKey.id,
     newValue: {
@@ -420,10 +484,10 @@ export async function updateGatewayApiKey(params: {
   input: UpdateGatewayApiKeyInput;
   clientInfo?: ClientInfo;
 }): Promise<void> {
-  const context = await resolveAccessibleTeamContext(params.userId, params.teamId);
-  ensureManagePermission(context.role);
+  const scope = await resolveGatewayScope(params.userId, params.teamId);
+  ensureManagePermission(scope);
 
-  const currentKey = await getLocalKeyOrThrow(params.input.id, context.teamId);
+  const currentKey = await getLocalKeyOrThrow(params.input.id, scope);
   const currentSync = await getSyncRecord(currentKey.id);
   const currentSnapshot = toAuditSnapshot(currentKey, currentSync);
   const normalizedName = params.input.name === undefined ? currentKey.name : normalizeName(params.input.name);
@@ -465,7 +529,6 @@ export async function updateGatewayApiKey(params: {
   const syncResult = await syncOrgApiKeyNow({
     orgApiKeyId: updatedLocal.id,
     actingUserId: params.userId,
-    teamId: context.teamId,
     action: 'update',
   });
 
@@ -475,7 +538,7 @@ export async function updateGatewayApiKey(params: {
 
   await writeApiKeyAuditLog({
     action: 'api_key.update',
-    teamId: context.teamId,
+    scope,
     userId: params.userId,
     keyId: updatedLocal.id,
     oldValue: currentSnapshot,
@@ -490,26 +553,29 @@ export async function removeGatewayApiKey(params: {
   id: number;
   clientInfo?: ClientInfo;
 }): Promise<void> {
-  const context = await resolveAccessibleTeamContext(params.userId, params.teamId);
-  ensureManagePermission(context.role);
+  const scope = await resolveGatewayScope(params.userId, params.teamId);
+  ensureManagePermission(scope);
 
-  const currentKey = await getLocalKeyOrThrow(params.id, context.teamId);
+  const currentKey = await getLocalKeyOrThrow(params.id, scope);
   const currentSync = await getSyncRecord(currentKey.id);
   const currentSnapshot = toAuditSnapshot(currentKey, currentSync);
 
   await syncOrgApiKeyNow({
     orgApiKeyId: currentKey.id,
     actingUserId: params.userId,
-    teamId: context.teamId,
     action: 'delete',
   });
 
   const supabase = createServerAdminSupabaseClient();
-  const { error } = await supabase
+  let deleteQuery = supabase
     .from('org_api_keys')
     .delete()
-    .eq('id', currentKey.id)
-    .eq('team_id', context.teamId);
+    .eq('id', currentKey.id);
+  deleteQuery =
+    scope.kind === 'team'
+      ? deleteQuery.eq('team_id', scope.teamId)
+      : deleteQuery.is('team_id', null).eq('user_id', scope.userId);
+  const { error } = await deleteQuery;
 
   if (error) {
     throw new Error(error.message || '删除组织 API Key 失败');
@@ -517,7 +583,7 @@ export async function removeGatewayApiKey(params: {
 
   await writeApiKeyAuditLog({
     action: 'api_key.delete',
-    teamId: context.teamId,
+    scope,
     userId: params.userId,
     keyId: currentKey.id,
     oldValue: currentSnapshot,
@@ -532,36 +598,20 @@ export async function getGatewayApiKeySecret(params: {
   clientInfo?: ClientInfo;
   skipAudit?: boolean;
 }): Promise<string> {
-  const context = await resolveAccessibleTeamContext(params.userId, params.teamId);
-  ensureManagePermission(context.role);
+  const scope = await resolveGatewayScope(params.userId, params.teamId);
+  ensureManagePermission(scope);
 
-  const currentKey = await getLocalKeyOrThrow(params.id, context.teamId);
-
-  const supabase = createServerAdminSupabaseClient();
-  const { data: syncData, error: syncError } = await supabase
-    .from('org_api_key_sync')
-    .select('*')
-    .eq('org_api_key_id', params.id)
-    .maybeSingle();
-  const syncRow = syncData as unknown as OrgApiKeySyncRow | null;
-
-  if (syncError) {
-    throw new Error(syncError.message || '获取 API Key 同步信息失败');
-  }
+  const currentKey = await getLocalKeyOrThrow(params.id, scope);
+  const syncRow = await getSyncRecord(params.id);
 
   if (!syncRow?.new_api_token_id) {
     throw new Error('运行时 API Key 尚未同步完成');
   }
 
-  const runtimeAccount = await ensureTeamRuntimeAccount({
-    teamId: context.teamId,
-    actingUserId: params.userId,
-  });
-
-  const secret = await fetchGatewayRuntimeTokenKey(
-    runtimeAccount.newApiUserId,
-    runtimeAccount.accessToken,
-    syncRow.new_api_token_id
+  const secret = await getRuntimeSecretForKey(
+    currentKey,
+    syncRow.new_api_token_id,
+    params.userId,
   );
 
   const viewedAt = new Date().toISOString();
@@ -574,7 +624,7 @@ export async function getGatewayApiKeySecret(params: {
   if (!params.skipAudit) {
     await writeApiKeyAuditLog({
       action: 'api_key.reveal',
-      teamId: context.teamId,
+      scope,
       userId: params.userId,
       keyId: currentKey.id,
       newValue: {
@@ -593,8 +643,8 @@ export async function getGatewayApiKeyRuntimeCredentials(params: {
   teamId?: string | null;
   id: number;
 }): Promise<{ secret: string; apiKey: GatewayApiKey }> {
-  const context = await resolveAccessibleTeamContext(params.userId, params.teamId);
-  const currentKey = await getLocalKeyOrThrow(params.id, context.teamId);
+  const scope = await resolveGatewayScope(params.userId, params.teamId);
+  const currentKey = await getLocalKeyOrThrow(params.id, scope);
 
   if (currentKey.status !== 'active') {
     throw new Error('当前 API Key 已禁用');
@@ -610,15 +660,10 @@ export async function getGatewayApiKeyRuntimeCredentials(params: {
     throw new Error('运行时 API Key 尚未同步完成');
   }
 
-  const runtimeAccount = await ensureTeamRuntimeAccount({
-    teamId: context.teamId,
-    actingUserId: params.userId,
-  });
-
-  const secret = await fetchGatewayRuntimeTokenKey(
-    runtimeAccount.newApiUserId,
-    runtimeAccount.accessToken,
-    syncRow.new_api_token_id
+  const secret = await getRuntimeSecretForKey(
+    currentKey,
+    syncRow.new_api_token_id,
+    params.userId,
   );
 
   return {

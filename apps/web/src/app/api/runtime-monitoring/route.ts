@@ -1,5 +1,5 @@
 import { getAuthenticatedAppUser } from '@/services/account/session.service';
-import { getBillingSummary } from '@/services/billing/billing.service';
+import { getRuntimeMonitoringSnapshot } from '@/services/monitoring/runtime-monitoring.service';
 import { fail, ok } from '@/server/api/responses';
 
 export const dynamic = 'force-dynamic';
@@ -11,11 +11,13 @@ export async function GET(request: Request) {
       return fail('请先登录', 401);
     }
 
-    const teamId = new URL(request.url).searchParams.get('team_id');
-    const summary = await getBillingSummary(appUser, teamId);
-    return ok(summary);
+    const url = new URL(request.url);
+    const hours = Number(url.searchParams.get('hours') || '24');
+    const channelLimit = Number(url.searchParams.get('channel_limit') || '10');
+    const snapshot = await getRuntimeMonitoringSnapshot({ hours, channelLimit });
+    return ok(snapshot);
   } catch (error) {
-    console.error('获取账单摘要异常:', error);
+    console.error('获取运行时监控异常:', error);
     return fail(error instanceof Error ? error.message : '服务器内部错误', 500);
   }
 }

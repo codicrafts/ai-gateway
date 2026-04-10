@@ -1,8 +1,7 @@
 import { NextRequest } from 'next/server';
 import { getClientInfo } from '@/lib/auditLog';
 import { getAuthenticatedAppUser } from '@/services/account/session.service';
-import { createGatewayApiKey, listGatewayApiKeysForTeam } from '@/services/gateway/gateway-token.service';
-import { resolveAccessibleTeamContext } from '@/services/team/team-context.service';
+import { createGatewayApiKey, listGatewayApiKeys } from '@/services/gateway/gateway-token.service';
 import { fail, ok } from '@/server/api/responses';
 
 /**
@@ -16,8 +15,10 @@ export async function GET(request: NextRequest) {
       return fail('请先登录', 401);
     }
 
-    const teamContext = await resolveAccessibleTeamContext(currentUser.id, request.nextUrl.searchParams.get('team_id'));
-    const apiKeys = await listGatewayApiKeysForTeam(teamContext.teamId);
+    const apiKeys = await listGatewayApiKeys({
+      userId: currentUser.id,
+      teamId: request.nextUrl.searchParams.get('team_id'),
+    });
     return ok(apiKeys);
   } catch (error) {
     console.error('获取 API Key 列表异常:', error);

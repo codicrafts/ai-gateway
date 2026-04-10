@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
 
     const { data: apiKeyData, error: apiKeyError } = await supabase
       .from('org_api_keys')
-      .select('team_id, id, used_quota')
+      .select('team_id, user_id, id, used_quota')
       .eq('id', syncMapping.org_api_key_id)
       .maybeSingle();
 
@@ -118,6 +118,7 @@ export async function POST(request: NextRequest) {
       .insert({
         new_api_log_id: payload.id,
         team_id: apiKeyData.team_id,
+        user_id: apiKeyData.user_id,
         org_api_key_id: apiKeyData.id,
         model: payload.model_name,
         prompt_tokens: payload.prompt_tokens,
@@ -175,6 +176,7 @@ export async function POST(request: NextRequest) {
       data: {
         log_id: payload.id,
         team_id: apiKeyData.team_id,
+        user_id: apiKeyData.user_id,
         tokens: payload.prompt_tokens + payload.completion_tokens,
       },
     });

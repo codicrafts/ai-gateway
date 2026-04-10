@@ -558,7 +558,9 @@ async function processUsagePullJob(job: OrgRuntimeSyncJobRow): Promise<{ inserte
   }
 
   const keyTeamMap = new Map<number, string>(
-    (orgApiKeys || []).map((record) => [record.id, record.team_id])
+    (orgApiKeys || [])
+      .filter((record): record is { id: number; team_id: string } => typeof record.team_id === 'string')
+      .map((record) => [record.id, record.team_id])
   );
 
   const teamSyncRecords = syncRecords.filter(

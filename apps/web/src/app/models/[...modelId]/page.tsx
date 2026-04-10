@@ -4,6 +4,7 @@ import type { Model } from "@ai-gateway/shared-types";
 import ModelDetailPageClient from "@/components/models/ModelDetailPageClient";
 import { buildPageMetadata } from "@/config/site";
 import { listModelCatalog } from "@/services/catalog/model-catalog.service";
+import { getModelDetailInsights } from "@/services/models/model-detail.service";
 
 function normalizeModelId(modelId: string[] | string) {
   return Array.isArray(modelId) ? modelId.join("/") : modelId;
@@ -49,5 +50,7 @@ export default async function ModelDetailPage({
     notFound();
   }
 
-  return <ModelDetailPageClient model={model} />;
+  const insights = await getModelDetailInsights(model);
+
+  return <ModelDetailPageClient model={model} insights={insights} />;
 }

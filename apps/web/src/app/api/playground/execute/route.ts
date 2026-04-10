@@ -2,7 +2,6 @@ import { NextRequest } from 'next/server';
 import { getAuthenticatedAppUser } from '@/services/account/session.service';
 import { listGatewayConfiguredModels } from '@/services/gateway/gateway-model.service';
 import { getGatewayApiKeyRuntimeCredentials } from '@/services/gateway/gateway-token.service';
-import { resolveAccessibleTeamContext } from '@/services/team/team-context.service';
 import {
   getPlaygroundEndpointScope,
   isPlaygroundEndpointType,
@@ -332,10 +331,9 @@ export async function POST(request: NextRequest) {
         return Response.json({ error: '请选择可用的 API 密钥' }, { status: 400 });
       }
 
-      const teamContext = await resolveAccessibleTeamContext(appUser.id, requestedTeamId);
       const { secret, apiKey } = await getGatewayApiKeyRuntimeCredentials({
         userId: appUser.id,
-        teamId: teamContext.teamId,
+        teamId: requestedTeamId,
         id: keyId,
       });
 

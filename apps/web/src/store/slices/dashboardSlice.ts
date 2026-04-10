@@ -111,6 +111,76 @@ export interface PaymentOrder {
   updated_at: string;
 }
 
+export interface RuntimeMonitoringSummary {
+  window_hours: number;
+  total_requests_24h: number;
+  successful_requests_24h: number;
+  error_requests_24h: number;
+  success_rate_24h: number;
+  avg_latency_ms_24h: number;
+  p95_latency_ms_24h: number;
+  latency_sample_size_24h: number;
+  prompt_tokens_24h: number;
+  completion_tokens_24h: number;
+  total_tokens_24h: number;
+  enabled_channels: number;
+  auto_disabled_channels: number;
+  manually_disabled_channels: number;
+  slow_channels: number;
+  last_minute_rpm: number;
+  last_minute_tpm: number;
+  alert_count: number;
+  generated_at: number;
+}
+
+export interface RuntimeMonitoringAlert {
+  id: string;
+  level: 'critical' | 'warning' | 'info' | string;
+  type: string;
+  title: string;
+  detail: string;
+  entity_type?: string;
+  entity_id?: number;
+  occurred_at: number;
+}
+
+export interface RuntimeMonitoringTrendPoint {
+  timestamp: number;
+  label: string;
+  requests: number;
+  successful_requests: number;
+  error_requests: number;
+  success_rate: number;
+  avg_latency_ms: number;
+  total_tokens: number;
+}
+
+export interface RuntimeMonitoringChannel {
+  channel_id: number;
+  name: string;
+  group: string;
+  status: number;
+  response_time: number;
+  last_test_at: number;
+  auto_ban: number;
+  models: string;
+  successful_requests_24h: number;
+  error_requests_24h: number;
+  total_requests_24h: number;
+  success_rate_24h: number;
+  avg_latency_ms_24h: number;
+  p95_latency_ms_24h: number;
+  total_tokens_24h: number;
+}
+
+export interface RuntimeMonitoringSnapshot {
+  summary: RuntimeMonitoringSummary | null;
+  alerts: RuntimeMonitoringAlert[];
+  trends: RuntimeMonitoringTrendPoint[];
+  channels: RuntimeMonitoringChannel[];
+  refreshed_at: string;
+}
+
 export interface DashboardSnapshot {
   apiKeys: ApiKey[];
   availableModels: Model[];
@@ -118,6 +188,7 @@ export interface DashboardSnapshot {
   usageStats: UsageStats | null;
   billingSummary: BillingSummary;
   paymentOrders: PaymentOrder[];
+  monitoring: RuntimeMonitoringSnapshot | null;
 }
 
 interface DashboardState {
@@ -127,6 +198,7 @@ interface DashboardState {
   usageStats: UsageStats | null;
   billingSummary: BillingSummary | null;
   paymentOrders: PaymentOrder[];
+  monitoring: RuntimeMonitoringSnapshot | null;
   monthlyRequests: number;
   monthlyCost: number;
   loading: boolean;
@@ -140,6 +212,7 @@ const initialState: DashboardState = {
   usageStats: null,
   billingSummary: null,
   paymentOrders: [],
+  monitoring: null,
   monthlyRequests: 0,
   monthlyCost: 0,
   loading: false,
@@ -221,6 +294,24 @@ export const fetchPaymentOrders = createAsyncThunk(
       }
 
       return result.data as PaymentOrder[];
+    } catch {
+      return rejectWithValue('网络错误');
+    }
+  }
+);
+
+export const fetchRuntimeMonitoring = createAsyncThunk(
+  'dashboard/fetchRuntimeMonitoring',
+  async (_: void, { rejectWithValue }) => {
+    try {
+      const response = await fetch('/api/runtime-monitoring?hours=24&channel_limit=10');
+      const result = await response.json();
+
+      if (!result.success) {
+        return rejectWithValue(result.error || '获取运行时监控失败');
+      }
+
+      return result.data as RuntimeMonitoringSnapshot;
     } catch {
       return rejectWithValue('网络错误');
     }
@@ -424,6 +515,7 @@ const dashboardSlice = createSlice({
       state.usageStats = action.payload.usageStats;
       state.billingSummary = action.payload.billingSummary;
       state.paymentOrders = action.payload.paymentOrders;
+      state.monitoring = action.payload.monitoring;
 
       const now = new Date();
       const thisMonthLogs = action.payload.usageLogs.filter((log) => {
@@ -495,6 +587,19 @@ const dashboardSlice = createSlice({
         state.paymentOrders = action.payload;
       })
       .addCase(fetchPaymentOrders.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      // fetchRuntimeMonitoring
+      .addCase(fetchRuntimeMonitoring.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchRuntimeMonitoring.fulfilled, (state, action) => {
+        state.loading = false;
+        state.monitoring = action.payload;
+      })
+      .addCase(fetchRuntimeMonitoring.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })
