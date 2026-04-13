@@ -135,7 +135,7 @@ export async function getOrganizationBalance(teamId: string): Promise<number> {
 export async function getBillingSummaryForTeam(teamId: string): Promise<BillingSummary> {
   const supabase = createServerAdminSupabaseClient();
 
-  const [usageRowsResult, usageAggregateRowsResult, billingRowsResult, billingBalanceRowsResult, apiKeyNamesResult] = await Promise.all([
+  const [usageRowsResult, usageAggregateRowsResult, billingRowsResult, billingBalanceRowsResult, apiKeyNamesResult] = await Promise.allSettled([
     supabase
       .from('org_usage_ledger')
       .select('*')
@@ -163,36 +163,75 @@ export async function getBillingSummaryForTeam(teamId: string): Promise<BillingS
       .eq('team_id', teamId),
   ]);
 
-  const { data: usageRowsData, error: usageError } = usageRowsResult;
-  if (usageError) {
-    throw new Error('获取组织账单失败');
+  const usageAggregateResolved =
+    usageAggregateRowsResult.status === 'fulfilled' ? usageAggregateRowsResult.value : null;
+  if (!usageAggregateResolved?.error && usageAggregateResolved?.data) {
+    // noop
+  } else {
+    const cause =
+      usageAggregateRowsResult.status === 'rejected'
+        ? usageAggregateRowsResult.reason
+        : usageAggregateResolved?.error;
+    throw new Error(`获取组织用量聚合数据失败${cause ? `: ${String(cause)}` : ''}`);
   }
 
-  const { data: billingRowsData, error: billingError } = billingRowsResult;
-  if (billingError) {
-    throw new Error('获取组织账务流水失败');
+  const billingBalanceResolved =
+    billingBalanceRowsResult.status === 'fulfilled' ? billingBalanceRowsResult.value : null;
+  if (!billingBalanceResolved?.error && billingBalanceResolved?.data) {
+    // noop
+  } else {
+    const cause =
+      billingBalanceRowsResult.status === 'rejected'
+        ? billingBalanceRowsResult.reason
+        : billingBalanceResolved?.error;
+    throw new Error(`获取组织账务聚合数据失败${cause ? `: ${String(cause)}` : ''}`);
   }
 
-  const { data: usageAggregateRowsData, error: usageAggregateError } = usageAggregateRowsResult;
-  if (usageAggregateError) {
-    throw new Error('获取组织用量聚合数据失败');
+  const usageRowsResolved = usageRowsResult.status === 'fulfilled' ? usageRowsResult.value : null;
+  if (usageRowsResolved?.error) {
+    console.error('Failed to load org usage ledger rows for billing summary', {
+      teamId,
+      error: usageRowsResolved.error,
+    });
+  } else if (usageRowsResult.status === 'rejected') {
+    console.error('Failed to load org usage ledger rows for billing summary', {
+      teamId,
+      error: usageRowsResult.reason,
+    });
   }
 
-  const { data: billingBalanceRowsData, error: billingBalanceError } = billingBalanceRowsResult;
-  if (billingBalanceError) {
-    throw new Error('获取组织账务聚合数据失败');
-  }
-  const { data: apiKeyNamesData, error: apiKeyNamesError } = apiKeyNamesResult;
-  if (apiKeyNamesError) {
-    throw new Error('获取组织 API Key 名称失败');
+  const billingRowsResolved = billingRowsResult.status === 'fulfilled' ? billingRowsResult.value : null;
+  if (billingRowsResolved?.error) {
+    console.error('Failed to load org billing ledger rows for billing summary', {
+      teamId,
+      error: billingRowsResolved.error,
+    });
+  } else if (billingRowsResult.status === 'rejected') {
+    console.error('Failed to load org billing ledger rows for billing summary', {
+      teamId,
+      error: billingRowsResult.reason,
+    });
   }
 
-  const usageRows = (usageRowsData || []) as OrgUsageLedgerRow[];
-  const billingRows = (billingRowsData || []) as OrgBillingLedgerRow[];
-  const usageAggregateRows = (usageAggregateRowsData || []) as Array<Pick<OrgUsageLedgerRow, 'amount' | 'occurred_at'>>;
-  const billingBalanceRows = (billingBalanceRowsData || []) as Array<Pick<OrgBillingLedgerRow, 'amount'>>;
+  const apiKeyNamesResolved = apiKeyNamesResult.status === 'fulfilled' ? apiKeyNamesResult.value : null;
+  if (apiKeyNamesResolved?.error) {
+    console.error('Failed to load org API key names for billing summary', {
+      teamId,
+      error: apiKeyNamesResolved.error,
+    });
+  } else if (apiKeyNamesResult.status === 'rejected') {
+    console.error('Failed to load org API key names for billing summary', {
+      teamId,
+      error: apiKeyNamesResult.reason,
+    });
+  }
+
+  const usageRows = ((usageRowsResolved && !usageRowsResolved.error ? usageRowsResolved.data : []) || []) as OrgUsageLedgerRow[];
+  const billingRows = ((billingRowsResolved && !billingRowsResolved.error ? billingRowsResolved.data : []) || []) as OrgBillingLedgerRow[];
+  const usageAggregateRows = (usageAggregateResolved.data || []) as Array<Pick<OrgUsageLedgerRow, 'amount' | 'occurred_at'>>;
+  const billingBalanceRows = (billingBalanceResolved.data || []) as Array<Pick<OrgBillingLedgerRow, 'amount'>>;
   const apiKeyNameMap = new Map(
-    ((apiKeyNamesData || []) as Array<{ id: number; name: string }>).map((row) => [Number(row.id), row.name])
+    ((((apiKeyNamesResolved && !apiKeyNamesResolved.error ? apiKeyNamesResolved.data : []) || []) as Array<{ id: number; name: string }>)).map((row) => [Number(row.id), row.name])
   );
   const now = new Date();
   const previousMonth = getPreviousMonth(now);

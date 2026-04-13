@@ -118,6 +118,11 @@ function getPaymentCheckoutBaseUrl(method: PaymentMethod): string | null {
   return PAYMENT_CHECKOUT_URLS[method]?.trim() || null;
 }
 
+function isMissingPaymentOrderTeamColumn(error: { message?: string | null; details?: string | null } | null | undefined) {
+  const haystack = `${error?.message || ''} ${error?.details || ''}`.toLowerCase();
+  return haystack.includes('team_id') && haystack.includes('payment_orders');
+}
+
 function appendCheckoutParams(baseUrl: string, params: Record<string, string | null | undefined>): string {
   const url = new URL(baseUrl);
 
@@ -226,7 +231,16 @@ export async function listPaymentOrders(userId: string, teamId?: string | null):
   const { data, error } = await query;
 
   if (error) {
-    throw new Error('获取充值订单失败');
+    if (teamId && isMissingPaymentOrderTeamColumn(error)) {
+      console.error('payment_orders.team_id column is missing; returning empty team payment orders until migration is applied', {
+        userId,
+        teamId,
+        error,
+      });
+      return [];
+    }
+
+    throw new Error(`获取充值订单失败: ${error.message}`);
   }
 
   return (data || []).map(mapPaymentOrder);

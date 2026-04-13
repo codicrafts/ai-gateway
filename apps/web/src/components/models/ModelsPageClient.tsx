@@ -36,6 +36,7 @@ export default function ModelsPageClient({
 }: {
   initialModels: Model[];
 }) {
+  const PAGE_SIZE = 12;
   const dispatch = useAppDispatch();
   const locale = useAppSelector((s) => s.locale.locale);
   const t = useTranslation();
@@ -60,10 +61,22 @@ export default function ModelsPageClient({
   } =
     useAppSelector((s) => s.models);
   const [showFilters, setShowFilters] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     dispatch(hydrateModels(initialModels));
   }, [dispatch, initialModels]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [
+    searchTerm,
+    providerFilter,
+    categoryFilter,
+    priceFilter,
+    capabilityFilter,
+    sortFilter,
+  ]);
 
   const defaultCapabilityTags = useMemo<Record<string, string[]>>(
     () => ({
@@ -236,6 +249,23 @@ export default function ModelsPageClient({
     () => [...filtered].sort((a, b) => b.context_length - a.context_length)[0],
     [filtered],
   );
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const pageStartIndex = (safeCurrentPage - 1) * PAGE_SIZE;
+  const paginatedModels = filtered.slice(pageStartIndex, pageStartIndex + PAGE_SIZE);
+  const visibleRangeStart = filtered.length === 0 ? 0 : pageStartIndex + 1;
+  const visibleRangeEnd = Math.min(pageStartIndex + PAGE_SIZE, filtered.length);
+  const paginationItems = useMemo(() => {
+    const items: number[] = [];
+    const start = Math.max(1, safeCurrentPage - 2);
+    const end = Math.min(totalPages, safeCurrentPage + 2);
+
+    for (let page = start; page <= end; page += 1) {
+      items.push(page);
+    }
+
+    return items;
+  }, [safeCurrentPage, totalPages]);
 
   return (
     <div className="min-h-screen bg-background relative">
@@ -495,8 +525,23 @@ export default function ModelsPageClient({
             </div>
           </section>
         ) : (
-          <section className="grid gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {filtered.map((model, index) => (
+          <>
+            <section className="mb-4 flex flex-col gap-3 rounded-xl border border-border bg-white/70 px-4 py-3 text-sm text-text-secondary shadow-sm sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                {t.modelsPage.paginationSummary
+                  .replace("{start}", String(visibleRangeStart))
+                  .replace("{end}", String(visibleRangeEnd))
+                  .replace("{total}", String(filtered.length))}
+              </div>
+              <div className="text-xs uppercase tracking-[0.16em] text-text-secondary/70">
+                {t.modelsPage.paginationPage
+                  .replace("{page}", String(safeCurrentPage))
+                  .replace("{total}", String(totalPages))}
+              </div>
+            </section>
+
+            <section className="grid gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {paginatedModels.map((model, index) => (
               <article
                 key={model.id}
                 className="group flex h-full flex-col overflow-hidden rounded-xl sm:rounded-[1.5rem] md:rounded-[2rem] border border-border bg-white p-4 sm:p-5 md:p-8 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-primary/20"
@@ -519,23 +564,11 @@ export default function ModelsPageClient({
                     </p>
                   </div>
                   <div className="rounded-lg sm:rounded-xl border border-border bg-dark-light/30 px-2 py-1 sm:px-3 sm:py-2 text-[0.6rem] sm:text-[0.65rem] font-bold uppercase tracking-[0.2em] sm:tracking-[0.24em] text-text-secondary group-hover:bg-primary/5 group-hover:text-primary transition-colors">
-                    #{String(index + 1).padStart(2, "0")}
+                    #{String(pageStartIndex + index + 1).padStart(2, "0")}
                   </div>
                 </div>
 
-                <p
-                  className="min-h-[72px] sm:min-h-[84px] text-[0.8rem] sm:text-sm leading-relaxed text-text-secondary"
-                  style={{
-                    display: "-webkit-box",
-                    WebkitLineClamp: 4,
-                    WebkitBoxOrient: "vertical",
-                    overflow: "hidden",
-                  }}
-                >
-                  {getLocalizedModelDescription(model, locale)}
-                </p>
-
-                <div className="mt-4 sm:mt-6 flex flex-wrap gap-1.5 sm:gap-2">
+                <div className="mt-2 sm:mt-3 flex flex-wrap gap-1.5 sm:gap-2">
                   {getLocalizedCapabilityTags(
                     model,
                     locale,
@@ -626,7 +659,49 @@ export default function ModelsPageClient({
                 </div>
               </article>
             ))}
-          </section>
+            </section>
+
+            {totalPages > 1 ? (
+              <section className="mt-6 flex flex-col items-center gap-3 sm:mt-8 sm:flex-row sm:justify-center">
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                  disabled={safeCurrentPage === 1}
+                  className="btn-secondary min-w-[120px] justify-center rounded-full px-4 py-2 disabled:cursor-not-allowed disabled:opacity-45"
+                >
+                  <i className="fas fa-arrow-left mr-2" />
+                  {t.modelsPage.paginationPrev}
+                </button>
+
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  {paginationItems.map((page) => (
+                    <button
+                      key={page}
+                      type="button"
+                      onClick={() => setCurrentPage(page)}
+                      className={`min-h-[42px] min-w-[42px] rounded-full border px-3 text-sm font-semibold transition-all ${
+                        page === safeCurrentPage
+                          ? "border-primary bg-primary text-white shadow-sm"
+                          : "border-border bg-white text-text-primary hover:border-primary/30 hover:text-primary"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+                  disabled={safeCurrentPage === totalPages}
+                  className="btn-secondary min-w-[120px] justify-center rounded-full px-4 py-2 disabled:cursor-not-allowed disabled:opacity-45"
+                >
+                  {t.modelsPage.paginationNext}
+                  <i className="fas fa-arrow-right ml-2" />
+                </button>
+              </section>
+            ) : null}
+          </>
         )}
 
         <section className="section-shell mt-12 sm:mt-16 md:mt-24 p-4 sm:p-5 md:p-12 bg-white rounded-xl sm:rounded-[1.75rem] md:rounded-[2.5rem] border border-border shadow-sm">

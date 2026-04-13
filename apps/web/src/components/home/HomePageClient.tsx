@@ -21,6 +21,16 @@ export default function HomePageClient({ initialModels }: { initialModels: Model
   const [codeTab, setCodeTab] = useState<CodeTab>('python');
   const t = useTranslation();
 
+  const hasMeaningfulDescription = (model: Model) => {
+    const description = (model.description || '').trim();
+    if (!description) {
+      return false;
+    }
+
+    const comparable = description.toLowerCase();
+    return comparable !== model.model_name.trim().toLowerCase() && comparable !== model.id.trim().toLowerCase();
+  };
+
   const codeExamples = {
     python: `from openai import OpenAI
 
@@ -357,9 +367,11 @@ export NEWAPI_API_KEY="your-api-key"
                     </span>
                   </div>
                   <div className="space-y-4 sm:space-y-5 p-4 sm:p-5 md:p-8">
-                    <p className="min-h-[72px] sm:min-h-[84px] text-[0.8rem] sm:text-sm leading-relaxed text-text-secondary [display:-webkit-box] [-webkit-line-clamp:4] [-webkit-box-orient:vertical] overflow-hidden">
-                      {model.description}
-                    </p>
+                    {hasMeaningfulDescription(model) ? (
+                      <p className="text-[0.8rem] sm:text-sm leading-relaxed text-text-secondary [display:-webkit-box] [-webkit-line-clamp:3] [-webkit-box-orient:vertical] overflow-hidden">
+                        {model.description}
+                      </p>
+                    ) : null}
                     <div className="grid grid-cols-2 gap-3 sm:gap-4 text-sm">
                       <div className="rounded-xl sm:rounded-2xl border border-border bg-dark-light/30 p-3 sm:p-4 transition-colors group-hover:bg-white group-hover:border-primary/20">
                         <div className="text-[0.625rem] sm:text-[0.68rem] uppercase tracking-[0.16em] sm:tracking-[0.18em] text-text-secondary font-semibold">{t.home.inputLabel}</div>

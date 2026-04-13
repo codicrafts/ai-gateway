@@ -172,6 +172,7 @@ export async function getDashboardPageBootstrap(
 
   const scope = await resolveGatewayScope(appUser.id, requestedTeamId);
   const selectedTeamId = scope.kind === 'team' ? scope.teamId : null;
+  const resolvedScopeId = scope.kind === 'team' ? scope.teamId : 'personal';
 
   const [
     apiKeys,
@@ -182,16 +183,16 @@ export async function getDashboardPageBootstrap(
     monitoring,
   ] = await Promise.all([
     needsApiKeys
-      ? listGatewayApiKeys({ userId: appUser.id, teamId: requestedTeamId || null })
+      ? listGatewayApiKeys({ userId: appUser.id, teamId: resolvedScopeId })
       : Promise.resolve([]),
     needsAvailableModels
       ? listGatewayConfiguredModels().catch(() => [])
       : Promise.resolve([]),
     needsUsage
-      ? listGatewayUsage({ userId: appUser.id, teamId: requestedTeamId || null, page: 0, limit: 50 })
+      ? listGatewayUsage({ userId: appUser.id, teamId: resolvedScopeId, page: 0, limit: 50 })
       : Promise.resolve({ logs: [], stats: null, page: 0, limit: 50 }),
     needsBillingSummary
-      ? getBillingSummary(appUser, requestedTeamId || null)
+      ? getBillingSummary(appUser, resolvedScopeId)
       : Promise.resolve({
           current_balance: 0,
           current_month_spend: 0,

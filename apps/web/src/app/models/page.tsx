@@ -10,7 +10,7 @@ export const metadata: Metadata = buildPageMetadata({
 });
 
 export default async function ModelsPage() {
-  const initialModels = await listModelCatalog({ limit: 100 });
+  const initialModels = await listModelCatalog();
 
   return <ModelsPageClient initialModels={initialModels} />;
 }

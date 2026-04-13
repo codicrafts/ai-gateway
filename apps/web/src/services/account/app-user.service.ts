@@ -213,7 +213,7 @@ export async function ensureNewApiLink(user: UserRow): Promise<UserRow> {
 }
 
 export async function upsertOAuthUser(input: UpsertOAuthUserInput): Promise<AppUser> {
-  const supabase = createServerSupabaseClient();
+  const supabase = createServerAdminSupabaseClient();
   const email = normalizeEmail(input.email);
   const existing = await getAppUserByEmail(email);
 
@@ -250,7 +250,29 @@ export async function upsertOAuthUser(input: UpsertOAuthUserInput): Promise<AppU
     .single();
 
   if (error || !data) {
-    throw new Error('创建用户失败');
+    const isDuplicateEmail = error?.code === '23505';
+    if (isDuplicateEmail) {
+      const concurrentExisting = await getAppUserByEmail(email);
+      if (concurrentExisting) {
+        const updatePayload: Database['public']['Tables']['users']['Update'] = {
+          provider: input.provider ?? concurrentExisting.provider,
+          name: input.name ?? concurrentExisting.name,
+          image: input.image ?? concurrentExisting.image,
+        };
+
+        const { data: updated } = await supabase
+          .from('users')
+          .update(updatePayload as never)
+          .eq('id', concurrentExisting.id)
+          .select('*')
+          .single();
+
+        const linked = await ensureNewApiLink(updated || concurrentExisting);
+        return sanitizeAppUser(linked);
+      }
+    }
+
+    throw new Error(`创建用户失败${error?.message ? `: ${error.message}` : ''}`);
   }
 
   const linked = await ensureNewApiLink(data);
@@ -296,7 +318,7 @@ export async function createLocalUser(input: CreateLocalUserInput): Promise<AppU
     .single();
 
   if (error || !data) {
-    throw new Error('创建用户失败');
+    throw new Error(`创建用户失败${error?.message ? `: ${error.message}` : ''}`);
   }
 
   const linked = await ensureNewApiLink(data);

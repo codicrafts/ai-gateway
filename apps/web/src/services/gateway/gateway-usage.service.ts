@@ -93,17 +93,17 @@ export async function listGatewayUsageForTeam(options: {
 
   const { data: usageRows, error } = usageRowsResult;
   if (error) {
-    throw new Error('获取组织用量日志失败');
+    throw new Error(`获取组织用量日志失败: ${error.message}`);
   }
 
   const { data: statRows, error: statError } = statRowsResult;
   if (statError) {
-    throw new Error('获取组织用量统计失败');
+    throw new Error(`获取组织用量统计失败: ${statError.message}`);
   }
 
   const { data: keyRows, error: keyRowsError } = keyRowsResult;
   if (keyRowsError) {
-    throw new Error('获取组织用量统计失败');
+    throw new Error(`获取组织用量统计失败: ${keyRowsError.message}`);
   }
 
   const rows = (usageRows || []) as OrgUsageLedgerRow[];
@@ -209,17 +209,17 @@ async function listGatewayUsageForScope(options: {
 
   const { data: usageRows, error } = usageRowsResult;
   if (error) {
-    throw new Error('获取组织用量日志失败');
+    throw new Error(`获取组织用量日志失败: ${error.message}`);
   }
 
   const { data: statRows, error: statError } = statRowsResult;
   if (statError) {
-    throw new Error('获取组织用量统计失败');
+    throw new Error(`获取组织用量统计失败: ${statError.message}`);
   }
 
   const { data: keyRows, error: keyRowsError } = keyRowsResult;
   if (keyRowsError) {
-    throw new Error('获取组织用量统计失败');
+    throw new Error(`获取组织用量统计失败: ${keyRowsError.message}`);
   }
 
   const rows = (usageRows || []) as OrgUsageLedgerRow[];

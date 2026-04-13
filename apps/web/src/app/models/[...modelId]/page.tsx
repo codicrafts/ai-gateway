@@ -11,7 +11,7 @@ function normalizeModelId(modelId: string[] | string) {
 }
 
 async function findModelById(modelId: string): Promise<Model | null> {
-  const models = await listModelCatalog({ limit: 300 });
+  const models = await listModelCatalog();
   return models.find((model) => model.id === modelId) || null;
 }
 

@@ -1,0 +1,1311 @@
+[SYS] 2026/04/13 - 09:35:36 | initializing token encoders 
+[SYS] 2026/04/13 - 09:35:36 | token encoders initialized 
+[SYS] 2026/04/13 - 09:35:36 | using PostgreSQL as database 
+[SYS] 2026/04/13 - 09:35:36 | database migration started 
+[SYS] 2026/04/13 - 09:35:37 | system is already initialized at: 2026-03-17 23:29:50 +0800 CST 
+[SYS] 2026/04/13 - 09:35:37 | SYNC_FREQUENCY not set, use default value 60 
+[SYS] 2026/04/13 - 09:35:37 | Redis is enabled 
+[SYS] 2026/04/13 - 09:35:37 | i18n initialized with languages: zh-CN, zh-TW, en 
+[SYS] 2026/04/13 - 09:35:37 | Loaded 0 custom OAuth providers 
+[SYS] 2026/04/13 - 09:35:37 | New API  started 
+[SYS] 2026/04/13 - 09:35:37 | memory cache enabled 
+[SYS] 2026/04/13 - 09:35:37 | sync frequency: 60 seconds 
+[SYS] 2026/04/13 - 09:35:37 | channels synced from database 
+[SYS] 2026/04/13 - 09:35:37 | 正在更新数据看板数据... 
+[SYS] 2026/04/13 - 09:35:37 | 保存数据看板数据成功，共保存0条数据 
+[INFO] 2026/04/13 - 09:35:37 | SYSTEM | codex credential auto-refresh task started: tick=10m0s threshold=24h0m0s 
+[SYS] 2026/04/13 - 09:35:37 | batch update enabled with interval 5s 
+[INFO] 2026/04/13 - 09:35:37 | SYSTEM | monitoring alert task started: tick=1m0s 
+[SYS] 2026/04/13 - 09:35:37 | upstream model update task started: interval=30m0s 
+[INFO] 2026/04/13 - 09:35:37 | SYSTEM | subscription quota reset task started: tick=1m0s 
+
+  [32mMeshRouter [0m  ready in 773 ms
+
+  ➜  [1mNetwork:[0m http://172.18.0.2:3000/
+
+[GIN] 2026/04/13 - 09:35:42 | api | 202604130135424576684179sHu8kMQ | 200 |    1.003792ms |    192.168.65.1 |     GET /api/status
+[SYS] 2026/04/13 - 09:35:52 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:35:52 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:36:07 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:36:07 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:36:22 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:36:22 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:36:37 | syncing channels from database 
+[SYS] 2026/04/13 - 09:36:37 | syncing options from database 
+[SYS] 2026/04/13 - 09:36:37 | channels synced from database 
+[SYS] 2026/04/13 - 09:36:37 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:36:37 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:36:52 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:36:52 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:37:07 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:37:07 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:37:22 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:37:22 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:37:37 | syncing options from database 
+[SYS] 2026/04/13 - 09:37:37 | syncing channels from database 
+[SYS] 2026/04/13 - 09:37:37 | channels synced from database 
+[SYS] 2026/04/13 - 09:37:37 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:37:37 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:37:52 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:37:52 | 任务进度轮询完成 
+[GIN] 2026/04/13 - 09:38:00 | api | 2026041301380013708301wmkq3Tpc | 200 |   17.032667ms |    192.168.65.1 |     GET /api/pricing
+[GIN] 2026/04/13 - 09:38:00 | api | 2026041301380014099592gVSWFSg6 | 200 |   27.233041ms |    192.168.65.1 |     GET /api/models/?p=0&page_size=500
+[GIN] 2026/04/13 - 09:38:00 | web | 20260413013800877181718D5YswpqI | 200 |    4.215125ms |    192.168.65.1 |     GET /
+[GIN] 2026/04/13 - 09:38:01 | api | 20260413013801211419259ndJ1aZDW | 200 |    1.519875ms |    192.168.65.1 |     GET /api/status
+[GIN] 2026/04/13 - 09:38:01 | api | 20260413013801231413884H3C7KzHm | 200 |     668.375µs |    192.168.65.1 |     GET /api/notice
+[GIN] 2026/04/13 - 09:38:01 | api | 20260413013801232219468T37sQ22y | 200 |     597.875µs |    192.168.65.1 |     GET /api/home_page_content
+[SYS] 2026/04/13 - 09:38:07 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:38:07 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:38:22 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:38:22 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:38:37 | syncing options from database 
+[SYS] 2026/04/13 - 09:38:37 | syncing channels from database 
+[SYS] 2026/04/13 - 09:38:37 | channels synced from database 
+[SYS] 2026/04/13 - 09:38:37 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:38:37 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:38:52 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:38:52 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:39:07 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:39:07 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:39:22 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:39:22 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:39:37 | syncing channels from database 
+[SYS] 2026/04/13 - 09:39:37 | syncing options from database 
+[SYS] 2026/04/13 - 09:39:37 | channels synced from database 
+[SYS] 2026/04/13 - 09:39:37 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:39:37 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:39:52 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:39:52 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:40:07 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:40:07 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:40:22 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:40:22 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:40:37 | 正在更新数据看板数据... 
+[SYS] 2026/04/13 - 09:40:37 | 保存数据看板数据成功，共保存0条数据 
+[SYS] 2026/04/13 - 09:40:37 | syncing options from database 
+[SYS] 2026/04/13 - 09:40:37 | syncing channels from database 
+[SYS] 2026/04/13 - 09:40:37 | channels synced from database 
+[SYS] 2026/04/13 - 09:40:37 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:40:37 | 任务进度轮询完成 
+[GIN] 2026/04/13 - 09:40:49 | api | 20260413014049196469962tqfs0p7f | 200 |    3.813458ms |    192.168.65.1 |     GET /api/status
+[GIN] 2026/04/13 - 09:40:49 | api | 20260413014049195765254xpM1xWHq | 200 |    6.944583ms |    192.168.65.1 |     GET /api/status
+[GIN] 2026/04/13 - 09:40:49 | api | 20260413014049366135629SNzOj056 | 200 |   13.602417ms |    192.168.65.1 |     GET /api/log/?p=0&page_size=100&username=agt_968fdb99728b
+[GIN] 2026/04/13 - 09:40:49 | api | 20260413014049369394337h0RVG1VU | 200 |   12.572542ms |    192.168.65.1 |     GET /api/log/?p=0&page_size=100&username=agt_968fdb99728b
+[SYS] 2026/04/13 - 09:40:52 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:40:52 | 任务进度轮询完成 
+[GIN] 2026/04/13 - 09:40:57 | api | 20260413014057127595382KvFX98FQ | 200 |   17.452583ms |    192.168.65.1 |     GET /api/monitor/alerts
+[GIN] 2026/04/13 - 09:40:57 | api | 20260413014057127598132O7tQH9hM | 200 |    19.36475ms |    192.168.65.1 |     GET /api/monitor/summary
+[GIN] 2026/04/13 - 09:40:57 | api | 20260413014057127543216820NJAdk | 200 |   21.966417ms |    192.168.65.1 |     GET /api/monitor/trends?hours=24
+[GIN] 2026/04/13 - 09:40:57 | api | 202604130140571268574667uIrf8dt | 200 |   23.983917ms |    192.168.65.1 |     GET /api/monitor/channels?limit=10
+[GIN] 2026/04/13 - 09:40:58 | api | 202604130140588954050mVPk43bM | 200 |    3.834584ms |    192.168.65.1 |     GET /api/monitor/trends?hours=24
+[GIN] 2026/04/13 - 09:40:58 | api | 202604130140588402091DQ1Tfe2c | 200 |    7.852375ms |    192.168.65.1 |     GET /api/monitor/alerts
+[GIN] 2026/04/13 - 09:40:58 | api | 202604130140588757008krod2aKf | 200 |    8.316416ms |    192.168.65.1 |     GET /api/monitor/channels?limit=10
+[GIN] 2026/04/13 - 09:40:58 | api | 202604130140588248258bwslCT0E | 200 |     12.4905ms |    192.168.65.1 |     GET /api/monitor/summary
+[GIN] 2026/04/13 - 09:40:58 | api | 2026041301405839355925hwRfqAHE | 200 |    2.490333ms |    192.168.65.1 |     GET /api/monitor/trends?hours=24
+[GIN] 2026/04/13 - 09:40:58 | api | 2026041301405839788216mccqPaFv | 200 |       2.493ms |    192.168.65.1 |     GET /api/monitor/channels?limit=10
+[GIN] 2026/04/13 - 09:40:58 | api | 2026041301405839063175JGSa0f5a | 200 |    4.937875ms |    192.168.65.1 |     GET /api/monitor/alerts
+[GIN] 2026/04/13 - 09:40:58 | api | 2026041301405838774466VLKSREeo | 200 |    7.047375ms |    192.168.65.1 |     GET /api/monitor/summary
+[GIN] 2026/04/13 - 09:40:59 | api | 20260413014059238828508lR0SDR7v | 200 |    1.427375ms |    192.168.65.1 |     GET /api/status
+[GIN] 2026/04/13 - 09:40:59 | api | 202604130140593463158428ncaetzu | 200 |    2.863625ms |    192.168.65.1 |     GET /api/status
+[GIN] 2026/04/13 - 09:40:59 | api | 20260413014059410390925gAW43004 | 200 |       5.095ms |    192.168.65.1 |     GET /api/log/?p=0&page_size=100&username=agt_968fdb99728b
+[GIN] 2026/04/13 - 09:40:59 | api | 20260413014059512213175zH4kD9FE | 200 |    3.736375ms |    192.168.65.1 |     GET /api/log/?p=0&page_size=100&username=agt_968fdb99728b
+[GIN] 2026/04/13 - 09:41:01 | api | 20260413014100996876384xwLbSKvf | 200 |    3.888875ms |    192.168.65.1 |     GET /api/monitor/trends?hours=24
+[GIN] 2026/04/13 - 09:41:01 | api | 20260413014100998721509FJYlLckm | 200 |      2.8175ms |    192.168.65.1 |     GET /api/monitor/channels?limit=10
+[GIN] 2026/04/13 - 09:41:01 | api | 20260413014100996876426PufcCysH | 200 |    6.746667ms |    192.168.65.1 |     GET /api/monitor/alerts
+[GIN] 2026/04/13 - 09:41:01 | api | 20260413014100996880343VQI9ls8K | 200 |    8.433834ms |    192.168.65.1 |     GET /api/monitor/summary
+[SYS] 2026/04/13 - 09:41:07 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:41:07 | 任务进度轮询完成 
+[GIN] 2026/04/13 - 09:41:13 | api | 20260413014113312369668bSMmTAbe | 200 |     2.97275ms |    192.168.65.1 |     GET /api/monitor/trends?hours=24
+[GIN] 2026/04/13 - 09:41:13 | api | 20260413014113312352668THahBTqj | 200 |    3.245042ms |    192.168.65.1 |     GET /api/monitor/channels?limit=10
+[GIN] 2026/04/13 - 09:41:13 | api | 20260413014113312352709Z7wqKoS1 | 200 |    5.116333ms |    192.168.65.1 |     GET /api/monitor/alerts
+[GIN] 2026/04/13 - 09:41:13 | api | 20260413014113312352626EkTkyAeA | 200 |    6.711125ms |    192.168.65.1 |     GET /api/monitor/summary
+[GIN] 2026/04/13 - 09:41:13 | api | 20260413014113454204626gVTsPkhz | 200 |    2.002459ms |    192.168.65.1 |     GET /api/monitor/trends?hours=24
+[GIN] 2026/04/13 - 09:41:13 | api | 20260413014113455093543OYI5kMB3 | 200 |    2.245291ms |    192.168.65.1 |     GET /api/monitor/channels?limit=10
+[GIN] 2026/04/13 - 09:41:13 | api | 202604130141134538621686hNxa3u7 | 200 |    5.363125ms |    192.168.65.1 |     GET /api/monitor/alerts
+[GIN] 2026/04/13 - 09:41:13 | api | 20260413014113453768334MQAjPo7e | 200 |    7.487041ms |    192.168.65.1 |     GET /api/monitor/summary
+[GIN] 2026/04/13 - 09:41:13 | api | 20260413014113840520751eVrEJ2L1 | 200 |       1.342ms |    192.168.65.1 |     GET /api/status
+[GIN] 2026/04/13 - 09:41:14 | api | 202604130141145108251vFwnrMhX | 200 |     3.39275ms |    192.168.65.1 |     GET /api/log/?p=0&page_size=100&username=agt_968fdb99728b
+[GIN] 2026/04/13 - 09:41:14 | api | 2026041301411433878418CBQdLV9h | 200 |     660.917µs |    192.168.65.1 |     GET /api/status
+[GIN] 2026/04/13 - 09:41:14 | api | 20260413014114197532710v8yTN9gV | 200 |    3.458375ms |    192.168.65.1 |     GET /api/log/?p=0&page_size=100&username=agt_968fdb99728b
+[GIN] 2026/04/13 - 09:41:14 | api | 20260413014114224949210lVROtrLY | 200 |      2.3025ms |    192.168.65.1 |     GET /api/monitor/trends?hours=24
+[GIN] 2026/04/13 - 09:41:14 | api | 20260413014114226289876W1mC49rM | 200 |    1.784125ms |    192.168.65.1 |     GET /api/monitor/channels?limit=10
+[GIN] 2026/04/13 - 09:41:14 | api | 20260413014114224262918pXj5kf48 | 200 |    4.384667ms |    192.168.65.1 |     GET /api/monitor/alerts
+[GIN] 2026/04/13 - 09:41:14 | api | 20260413014114223839376Qmv9Vnd5 | 200 |    6.482792ms |    192.168.65.1 |     GET /api/monitor/summary
+[GIN] 2026/04/13 - 09:41:15 | api | 2026041301411512675252gdZzeSKZ | 200 |    5.243709ms |    192.168.65.1 |     GET /api/monitor/alerts
+[GIN] 2026/04/13 - 09:41:15 | api | 2026041301411517405627szAchh06 | 200 |      1.5175ms |    192.168.65.1 |     GET /api/monitor/channels?limit=10
+[GIN] 2026/04/13 - 09:41:15 | api | 2026041301411512400877v1YwGBzx | 200 |    6.627708ms |    192.168.65.1 |     GET /api/pricing
+[GIN] 2026/04/13 - 09:41:15 | api | 2026041301411518295793OFurXj2m | 200 |    7.102958ms |    192.168.65.1 |     GET /api/monitor/trends?hours=24
+[GIN] 2026/04/13 - 09:41:15 | api | 2026041301411512380168Q7ygi4RD | 200 |   13.042708ms |    192.168.65.1 |     GET /api/models/?p=0&page_size=500
+[GIN] 2026/04/13 - 09:41:15 | api | 2026041301411512607918LEmBYrVe | 200 |   13.766458ms |    192.168.65.1 |     GET /api/monitor/summary
+[GIN] 2026/04/13 - 09:41:17 | api | 20260413014117179135878hwy4NSi0 | 200 |    2.669333ms |    192.168.65.1 |     GET /api/status
+[GIN] 2026/04/13 - 09:41:17 | api | 20260413014117192097628ww3MrHpd | 200 |    1.373208ms |    192.168.65.1 |     GET /api/status
+[GIN] 2026/04/13 - 09:41:17 | api | 20260413014117341505961tU7iKWCN | 200 |    4.867416ms |    192.168.65.1 |     GET /api/log/?p=0&page_size=100&username=agt_968fdb99728b
+[GIN] 2026/04/13 - 09:41:17 | api | 20260413014117359609086L5Uax82G | 200 |    2.613209ms |    192.168.65.1 |     GET /api/log/?p=0&page_size=100&username=agt_968fdb99728b
+[GIN] 2026/04/13 - 09:41:17 | api | 2026041301411795246987827CFafEa | 200 |    2.958084ms |    192.168.65.1 |     GET /api/monitor/trends?hours=24
+[GIN] 2026/04/13 - 09:41:17 | api | 202604130141179516331280issGnSI | 200 |    4.871375ms |    192.168.65.1 |     GET /api/monitor/alerts
+[GIN] 2026/04/13 - 09:41:17 | api | 20260413014117953034961917SYgk6 | 200 |    3.569459ms |    192.168.65.1 |     GET /api/monitor/channels?limit=10
+[GIN] 2026/04/13 - 09:41:17 | api | 20260413014117951008211q1DKdEcB | 200 |     6.90625ms |    192.168.65.1 |     GET /api/monitor/summary
+[GIN] 2026/04/13 - 09:41:20 | api | 2026041301412066593504wZXEgkQM | 200 |     1.30625ms |    192.168.65.1 |     GET /api/status
+[GIN] 2026/04/13 - 09:41:20 | api | 2026041301412077984796euhFbTet | 200 |       1.345ms |    192.168.65.1 |     GET /api/status
+[GIN] 2026/04/13 - 09:41:20 | api | 20260413014120229043546KuClNwm9 | 200 |    3.402292ms |    192.168.65.1 |     GET /api/log/?p=0&page_size=100&username=agt_968fdb99728b
+[GIN] 2026/04/13 - 09:41:20 | api | 20260413014120250653587F92eVi4D | 200 |    3.212875ms |    192.168.65.1 |     GET /api/log/?p=0&page_size=100&username=agt_968fdb99728b
+[SYS] 2026/04/13 - 09:41:22 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:41:22 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:41:37 | syncing options from database 
+[SYS] 2026/04/13 - 09:41:37 | syncing channels from database 
+[SYS] 2026/04/13 - 09:41:37 | channels synced from database 
+[SYS] 2026/04/13 - 09:41:37 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:41:37 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:41:52 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:41:52 | 任务进度轮询完成 
+[GIN] 2026/04/13 - 09:42:02 | api | 20260413014202775951635GupjE6oN | 401 |    1.245875ms |    192.168.65.1 |     GET /api/channel/models
+[GIN] 2026/04/13 - 09:42:02 | api | 20260413014202776131260JPs3usPS | 401 |    1.441375ms |    192.168.65.1 |     GET /api/group/
+[GIN] 2026/04/13 - 09:42:02 | api | 20260413014202777087260O1Q6jRTl | 401 |       928.5µs |    192.168.65.1 |     GET /api/channel/types
+[GIN] 2026/04/13 - 09:42:02 | api | 20260413014202803523093L2awuBh1 | 401 |     619.166µs |    192.168.65.1 |     GET /api/prefill_group/?type=model
+[GIN] 2026/04/13 - 09:42:02 | web | 20260413014202812879052p1HLBuuS | 200 |    3.359416ms |    192.168.65.1 |     GET /login?expired=true
+[GIN] 2026/04/13 - 09:42:02 | web | 20260413014202819448177vlAV8N3F | 200 |     644.833µs |    192.168.65.1 |     GET /login?expired=true
+[GIN] 2026/04/13 - 09:42:03 | api | 20260413014203166544802oHhLiTLC | 200 |    2.151333ms |    192.168.65.1 |     GET /api/status
+[SYS] 2026/04/13 - 09:42:07 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:42:07 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:42:22 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:42:22 | 任务进度轮询完成 
+[GIN] 2026/04/13 - 09:42:35 | api | 20260413014235946641720BY3wiRMZ | 200 |   33.178458ms |    192.168.65.1 |    POST /api/user/login?turnstile=
+[GIN] 2026/04/13 - 09:42:36 | api | 2026041301423614592012JctLV2Ea | 200 |      6.3605ms |    192.168.65.1 |     GET /api/user/self
+[GIN] 2026/04/13 - 09:42:36 | api | 2026041301423685286970KuOuHl0e | 200 |     996.375µs |    192.168.65.1 |     GET /api/user/self
+[GIN] 2026/04/13 - 09:42:36 | api | 20260413014236866499709EvTw4mM | 200 |    3.801542ms |    192.168.65.1 |     GET /api/data/?username=&start_timestamp=1775958156&end_timestamp=1776048156&default_time=hour
+[GIN] 2026/04/13 - 09:42:36 | api | 20260413014236123001345lJkwRokw | 200 |     763.417µs |    192.168.65.1 |     GET /api/uptime/status
+[GIN] 2026/04/13 - 09:42:36 | api | 20260413014236152769512QJ5a2rDi | 200 |   15.798416ms |    192.168.65.1 |     GET /api/monitor/alerts
+[GIN] 2026/04/13 - 09:42:36 | api | 202604130142361527810121hSqQB9j | 200 |    19.51125ms |    192.168.65.1 |     GET /api/monitor/summary
+[GIN] 2026/04/13 - 09:42:36 | api | 20260413014236156372970kvVmw6eF | 200 |      38.598ms |    192.168.65.1 |     GET /api/monitor/trends?hours=24
+[GIN] 2026/04/13 - 09:42:36 | api | 20260413014236156372803gzEJSgwu | 200 |   42.107541ms |    192.168.65.1 |     GET /api/monitor/channels?limit=8
+[SYS] 2026/04/13 - 09:42:37 | syncing channels from database 
+[SYS] 2026/04/13 - 09:42:37 | syncing options from database 
+[SYS] 2026/04/13 - 09:42:37 | channels synced from database 
+[SYS] 2026/04/13 - 09:42:37 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:42:37 | 任务进度轮询完成 
+[GIN] 2026/04/13 - 09:42:41 | api | 20260413014241621964333cCqRLWvZ | 200 |     660.792µs |    192.168.65.1 |     GET /api/group/
+[GIN] 2026/04/13 - 09:42:41 | api | 20260413014241621928875wnfTK0hq | 200 |    2.237083ms |    192.168.65.1 |     GET /api/channel/models
+[GIN] 2026/04/13 - 09:42:41 | api | 20260413014241621922500WXO7YN41 | 200 |    2.810125ms |    192.168.65.1 |     GET /api/user/2fa/status
+[GIN] 2026/04/13 - 09:42:41 | api | 20260413014241622989542sAwjVHM3 | 200 |       2.228ms |    192.168.65.1 |     GET /api/models
+[GIN] 2026/04/13 - 09:42:41 | api | 20260413014241621934792hK0SGDKv | 200 |    4.252333ms |    192.168.65.1 |     GET /api/user/passkey
+[GIN] 2026/04/13 - 09:42:41 | api | 20260413014241622895792YkbfhCw9 | 200 |    4.865625ms |    192.168.65.1 |     GET /api/channel/?p=1&page_size=10&id_sort=false&tag_mode=false
+[GIN] 2026/04/13 - 09:42:41 | api | 20260413014241624681583x0Ru33Os | 200 |    3.317417ms |    192.168.65.1 |     GET /api/option/
+[GIN] 2026/04/13 - 09:42:45 | api | 20260413014245611050044nsnx5hYN | 200 |     529.625µs |    192.168.65.1 |     GET /api/group/
+[GIN] 2026/04/13 - 09:42:45 | api | 20260413014245611039752w0jfkdHx | 200 |     823.833µs |    192.168.65.1 |     GET /api/channel/types
+[GIN] 2026/04/13 - 09:42:45 | api | 20260413014245610920502smtdQK7Y | 200 |    2.371208ms |    192.168.65.1 |     GET /api/channel/models
+[GIN] 2026/04/13 - 09:42:45 | api | 20260413014245611025710guJ3jBnV | 200 |    2.775291ms |    192.168.65.1 |     GET /api/channel/2
+[GIN] 2026/04/13 - 09:42:45 | api | 20260413014245611035835HzQWhUmM | 200 |    4.582125ms |    192.168.65.1 |     GET /api/channel/2/versions
+[GIN] 2026/04/13 - 09:42:45 | api | 20260413014245631652669ub1lkYEu | 200 |    1.779959ms |    192.168.65.1 |     GET /api/prefill_group/?type=model
+[SYS] 2026/04/13 - 09:42:52 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:42:52 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:42:55 | channels synced from database 
+[GIN] 2026/04/13 - 09:42:55 | api | 20260413014255474830965YuHJVyyD | 200 |   34.180917ms |    192.168.65.1 |     PUT /api/channel/
+[GIN] 2026/04/13 - 09:42:55 | api | 202604130142555125497572Sjhb7NA | 200 |    1.286875ms |    192.168.65.1 |     GET /api/channel/?p=1&page_size=10&id_sort=false&tag_mode=false
+[GIN] 2026/04/13 - 09:43:01 | api | 20260413014301136397051qibnQJfe | 200 |         638µs |    192.168.65.1 |     GET /api/group/
+[GIN] 2026/04/13 - 09:43:01 | api | 20260413014301136381343j7LbDsFl | 200 |     698.541µs |    192.168.65.1 |     GET /api/channel/types
+[GIN] 2026/04/13 - 09:43:01 | api | 20260413014301136359593owyu0pIO | 200 |    1.132666ms |    192.168.65.1 |     GET /api/channel/1/versions
+[GIN] 2026/04/13 - 09:43:01 | api | 20260413014301136343051F4ySrhYk | 200 |    1.739834ms |    192.168.65.1 |     GET /api/channel/models
+[GIN] 2026/04/13 - 09:43:01 | api | 20260413014301137980593MBW0MWeF | 200 |    2.115166ms |    192.168.65.1 |     GET /api/channel/1
+[GIN] 2026/04/13 - 09:43:01 | api | 20260413014301153793218yehHlEK2 | 200 |    1.024792ms |    192.168.65.1 |     GET /api/prefill_group/?type=model
+[SYS] 2026/04/13 - 09:43:07 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:43:07 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:43:16 | channels synced from database 
+[GIN] 2026/04/13 - 09:43:16 | api | 20260413014316352949502g2jJp59O | 200 |   36.715916ms |    192.168.65.1 |     PUT /api/channel/
+[GIN] 2026/04/13 - 09:43:16 | api | 20260413014316393216002rIvbWSlo | 200 |       1.273ms |    192.168.65.1 |     GET /api/channel/?p=1&page_size=10&id_sort=false&tag_mode=false
+[GIN] 2026/04/13 - 09:43:20 | api | 20260413014320319477421LWeKdrRr | 200 |   38.632375ms |    192.168.65.1 |     GET /api/pricing
+[SYS] 2026/04/13 - 09:43:22 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:43:22 | 任务进度轮询完成 
+[GIN] 2026/04/13 - 09:43:23 | api | 20260413014323331449547xkaYFOJR | 200 |    3.111458ms |    192.168.65.1 |     GET /api/monitor/trends?hours=24
+[GIN] 2026/04/13 - 09:43:23 | api | 20260413014323331375089VGcHzXVh | 200 |   13.824875ms |    192.168.65.1 |     GET /api/monitor/summary
+[GIN] 2026/04/13 - 09:43:23 | api | 20260413014323331373714C3uwYtA8 | 200 |   33.916417ms |    192.168.65.1 |     GET /api/monitor/channels?limit=10
+[GIN] 2026/04/13 - 09:43:23 | api | 20260413014323331373756Xd0VBHFf | 200 |   37.990416ms |    192.168.65.1 |     GET /api/monitor/alerts
+[GIN] 2026/04/13 - 09:43:29 | api | 20260413014329504445967RhlEzCMO | 200 |    1.842792ms |    192.168.65.1 |     GET /api/monitor/trends?hours=24
+[GIN] 2026/04/13 - 09:43:29 | api | 20260413014329504509925UoO8en1c | 200 |    2.510208ms |    192.168.65.1 |     GET /api/monitor/channels?limit=10
+[GIN] 2026/04/13 - 09:43:29 | api | 20260413014329504440717yRXhNGe1 | 200 |    3.298833ms |    192.168.65.1 |     GET /api/monitor/alerts
+[GIN] 2026/04/13 - 09:43:29 | api | 202604130143295044579678Fmt2zaM | 200 |       5.012ms |    192.168.65.1 |     GET /api/monitor/summary
+[SYS] 2026/04/13 - 09:43:37 | syncing options from database 
+[SYS] 2026/04/13 - 09:43:37 | syncing channels from database 
+[SYS] 2026/04/13 - 09:43:37 | channels synced from database 
+[SYS] 2026/04/13 - 09:43:37 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:43:37 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:43:52 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:43:52 | 任务进度轮询完成 
+[GIN] 2026/04/13 - 09:44:04 | api | 20260413014404626165553j4qK2YvX | 200 |    5.779208ms |    192.168.65.1 |     GET /api/monitor/channels?limit=10
+[GIN] 2026/04/13 - 09:44:04 | api | 20260413014404626241094D2YATtv4 | 200 |    6.413042ms |    192.168.65.1 |     GET /api/monitor/trends?hours=24
+[GIN] 2026/04/13 - 09:44:04 | api | 20260413014404626165761INpsAiPE | 200 |   15.991084ms |    192.168.65.1 |     GET /api/monitor/alerts
+[GIN] 2026/04/13 - 09:44:04 | api | 20260413014404626165636pUbuqu3w | 200 |      17.129ms |    192.168.65.1 |     GET /api/monitor/summary
+[GIN] 2026/04/13 - 09:44:06 | api | 20260413014406766353304DolAGEhU | 200 |     3.29625ms |    192.168.65.1 |     GET /api/pricing
+[GIN] 2026/04/13 - 09:44:06 | api | 202604130144067667717204Jt7MwMV | 200 |    6.879417ms |    192.168.65.1 |     GET /api/models/?p=0&page_size=500
+[SYS] 2026/04/13 - 09:44:07 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:44:07 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:44:22 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:44:22 | 任务进度轮询完成 
+[GIN] 2026/04/13 - 09:44:29 | api | 20260413014429421682133wJyyIUVR | 200 |   15.012959ms |    192.168.65.1 |     GET /api/pricing
+[GIN] 2026/04/13 - 09:44:29 | api | 202604130144294216843422qINNBIV | 200 |   15.060584ms |    192.168.65.1 |     GET /api/models/?p=0&page_size=500
+[SYS] 2026/04/13 - 09:44:37 | syncing options from database 
+[SYS] 2026/04/13 - 09:44:37 | syncing channels from database 
+[SYS] 2026/04/13 - 09:44:37 | channels synced from database 
+[SYS] 2026/04/13 - 09:44:37 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:44:37 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:44:52 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:44:52 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:45:07 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:45:07 | 任务进度轮询完成 
+[GIN] 2026/04/13 - 09:45:19 | api | 20260413014519266090879xCxuVTiT | 200 |    4.570041ms |    192.168.65.1 |     GET /api/home_page_content
+[GIN] 2026/04/13 - 09:45:19 | api | 20260413014519266090795w6ArooNV | 200 |    6.063584ms |    192.168.65.1 |     GET /api/notice
+[GIN] 2026/04/13 - 09:45:20 | api | 20260413014520451765671aiD016wO | 200 |   13.449625ms |    192.168.65.1 |     GET /api/user/self
+[GIN] 2026/04/13 - 09:45:20 | api | 20260413014520451916338rMy9GRvz | 200 |   14.185583ms |    192.168.65.1 |     GET /api/data/?username=&start_timestamp=1775958320&end_timestamp=1776048320&default_time=hour
+[GIN] 2026/04/13 - 09:45:20 | api | 20260413014520479576838CLPB4TPL | 200 |      554.75µs |    192.168.65.1 |     GET /api/uptime/status
+[GIN] 2026/04/13 - 09:45:20 | api | 20260413014520509669088aHhkkqUq | 200 |   30.528917ms |    192.168.65.1 |     GET /api/monitor/alerts
+[GIN] 2026/04/13 - 09:45:20 | api | 20260413014520509076796hXsEkY5d | 200 |   35.239375ms |    192.168.65.1 |     GET /api/monitor/summary
+[GIN] 2026/04/13 - 09:45:20 | api | 20260413014520517325963hlDbfwq4 | 200 |   29.796958ms |    192.168.65.1 |     GET /api/monitor/trends?hours=24
+[GIN] 2026/04/13 - 09:45:20 | api | 20260413014520515523879JyWlOz6U | 200 |    34.51175ms |    192.168.65.1 |     GET /api/monitor/channels?limit=8
+[SYS] 2026/04/13 - 09:45:22 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:45:22 | 任务进度轮询完成 
+[GIN] 2026/04/13 - 09:45:28 | api | 20260413014528757790425MVd1HimD | 200 |     680.542µs |    192.168.65.1 |     GET /api/group/
+[GIN] 2026/04/13 - 09:45:28 | api | 20260413014528757785717hUg4Lzsg | 200 |    1.981625ms |    192.168.65.1 |     GET /api/user/2fa/status
+[GIN] 2026/04/13 - 09:45:28 | api | 20260413014528757788717AvSsABiu | 200 |    2.150084ms |    192.168.65.1 |     GET /api/channel/models
+[GIN] 2026/04/13 - 09:45:28 | api | 20260413014528758235842ogMqjbtH | 200 |    3.068959ms |    192.168.65.1 |     GET /api/user/passkey
+[GIN] 2026/04/13 - 09:45:28 | api | 20260413014528760630050xYOjRU6Z | 200 |       1.119ms |    192.168.65.1 |     GET /api/models
+[GIN] 2026/04/13 - 09:45:28 | api | 20260413014528762332508rYqAHkS2 | 200 |      2.7965ms |    192.168.65.1 |     GET /api/option/
+[GIN] 2026/04/13 - 09:45:28 | api | 20260413014528760634508fx5b7krE | 200 |    7.490917ms |    192.168.65.1 |     GET /api/channel/?p=1&page_size=10&id_sort=false&tag_mode=false
+[GIN] 2026/04/13 - 09:45:31 | api | 20260413014531149465051FycpZtqg | 200 |       1.074ms |    192.168.65.1 |     GET /api/group/
+[GIN] 2026/04/13 - 09:45:31 | api | 20260413014531149458468pTBt4gAx | 200 |    1.615542ms |    192.168.65.1 |     GET /api/channel/types
+[GIN] 2026/04/13 - 09:45:31 | api | 20260413014531149433801z2NklvN0 | 200 |    2.627709ms |    192.168.65.1 |     GET /api/channel/models
+[GIN] 2026/04/13 - 09:45:31 | api | 20260413014531149475301E05HPbMc | 200 |    3.603833ms |    192.168.65.1 |     GET /api/channel/2
+[GIN] 2026/04/13 - 09:45:31 | api | 202604130145311494200099e3OiApx | 200 |    5.087334ms |    192.168.65.1 |     GET /api/channel/2/versions
+[GIN] 2026/04/13 - 09:45:31 | api | 20260413014531168762426nwKceleY | 200 |    1.425625ms |    192.168.65.1 |     GET /api/prefill_group/?type=model
+[SYS] 2026/04/13 - 09:45:37 | 正在更新数据看板数据... 
+[SYS] 2026/04/13 - 09:45:37 | 保存数据看板数据成功，共保存0条数据 
+[SYS] 2026/04/13 - 09:45:37 | syncing options from database 
+[SYS] 2026/04/13 - 09:45:37 | syncing channels from database 
+[SYS] 2026/04/13 - 09:45:37 | channels synced from database 
+[SYS] 2026/04/13 - 09:45:37 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:45:37 | 任务进度轮询完成 
+[GIN] 2026/04/13 - 09:45:48 | api | 20260413014548489566420aApqMoRb | 200 |    6.622125ms |    192.168.65.1 |     GET /api/channel/?p=1&page_size=10&id_sort=false&tag_mode=false&type=43
+[GIN] 2026/04/13 - 09:45:49 | api | 20260413014549586014129vFmyMtgM | 200 |    3.989459ms |    192.168.65.1 |     GET /api/channel/?p=1&page_size=10&id_sort=false&tag_mode=false&type=24
+[GIN] 2026/04/13 - 09:45:50 | api | 20260413014550102123046JAsFEo2b | 200 |     2.97825ms |    192.168.65.1 |     GET /api/channel/?p=1&page_size=10&id_sort=false&tag_mode=false&type=43
+[GIN] 2026/04/13 - 09:45:52 | api | 20260413014552646903089AgVYcnD9 | 200 |      10.361ms |    192.168.65.1 |     GET /api/subscription/admin/plans
+[SYS] 2026/04/13 - 09:45:52 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:45:52 | 任务进度轮询完成 
+[GIN] 2026/04/13 - 09:45:54 | api | 20260413014554376253089U1uVZB97 | 200 |    3.330542ms |    192.168.65.1 |     GET /api/vendors/?page_size=1000
+[GIN] 2026/04/13 - 09:45:54 | api | 20260413014554376252214mq0frCNH | 200 |   13.974625ms |    192.168.65.1 |     GET /api/models/?p=1&page_size=10
+[GIN] 2026/04/13 - 09:46:00 | api | 20260413014600811333384m4OhO7nH | 200 |    5.932959ms |    192.168.65.1 |     GET /api/models/?p=2&page_size=10
+[GIN] 2026/04/13 - 09:46:05 | api | 20260413014605337504178XuUS4dTW | 200 |    3.361792ms |    192.168.65.1 |     GET /api/models/?p=1&page_size=10
+[SYS] 2026/04/13 - 09:46:07 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:46:07 | 任务进度轮询完成 
+[GIN] 2026/04/13 - 09:46:19 | api | 20260413014619334894462yofK2BZU | 200 |    7.471167ms |    192.168.65.1 |     GET /api/models/search?vendor=4&p=1&page_size=10
+[SYS] 2026/04/13 - 09:46:22 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:46:22 | 任务进度轮询完成 
+[GIN] 2026/04/13 - 09:46:23 | api | 20260413014623656167256Y5pHLlIj | 200 |   10.748042ms |    192.168.65.1 |     GET /api/models/?p=1&page_size=10
+[SYS] 2026/04/13 - 09:46:37 | syncing options from database 
+[SYS] 2026/04/13 - 09:46:37 | syncing channels from database 
+[SYS] 2026/04/13 - 09:46:37 | channels synced from database 
+[SYS] 2026/04/13 - 09:46:37 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:46:37 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:46:52 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:46:52 | 任务进度轮询完成 
+[GIN] 2026/04/13 - 09:46:59 | api | 20260413014659730645509ssyom2It | 200 |    15.92825ms |    192.168.65.1 |     GET /api/pricing
+[SYS] 2026/04/13 - 09:47:07 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:47:07 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:47:22 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:47:22 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:47:37 | syncing options from database 
+[SYS] 2026/04/13 - 09:47:37 | syncing channels from database 
+[SYS] 2026/04/13 - 09:47:37 | channels synced from database 
+[SYS] 2026/04/13 - 09:47:37 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:47:37 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:47:52 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:47:52 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:48:07 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:48:07 | 任务进度轮询完成 
+[GIN] 2026/04/13 - 09:48:20 | api | 20260413014820687312129qaMIUu4m | 200 |    7.203417ms |    192.168.65.1 |     GET /api/user/self
+[GIN] 2026/04/13 - 09:48:20 | api | 202604130148206875956718fGh9cjF | 200 |   26.022584ms |    192.168.65.1 |     GET /api/vendors/?page_size=1000
+[GIN] 2026/04/13 - 09:48:20 | api | 20260413014820687574171u83mWr3I | 200 |   33.456291ms |    192.168.65.1 |     GET /api/models/?p=1&page_size=10
+[SYS] 2026/04/13 - 09:48:22 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:48:22 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:48:37 | syncing options from database 
+[SYS] 2026/04/13 - 09:48:37 | syncing channels from database 
+[SYS] 2026/04/13 - 09:48:37 | channels synced from database 
+[SYS] 2026/04/13 - 09:48:37 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:48:37 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:48:52 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:48:52 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:49:07 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:49:07 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:49:22 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:49:22 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:49:37 | syncing options from database 
+[SYS] 2026/04/13 - 09:49:37 | syncing channels from database 
+[SYS] 2026/04/13 - 09:49:37 | channels synced from database 
+[SYS] 2026/04/13 - 09:49:37 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:49:37 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:49:52 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:49:52 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:50:07 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:50:07 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:50:22 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:50:22 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:50:37 | 正在更新数据看板数据... 
+[SYS] 2026/04/13 - 09:50:37 | 保存数据看板数据成功，共保存0条数据 
+[SYS] 2026/04/13 - 09:50:37 | syncing options from database 
+[SYS] 2026/04/13 - 09:50:37 | syncing channels from database 
+[SYS] 2026/04/13 - 09:50:37 | channels synced from database 
+[SYS] 2026/04/13 - 09:50:37 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:50:37 | 任务进度轮询完成 
+[GIN] 2026/04/13 - 09:50:47 | api | 20260413015047202884628yIR9oaT1 | 200 |    17.21225ms |    192.168.65.1 |     GET /api/pricing
+[SYS] 2026/04/13 - 09:50:52 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:50:52 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:51:07 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:51:07 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:51:22 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:51:22 | 任务进度轮询完成 
+[GIN] 2026/04/13 - 09:51:28 | api | 20260413015128244328841VZufuXSH | 200 |    7.324291ms |    192.168.65.1 |     GET /api/pricing
+[GIN] 2026/04/13 - 09:51:28 | api | 20260413015128244289008bkRdWmMe | 200 |   15.125917ms |    192.168.65.1 |     GET /api/models/?p=0&page_size=500
+[SYS] 2026/04/13 - 09:51:37 | syncing options from database 
+[SYS] 2026/04/13 - 09:51:37 | syncing channels from database 
+[SYS] 2026/04/13 - 09:51:37 | channels synced from database 
+[SYS] 2026/04/13 - 09:51:37 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:51:37 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:51:52 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:51:52 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:52:07 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:52:07 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:52:22 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:52:22 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:52:37 | syncing options from database 
+[SYS] 2026/04/13 - 09:52:37 | syncing channels from database 
+[SYS] 2026/04/13 - 09:52:37 | channels synced from database 
+[SYS] 2026/04/13 - 09:52:37 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:52:37 | 任务进度轮询完成 
+[GIN] 2026/04/13 - 09:52:39 | api | 20260413015239506175722PXNZZplZ | 200 |       1.724ms |    192.168.65.1 |     GET /api/notice
+[GIN] 2026/04/13 - 09:52:39 | api | 20260413015239506173972sOaMPejL | 200 |    2.086625ms |    192.168.65.1 |     GET /api/home_page_content
+[GIN] 2026/04/13 - 09:52:41 | api | 202604130152415507875bsrzfyTZ | 200 |    3.869166ms |    192.168.65.1 |     GET /api/data/?username=&start_timestamp=1775958760&end_timestamp=1776048760&default_time=hour
+[GIN] 2026/04/13 - 09:52:41 | api | 2026041301524153635006HDFhMRp | 200 |    4.199458ms |    192.168.65.1 |     GET /api/user/self
+[GIN] 2026/04/13 - 09:52:41 | api | 20260413015241272472910Jm2rKSb | 200 |    1.207583ms |    192.168.65.1 |     GET /api/uptime/status
+[GIN] 2026/04/13 - 09:52:41 | api | 2026041301524150768083dKg211G8 | 200 |   17.896417ms |    192.168.65.1 |     GET /api/monitor/alerts
+[GIN] 2026/04/13 - 09:52:41 | api | 2026041301524150755583NQZWKH9Q | 200 |   23.211542ms |    192.168.65.1 |     GET /api/monitor/summary
+[GIN] 2026/04/13 - 09:52:41 | api | 20260413015241509425001CzCOWLy | 200 |   25.685541ms |    192.168.65.1 |     GET /api/monitor/trends?hours=24
+[GIN] 2026/04/13 - 09:52:41 | api | 2026041301524151974125WIh8PnhH | 200 |   26.005375ms |    192.168.65.1 |     GET /api/monitor/channels?limit=8
+[GIN] 2026/04/13 - 09:52:42 | api | 20260413015242355232500LVrwPjon | 200 |    3.335958ms |    192.168.65.1 |     GET /api/vendors/?page_size=1000
+[GIN] 2026/04/13 - 09:52:42 | api | 202604130152423552335428gGt0z9Q | 200 |   17.128125ms |    192.168.65.1 |     GET /api/models/?p=1&page_size=10
+[GIN] 2026/04/13 - 09:52:52 | api | 20260413015252205969922AmODBkX7 | 200 |    8.492083ms |    192.168.65.1 |     GET /api/pricing
+[SYS] 2026/04/13 - 09:52:53 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:52:53 | 任务进度轮询完成 
+[GIN] 2026/04/13 - 09:53:01 | api | 20260413015301424629593PqSJI300 | 200 |    6.607917ms |    192.168.65.1 |     GET /api/pricing
+[GIN] 2026/04/13 - 09:53:01 | api | 20260413015301424731301yVXStKR4 | 200 |   17.941417ms |    192.168.65.1 |     GET /api/models/?p=0&page_size=500
+[SYS] 2026/04/13 - 09:53:08 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:53:08 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:53:23 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:53:23 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:53:37 | syncing options from database 
+[SYS] 2026/04/13 - 09:53:37 | syncing channels from database 
+[SYS] 2026/04/13 - 09:53:37 | channels synced from database 
+[SYS] 2026/04/13 - 09:53:38 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:53:38 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:53:53 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:53:53 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:54:08 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:54:08 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:54:23 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:54:23 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:54:37 | syncing options from database 
+[SYS] 2026/04/13 - 09:54:37 | syncing channels from database 
+[SYS] 2026/04/13 - 09:54:37 | channels synced from database 
+[SYS] 2026/04/13 - 09:54:38 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:54:38 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:54:53 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:54:53 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:55:08 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:55:08 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:55:23 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:55:23 | 任务进度轮询完成 
+[GIN] 2026/04/13 - 09:55:26 | api | 20260413015526545851924H4olRh9B | 200 |   15.333625ms |    192.168.65.1 |     GET /api/data/?username=&start_timestamp=1775958926&end_timestamp=1776048926&default_time=hour
+[GIN] 2026/04/13 - 09:55:26 | api | 20260413015526545851840NTwLgTCC | 200 |    19.96725ms |    192.168.65.1 |     GET /api/user/self
+[GIN] 2026/04/13 - 09:55:26 | api | 20260413015526571985257khctymjf | 200 |     551.625µs |    192.168.65.1 |     GET /api/uptime/status
+[GIN] 2026/04/13 - 09:55:26 | api | 202604130155266136039650xQItqDh | 200 |   13.198584ms |    192.168.65.1 |     GET /api/monitor/alerts
+[GIN] 2026/04/13 - 09:55:26 | api | 20260413015526613612465k3z0SXvM | 200 |    21.44725ms |    192.168.65.1 |     GET /api/monitor/summary
+[GIN] 2026/04/13 - 09:55:26 | api | 20260413015526614692549JKKtJw2N | 200 |   45.025375ms |    192.168.65.1 |     GET /api/monitor/trends?hours=24
+[GIN] 2026/04/13 - 09:55:26 | api | 2026041301552661456842410mMppUj | 200 |   49.273708ms |    192.168.65.1 |     GET /api/monitor/channels?limit=8
+[GIN] 2026/04/13 - 09:55:27 | api | 20260413015527604867966nvULHmx4 | 200 |    3.354416ms |    192.168.65.1 |     GET /api/vendors/?page_size=1000
+[GIN] 2026/04/13 - 09:55:27 | api | 20260413015527604881549EDiJhWjL | 200 |   18.513167ms |    192.168.65.1 |     GET /api/models/?p=1&page_size=10
+[GIN] 2026/04/13 - 09:55:31 | api | 2026041301553152347926F6NoPy8f | 200 |    3.179791ms |    192.168.65.1 |     GET /api/vendors/?page_size=1000
+[GIN] 2026/04/13 - 09:55:31 | api | 2026041301553153756968Ub2kX8f5 | 200 |    4.930625ms |    192.168.65.1 |     GET /api/models/14
+[GIN] 2026/04/13 - 09:55:31 | api | 2026041301553171359301qgejXY3l | 200 |    3.577375ms |    192.168.65.1 |     GET /api/prefill_group/?type=tag
+[GIN] 2026/04/13 - 09:55:31 | api | 2026041301553171325884f98qvgIz | 200 |    3.702417ms |    192.168.65.1 |     GET /api/prefill_group/?type=endpoint
+[SYS] 2026/04/13 - 09:55:37 | 正在更新数据看板数据... 
+[SYS] 2026/04/13 - 09:55:37 | 保存数据看板数据成功，共保存0条数据 
+[SYS] 2026/04/13 - 09:55:37 | syncing options from database 
+[SYS] 2026/04/13 - 09:55:37 | syncing channels from database 
+[SYS] 2026/04/13 - 09:55:37 | channels synced from database 
+[SYS] 2026/04/13 - 09:55:38 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:55:38 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:55:53 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:55:53 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:56:08 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:56:08 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:56:23 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:56:23 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:56:37 | syncing options from database 
+[SYS] 2026/04/13 - 09:56:37 | syncing channels from database 
+[SYS] 2026/04/13 - 09:56:37 | channels synced from database 
+[SYS] 2026/04/13 - 09:56:38 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:56:38 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:56:53 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:56:53 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:57:08 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:57:08 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:57:23 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:57:23 | 任务进度轮询完成 
+[GIN] 2026/04/13 - 09:57:23 | api | 20260413015723369380297jvnov2fL | 200 |   18.454792ms |    192.168.65.1 |     GET /api/models/search?vendor=3&p=1&page_size=10
+[GIN] 2026/04/13 - 09:57:27 | api | 20260413015727496273924pibyPlbL | 200 |    6.021458ms |    192.168.65.1 |     GET /api/models/?p=1&page_size=10
+[GIN] 2026/04/13 - 09:57:29 | api | 20260413015729950802300on0Av4so | 200 |    4.903041ms |    192.168.65.1 |     GET /api/models/?p=2&page_size=10
+[GIN] 2026/04/13 - 09:57:31 | api | 20260413015731101351134hIsh6v5e | 200 |    3.935875ms |    192.168.65.1 |     GET /api/models/?p=1&page_size=10
+[SYS] 2026/04/13 - 09:57:37 | syncing options from database 
+[SYS] 2026/04/13 - 09:57:37 | syncing channels from database 
+[SYS] 2026/04/13 - 09:57:37 | channels synced from database 
+[SYS] 2026/04/13 - 09:57:38 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:57:38 | 任务进度轮询完成 
+[GIN] 2026/04/13 - 09:57:43 | api | 202604130157432828896672eA3hBBT | 200 |    5.969166ms |    192.168.65.1 |     GET /api/pricing
+[SYS] 2026/04/13 - 09:57:53 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:57:53 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:58:08 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:58:08 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:58:23 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:58:23 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:58:37 | syncing options from database 
+[SYS] 2026/04/13 - 09:58:37 | syncing channels from database 
+[SYS] 2026/04/13 - 09:58:37 | channels synced from database 
+[SYS] 2026/04/13 - 09:58:38 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:58:38 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:58:53 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:58:53 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:59:08 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:59:08 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:59:23 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:59:23 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:59:37 | syncing options from database 
+[SYS] 2026/04/13 - 09:59:37 | syncing channels from database 
+[SYS] 2026/04/13 - 09:59:37 | channels synced from database 
+[SYS] 2026/04/13 - 09:59:38 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:59:38 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 09:59:53 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 09:59:53 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:00:08 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:00:08 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:00:23 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:00:23 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:00:37 | 正在更新数据看板数据... 
+[SYS] 2026/04/13 - 10:00:37 | 保存数据看板数据成功，共保存0条数据 
+[SYS] 2026/04/13 - 10:00:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:00:37 | syncing channels from database 
+[SYS] 2026/04/13 - 10:00:37 | channels synced from database 
+[SYS] 2026/04/13 - 10:00:38 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:00:38 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:00:53 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:00:53 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:01:08 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:01:08 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:01:23 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:01:23 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:01:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:01:37 | syncing channels from database 
+[SYS] 2026/04/13 - 10:01:37 | channels synced from database 
+[SYS] 2026/04/13 - 10:01:38 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:01:38 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:01:53 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:01:53 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:02:08 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:02:08 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:02:23 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:02:23 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:02:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:02:37 | syncing channels from database 
+[SYS] 2026/04/13 - 10:02:37 | channels synced from database 
+[SYS] 2026/04/13 - 10:02:38 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:02:38 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:02:53 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:02:53 | 任务进度轮询完成 
+[GIN] 2026/04/13 - 10:02:56 | api | 20260413020256488689674AzmGzS2U | 200 |   23.880917ms |    192.168.65.1 |     GET /api/pricing
+[GIN] 2026/04/13 - 10:02:56 | api | 202604130202564884199658WTLP43B | 200 |   27.836584ms |    192.168.65.1 |     GET /api/models/?p=0&page_size=500
+[SYS] 2026/04/13 - 10:03:08 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:03:08 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:03:23 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:03:23 | 任务进度轮询完成 
+[GIN] 2026/04/13 - 10:03:33 | api | 20260413020333192381343HBcfdeX6 | 200 |   14.897167ms |    192.168.65.1 |     GET /api/pricing
+[GIN] 2026/04/13 - 10:03:33 | api | 20260413020333192391552oh7Fqpvm | 200 |   26.995708ms |    192.168.65.1 |     GET /api/models/?p=0&page_size=500
+[SYS] 2026/04/13 - 10:03:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:03:37 | syncing channels from database 
+[SYS] 2026/04/13 - 10:03:37 | channels synced from database 
+[SYS] 2026/04/13 - 10:03:38 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:03:38 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:03:53 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:03:53 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:04:08 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:04:08 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:04:23 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:04:23 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:04:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:04:37 | syncing channels from database 
+[SYS] 2026/04/13 - 10:04:37 | channels synced from database 
+[SYS] 2026/04/13 - 10:04:38 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:04:38 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:04:53 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:04:53 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:05:08 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:05:08 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:05:23 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:05:23 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:05:37 | 正在更新数据看板数据... 
+[SYS] 2026/04/13 - 10:05:37 | 保存数据看板数据成功，共保存0条数据 
+[SYS] 2026/04/13 - 10:05:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:05:37 | syncing channels from database 
+[SYS] 2026/04/13 - 10:05:37 | channels synced from database 
+[SYS] 2026/04/13 - 10:05:38 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:05:38 | 任务进度轮询完成 
+[GIN] 2026/04/13 - 10:05:51 | api | 20260413020551596669338VtPSaXRK | 200 |   21.850625ms |    192.168.65.1 |     GET /api/pricing
+[GIN] 2026/04/13 - 10:05:51 | api | 20260413020551596565046eHwOE8Tu | 200 |   26.329458ms |    192.168.65.1 |     GET /api/models/?p=0&page_size=500
+[SYS] 2026/04/13 - 10:05:53 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:05:53 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:06:08 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:06:08 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:06:23 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:06:23 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:06:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:06:37 | syncing channels from database 
+[SYS] 2026/04/13 - 10:06:37 | channels synced from database 
+[SYS] 2026/04/13 - 10:06:38 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:06:38 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:06:53 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:06:53 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:07:08 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:07:08 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:07:23 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:07:23 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:07:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:07:37 | syncing channels from database 
+[SYS] 2026/04/13 - 10:07:37 | channels synced from database 
+[SYS] 2026/04/13 - 10:07:38 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:07:38 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:07:53 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:07:53 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:08:08 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:08:08 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:08:23 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:08:23 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:08:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:08:37 | syncing channels from database 
+[SYS] 2026/04/13 - 10:08:37 | channels synced from database 
+[SYS] 2026/04/13 - 10:08:38 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:08:38 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:08:53 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:08:53 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:09:08 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:09:08 | 任务进度轮询完成 
+[GIN] 2026/04/13 - 10:09:21 | api | 20260413020921917382963CpM7Gh0q | 200 |   22.192708ms |    192.168.65.1 |     GET /api/pricing
+[GIN] 2026/04/13 - 10:09:21 | api | 20260413020921917380880l9agZIRa | 200 |    24.87925ms |    192.168.65.1 |     GET /api/models/?p=0&page_size=500
+[SYS] 2026/04/13 - 10:09:23 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:09:23 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:09:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:09:37 | syncing channels from database 
+[SYS] 2026/04/13 - 10:09:37 | channels synced from database 
+[SYS] 2026/04/13 - 10:09:38 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:09:38 | 任务进度轮询完成 
+[GIN] 2026/04/13 - 10:09:39 | api | 20260413020939844399513nFxYBl2c | 200 |      4.4005ms |    192.168.65.1 |     GET /api/pricing
+[GIN] 2026/04/13 - 10:09:39 | api | 202604130209398442689303GrVRjow | 200 |   11.529625ms |    192.168.65.1 |     GET /api/models/?p=0&page_size=500
+[SYS] 2026/04/13 - 10:09:53 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:09:53 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:10:08 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:10:08 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:10:23 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:10:23 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:10:37 | 正在更新数据看板数据... 
+[SYS] 2026/04/13 - 10:10:37 | 保存数据看板数据成功，共保存0条数据 
+[SYS] 2026/04/13 - 10:10:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:10:37 | syncing channels from database 
+[SYS] 2026/04/13 - 10:10:37 | channels synced from database 
+[SYS] 2026/04/13 - 10:10:38 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:10:38 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:10:53 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:10:53 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:11:08 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:11:08 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:11:23 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:11:23 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:11:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:11:37 | syncing channels from database 
+[SYS] 2026/04/13 - 10:11:37 | channels synced from database 
+[SYS] 2026/04/13 - 10:11:38 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:11:38 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:11:54 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:11:54 | 任务进度轮询完成 
+[GIN] 2026/04/13 - 10:11:55 | api | 2026041302115558037798h2W7cGN2 | 200 |   16.987083ms |    192.168.65.1 |     GET /api/pricing
+[GIN] 2026/04/13 - 10:11:55 | api | 20260413021155579635890SO3mJYR | 200 |   19.087791ms |    192.168.65.1 |     GET /api/models/?p=0&page_size=500
+[SYS] 2026/04/13 - 10:12:09 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:12:09 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:12:24 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:12:24 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:12:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:12:37 | syncing channels from database 
+[SYS] 2026/04/13 - 10:12:37 | channels synced from database 
+[SYS] 2026/04/13 - 10:12:39 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:12:39 | 任务进度轮询完成 
+[GIN] 2026/04/13 - 10:12:44 | api | 20260413021244888447918qkXYjwhU | 200 |    6.381083ms |    192.168.65.1 |     GET /api/pricing
+[GIN] 2026/04/13 - 10:12:44 | api | 202604130212448882296683uz8Zmuc | 200 |      18.567ms |    192.168.65.1 |     GET /api/models/?p=0&page_size=500
+[SYS] 2026/04/13 - 10:12:54 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:12:54 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:13:09 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:13:09 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:13:24 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:13:24 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:13:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:13:37 | syncing channels from database 
+[SYS] 2026/04/13 - 10:13:37 | channels synced from database 
+[SYS] 2026/04/13 - 10:13:39 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:13:39 | 任务进度轮询完成 
+[GIN] 2026/04/13 - 10:13:51 | api | 20260413021351711967255VY0dQEob | 200 |     27.6045ms |    192.168.65.1 |     GET /api/pricing
+[GIN] 2026/04/13 - 10:13:51 | api | 20260413021351711973213O85qXISX | 200 |   33.651666ms |    192.168.65.1 |     GET /api/monitor/trends?hours=24
+[GIN] 2026/04/13 - 10:13:51 | api | 20260413021351713172171ZNcE933s | 200 |   33.807375ms |    192.168.65.1 |     GET /api/monitor/channels?limit=10
+[GIN] 2026/04/13 - 10:13:51 | api | 20260413021351712365713WO2ymnoG | 200 |   34.922791ms |    192.168.65.1 |     GET /api/monitor/alerts
+[GIN] 2026/04/13 - 10:13:51 | api | 20260413021351711962046xCKuDcgE | 200 |   40.847458ms |    192.168.65.1 |     GET /api/models/?p=0&page_size=500
+[GIN] 2026/04/13 - 10:13:51 | api | 202604130213517119716309L5b931u | 200 |   42.244292ms |    192.168.65.1 |     GET /api/monitor/summary
+[SYS] 2026/04/13 - 10:13:54 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:13:54 | 任务进度轮询完成 
+[GIN] 2026/04/13 - 10:13:56 | api | 20260413021356466729757LCUBDg0M | 200 |     4.90225ms |    192.168.65.1 |     GET /api/monitor/trends?hours=24
+[GIN] 2026/04/13 - 10:13:56 | api | 202604130213564666955074Xhf7x4w | 200 |    5.848666ms |    192.168.65.1 |     GET /api/monitor/channels?limit=10
+[GIN] 2026/04/13 - 10:13:56 | api | 20260413021356466861715JeiHiSdv | 200 |    7.663875ms |    192.168.65.1 |     GET /api/monitor/alerts
+[GIN] 2026/04/13 - 10:13:56 | api | 20260413021356466686382UHXPxE7t | 200 |   15.168959ms |    192.168.65.1 |     GET /api/monitor/summary
+[SYS] 2026/04/13 - 10:14:09 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:14:09 | 任务进度轮询完成 
+[GIN] 2026/04/13 - 10:14:18 | api | 20260413021418446100461CLoH3yn4 | 200 |    6.787709ms |    192.168.65.1 |     GET /api/monitor/trends?hours=24
+[GIN] 2026/04/13 - 10:14:18 | api | 20260413021418446100420zZXLmxXM | 200 |    7.360041ms |    192.168.65.1 |     GET /api/monitor/channels?limit=10
+[GIN] 2026/04/13 - 10:14:18 | api | 20260413021418446156461epCu7Rm9 | 200 |   10.143875ms |    192.168.65.1 |     GET /api/monitor/alerts
+[GIN] 2026/04/13 - 10:14:18 | api | 20260413021418446174128dARfLern | 200 |   12.173792ms |    192.168.65.1 |     GET /api/monitor/summary
+[GIN] 2026/04/13 - 10:14:21 | api | 20260413021421314388213DIZDyJxx | 200 |    1.888875ms |    192.168.65.1 |     GET /api/status
+[GIN] 2026/04/13 - 10:14:21 | api | 20260413021421314100921Ey24WmsH | 200 |    2.016625ms |    192.168.65.1 |     GET /api/status
+[GIN] 2026/04/13 - 10:14:21 | api | 20260413021421446919088Cz59dr7O | 200 |    7.679375ms |    192.168.65.1 |     GET /api/monitor/trends?hours=24
+[GIN] 2026/04/13 - 10:14:21 | api | 20260413021421446661463U6uX7ZvM | 200 |       8.744ms |    192.168.65.1 |     GET /api/monitor/channels?limit=10
+[GIN] 2026/04/13 - 10:14:21 | api | 20260413021421446665921MXhz0gEW | 200 |   10.593416ms |    192.168.65.1 |     GET /api/monitor/alerts
+[GIN] 2026/04/13 - 10:14:21 | api | 20260413021421446678546ifdIwTyE | 200 |   11.744834ms |    192.168.65.1 |     GET /api/monitor/summary
+[GIN] 2026/04/13 - 10:14:21 | api | 20260413021421482940713iwpiK9kq | 200 |    3.955291ms |    192.168.65.1 |     GET /api/log/?p=0&page_size=100&username=agt_968fdb99728b
+[GIN] 2026/04/13 - 10:14:21 | api | 20260413021421483615838ZnsGOeUr | 200 |    3.851291ms |    192.168.65.1 |     GET /api/log/?p=0&page_size=100&username=agt_968fdb99728b
+[GIN] 2026/04/13 - 10:14:23 | api | 20260413021423936057214s41FuTxC | 200 |    4.767375ms |    192.168.65.1 |     GET /api/status
+[GIN] 2026/04/13 - 10:14:23 | api | 20260413021423975170047n0Tyovsx | 200 |    1.545875ms |    192.168.65.1 |     GET /api/status
+[SYS] 2026/04/13 - 10:14:24 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:14:24 | 任务进度轮询完成 
+[GIN] 2026/04/13 - 10:14:24 | api | 202604130214241098839224TVz0dB0 | 200 |     4.94175ms |    192.168.65.1 |     GET /api/log/?p=0&page_size=100&username=agt_968fdb99728b
+[GIN] 2026/04/13 - 10:14:24 | api | 202604130214241414832977gpamPKJ | 200 |    3.323458ms |    192.168.65.1 |     GET /api/log/?p=0&page_size=100&username=agt_968fdb99728b
+[GIN] 2026/04/13 - 10:14:25 | api | 202604130214252946964Uy3V4amW | 200 |    4.877334ms |    192.168.65.1 |     GET /api/monitor/trends?hours=24
+[GIN] 2026/04/13 - 10:14:25 | api | 202604130214252245048tdBfwu3Y | 200 |    6.726041ms |    192.168.65.1 |     GET /api/monitor/alerts
+[GIN] 2026/04/13 - 10:14:25 | api | 202604130214253525423uurKgHTg | 200 |    7.692458ms |    192.168.65.1 |     GET /api/monitor/channels?limit=10
+[GIN] 2026/04/13 - 10:14:25 | api | 202604130214252050673DiqMGT4k | 200 |   11.205042ms |    192.168.65.1 |     GET /api/monitor/summary
+[GIN] 2026/04/13 - 10:14:33 | api | 20260413021433758137927L4wUyV4I | 200 |    3.947542ms |    192.168.65.1 |     GET /api/pricing
+[GIN] 2026/04/13 - 10:14:33 | api | 20260413021433757764802oWzTy2b0 | 200 |    8.731375ms |    192.168.65.1 |     GET /api/models/?p=0&page_size=500
+[GIN] 2026/04/13 - 10:14:34 | api | 20260413021434760337302JG2BBGPk | 200 |      3.1575ms |    192.168.65.1 |     GET /api/pricing
+[GIN] 2026/04/13 - 10:14:34 | api | 20260413021434760409677S6WZlzsq | 200 |    3.382125ms |    192.168.65.1 |     GET /api/models/?p=0&page_size=500
+[GIN] 2026/04/13 - 10:14:35 | api | 20260413021435739793678EAqnjzHZ | 200 |     4.36225ms |    192.168.65.1 |     GET /api/pricing
+[GIN] 2026/04/13 - 10:14:35 | api | 20260413021435739850053oBT1Kw1G | 200 |     4.44525ms |    192.168.65.1 |     GET /api/models/?p=0&page_size=500
+[GIN] 2026/04/13 - 10:14:36 | api | 20260413021436419284637ByOrg2w0 | 200 |    2.888834ms |    192.168.65.1 |     GET /api/pricing
+[GIN] 2026/04/13 - 10:14:36 | api | 20260413021436419284678qrYSwvZg | 200 |    3.736625ms |    192.168.65.1 |     GET /api/models/?p=0&page_size=500
+[SYS] 2026/04/13 - 10:14:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:14:37 | syncing channels from database 
+[SYS] 2026/04/13 - 10:14:37 | channels synced from database 
+[SYS] 2026/04/13 - 10:14:39 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:14:39 | 任务进度轮询完成 
+[GIN] 2026/04/13 - 10:14:42 | api | 20260413021442321752417MaImfw52 | 200 |   10.399916ms |    192.168.65.1 |     GET /api/pricing
+[GIN] 2026/04/13 - 10:14:42 | api | 202604130214423218872503oFkPqwy | 200 |   12.943833ms |    192.168.65.1 |     GET /api/monitor/trends?hours=24
+[GIN] 2026/04/13 - 10:14:42 | api | 20260413021442321929542nzM7zB72 | 200 |   14.417958ms |    192.168.65.1 |     GET /api/monitor/channels?limit=10
+[GIN] 2026/04/13 - 10:14:42 | api | 20260413021442321867542n7h2pQmC | 200 |   15.252375ms |    192.168.65.1 |     GET /api/models/?p=0&page_size=500
+[GIN] 2026/04/13 - 10:14:42 | api | 20260413021442321887250tWYNGmI9 | 200 |     17.3005ms |    192.168.65.1 |     GET /api/monitor/alerts
+[GIN] 2026/04/13 - 10:14:42 | api | 20260413021442321885750iADB0Cj7 | 200 |    35.60925ms |    192.168.65.1 |     GET /api/monitor/summary
+[GIN] 2026/04/13 - 10:14:42 | api | 20260413021442808935209v5GJCinC | 200 |    2.889708ms |    192.168.65.1 |     GET /api/status
+[GIN] 2026/04/13 - 10:14:42 | api | 20260413021442974392292wF4xBSkx | 200 |    4.489375ms |    192.168.65.1 |     GET /api/log/?p=0&page_size=100&username=agt_968fdb99728b
+[GIN] 2026/04/13 - 10:14:45 | api | 202604130214451333520858UeWZFkL | 200 |    2.606125ms |    192.168.65.1 |     GET /api/monitor/trends?hours=24
+[GIN] 2026/04/13 - 10:14:45 | api | 2026041302144513434066807ZIYaL2 | 200 |    4.278625ms |    192.168.65.1 |     GET /api/monitor/channels?limit=10
+[GIN] 2026/04/13 - 10:14:45 | api | 20260413021445132628001unFYW7hl | 200 |    10.34325ms |    192.168.65.1 |     GET /api/monitor/summary
+[GIN] 2026/04/13 - 10:14:45 | api | 20260413021445133009001os8yRRSm | 200 |   11.574833ms |    192.168.65.1 |     GET /api/monitor/alerts
+[GIN] 2026/04/13 - 10:14:45 | api | 20260413021445837361043Pu72jZUL | 200 |    2.153709ms |    192.168.65.1 |     GET /api/monitor/trends?hours=24
+[GIN] 2026/04/13 - 10:14:45 | api | 20260413021445837523335QoMWWPHY | 200 |    3.207834ms |    192.168.65.1 |     GET /api/monitor/channels?limit=10
+[GIN] 2026/04/13 - 10:14:45 | api | 20260413021445837362877LCTa6MTT | 200 |    4.431166ms |    192.168.65.1 |     GET /api/monitor/alerts
+[GIN] 2026/04/13 - 10:14:45 | api | 202604130214458373612104cq2zjzl | 200 |    6.407209ms |    192.168.65.1 |     GET /api/monitor/summary
+[GIN] 2026/04/13 - 10:14:45 | api | 202604130214458548102107a1eQ0hI | 200 |    1.507166ms |    192.168.65.1 |     GET /api/monitor/trends?hours=24
+[GIN] 2026/04/13 - 10:14:45 | api | 20260413021445854980127FQ0p7sBi | 200 |     2.35225ms |    192.168.65.1 |     GET /api/monitor/channels?limit=10
+[GIN] 2026/04/13 - 10:14:45 | api | 20260413021445854652710Qrv70lPp | 200 |    3.420292ms |    192.168.65.1 |     GET /api/monitor/alerts
+[GIN] 2026/04/13 - 10:14:45 | api | 20260413021445854585085jzBb3bkq | 200 |    4.391792ms |    192.168.65.1 |     GET /api/monitor/summary
+[GIN] 2026/04/13 - 10:14:47 | api | 2026041302144795127627c0HLjByI | 200 |    1.737833ms |    192.168.65.1 |     GET /api/status
+[GIN] 2026/04/13 - 10:14:47 | api | 20260413021447268424544Q68HXqEH | 200 |    4.592041ms |    192.168.65.1 |     GET /api/log/?p=0&page_size=100&username=agt_968fdb99728b
+[GIN] 2026/04/13 - 10:14:47 | api | 20260413021447698863836vPizditV | 200 |      1.5335ms |    192.168.65.1 |     GET /api/status
+[GIN] 2026/04/13 - 10:14:47 | api | 20260413021447861004503Q4tLEOb1 | 200 |    3.270334ms |    192.168.65.1 |     GET /api/log/?p=0&page_size=100&username=agt_968fdb99728b
+[GIN] 2026/04/13 - 10:14:48 | api | 20260413021448785357711jhAepmPy | 200 |    4.538375ms |    192.168.65.1 |     GET /api/pricing
+[GIN] 2026/04/13 - 10:14:48 | api | 20260413021448785353711EhauxUjJ | 200 |      8.8245ms |    192.168.65.1 |     GET /api/models/?p=0&page_size=500
+[GIN] 2026/04/13 - 10:14:51 | api | 202604130214512059832130I8LnL5R | 200 |    3.455167ms |    192.168.65.1 |     GET /api/pricing
+[GIN] 2026/04/13 - 10:14:51 | api | 20260413021451205953671ULoe6P6d | 200 |    4.879625ms |    192.168.65.1 |     GET /api/models/?p=0&page_size=500
+[GIN] 2026/04/13 - 10:14:52 | api | 20260413021452159262546E9Kdchaz | 200 |   20.456166ms |    192.168.65.1 |     GET /api/pricing
+[GIN] 2026/04/13 - 10:14:52 | api | 20260413021452159254921KKxSNhXx | 200 |   23.745333ms |    192.168.65.1 |     GET /api/models/?p=0&page_size=500
+[SYS] 2026/04/13 - 10:14:54 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:14:54 | 任务进度轮询完成 
+[GIN] 2026/04/13 - 10:14:56 | api | 20260413021456396810715Tg6T9mgL | 200 |   15.441584ms |    192.168.65.1 |     GET /api/monitor/alerts
+[GIN] 2026/04/13 - 10:14:56 | api | 20260413021456397653298BanvYxNe | 200 |   21.301416ms |    192.168.65.1 |     GET /api/monitor/summary
+[GIN] 2026/04/13 - 10:14:56 | api | 20260413021456396810590kMyLgBAV | 200 |   25.090875ms |    192.168.65.1 |     GET /api/monitor/trends?hours=24
+[GIN] 2026/04/13 - 10:14:56 | api | 20260413021456396810757h2pIOU1m | 200 |   26.362917ms |    192.168.65.1 |     GET /api/monitor/channels?limit=10
+[GIN] 2026/04/13 - 10:14:59 | api | 202604130214596324545084933OLso | 200 |    4.860416ms |    192.168.65.1 |     GET /api/status
+[GIN] 2026/04/13 - 10:14:59 | api | 2026041302145995561384232IA9g7S | 200 |   10.884625ms |    192.168.65.1 |     GET /api/log/?p=0&page_size=100&username=agt_968fdb99728b
+[SYS] 2026/04/13 - 10:15:09 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:15:09 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:15:24 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:15:24 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:15:37 | 正在更新数据看板数据... 
+[SYS] 2026/04/13 - 10:15:37 | 保存数据看板数据成功，共保存0条数据 
+[SYS] 2026/04/13 - 10:15:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:15:37 | syncing channels from database 
+[SYS] 2026/04/13 - 10:15:37 | channels synced from database 
+[SYS] 2026/04/13 - 10:15:39 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:15:39 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:15:54 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:15:54 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:16:09 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:16:09 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:16:24 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:16:24 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:16:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:16:37 | syncing channels from database 
+[SYS] 2026/04/13 - 10:16:37 | channels synced from database 
+[SYS] 2026/04/13 - 10:16:39 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:16:39 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:16:54 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:16:54 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:17:09 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:17:09 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:17:24 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:17:24 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:17:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:17:37 | syncing channels from database 
+[SYS] 2026/04/13 - 10:17:37 | channels synced from database 
+[SYS] 2026/04/13 - 10:17:39 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:17:39 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:17:54 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:17:54 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:18:09 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:18:09 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:18:24 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:18:24 | 任务进度轮询完成 
+[GIN] 2026/04/13 - 10:18:29 | api | 20260413021829342748091BTj3xQb5 | 200 |   13.338958ms |    192.168.65.1 |     GET /api/monitor/trends?hours=24
+[GIN] 2026/04/13 - 10:18:29 | api | 20260413021829343495258dScK5O1h | 200 |   16.956375ms |    192.168.65.1 |     GET /api/monitor/channels?limit=10
+[GIN] 2026/04/13 - 10:18:29 | api | 202604130218293421458418PDHWP94 | 200 |    28.67725ms |    192.168.65.1 |     GET /api/monitor/alerts
+[GIN] 2026/04/13 - 10:18:29 | api | 20260413021829342145883elzv4Zfv | 200 |   30.641167ms |    192.168.65.1 |     GET /api/monitor/summary
+[SYS] 2026/04/13 - 10:18:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:18:37 | syncing channels from database 
+[SYS] 2026/04/13 - 10:18:37 | channels synced from database 
+[SYS] 2026/04/13 - 10:18:39 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:18:39 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:18:54 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:18:54 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:19:09 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:19:09 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:19:24 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:19:24 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:19:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:19:37 | syncing channels from database 
+[SYS] 2026/04/13 - 10:19:37 | channels synced from database 
+[SYS] 2026/04/13 - 10:19:39 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:19:39 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:19:54 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:19:54 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:20:09 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:20:09 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:20:24 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:20:24 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:20:37 | 正在更新数据看板数据... 
+[SYS] 2026/04/13 - 10:20:37 | 保存数据看板数据成功，共保存0条数据 
+[SYS] 2026/04/13 - 10:20:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:20:37 | syncing channels from database 
+[SYS] 2026/04/13 - 10:20:37 | channels synced from database 
+[SYS] 2026/04/13 - 10:20:39 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:20:39 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:20:54 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:20:54 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:21:09 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:21:09 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:21:24 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:21:24 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:21:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:21:37 | syncing channels from database 
+[SYS] 2026/04/13 - 10:21:37 | channels synced from database 
+[SYS] 2026/04/13 - 10:21:39 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:21:39 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:21:54 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:21:54 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:22:09 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:22:09 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:22:24 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:22:24 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:22:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:22:37 | syncing channels from database 
+[SYS] 2026/04/13 - 10:22:37 | channels synced from database 
+[SYS] 2026/04/13 - 10:22:39 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:22:39 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:22:54 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:22:54 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:23:09 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:23:09 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:23:24 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:23:24 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:23:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:23:37 | syncing channels from database 
+[SYS] 2026/04/13 - 10:23:37 | channels synced from database 
+[SYS] 2026/04/13 - 10:23:39 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:23:39 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:23:54 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:23:54 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:24:09 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:24:09 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:24:24 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:24:24 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:24:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:24:37 | syncing channels from database 
+[SYS] 2026/04/13 - 10:24:37 | channels synced from database 
+[SYS] 2026/04/13 - 10:24:39 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:24:39 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:24:54 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:24:54 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:25:09 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:25:09 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:25:24 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:25:24 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:25:37 | 正在更新数据看板数据... 
+[SYS] 2026/04/13 - 10:25:37 | 保存数据看板数据成功，共保存0条数据 
+[SYS] 2026/04/13 - 10:25:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:25:37 | syncing channels from database 
+[SYS] 2026/04/13 - 10:25:37 | channels synced from database 
+[SYS] 2026/04/13 - 10:25:39 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:25:39 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:25:54 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:25:54 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:26:09 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:26:09 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:26:24 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:26:24 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:26:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:26:37 | syncing channels from database 
+[SYS] 2026/04/13 - 10:26:37 | channels synced from database 
+[SYS] 2026/04/13 - 10:26:39 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:26:39 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:26:54 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:26:54 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:27:09 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:27:09 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:27:24 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:27:24 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:27:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:27:37 | syncing channels from database 
+[SYS] 2026/04/13 - 10:27:37 | channels synced from database 
+[SYS] 2026/04/13 - 10:27:39 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:27:39 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:27:54 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:27:54 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:28:09 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:28:09 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:28:24 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:28:24 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:28:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:28:38 | syncing channels from database 
+[SYS] 2026/04/13 - 10:28:38 | channels synced from database 
+[SYS] 2026/04/13 - 10:28:39 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:28:39 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:28:54 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:28:54 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:29:09 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:29:09 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:29:24 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:29:24 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:29:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:29:38 | syncing channels from database 
+[SYS] 2026/04/13 - 10:29:38 | channels synced from database 
+[SYS] 2026/04/13 - 10:29:39 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:29:39 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:29:54 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:29:54 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:30:09 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:30:09 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:30:24 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:30:24 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:30:37 | 正在更新数据看板数据... 
+[SYS] 2026/04/13 - 10:30:37 | 保存数据看板数据成功，共保存0条数据 
+[SYS] 2026/04/13 - 10:30:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:30:38 | syncing channels from database 
+[SYS] 2026/04/13 - 10:30:38 | channels synced from database 
+[SYS] 2026/04/13 - 10:30:39 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:30:39 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:30:54 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:30:54 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:31:09 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:31:09 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:31:24 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:31:24 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:31:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:31:38 | syncing channels from database 
+[SYS] 2026/04/13 - 10:31:38 | channels synced from database 
+[SYS] 2026/04/13 - 10:31:39 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:31:39 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:31:54 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:31:54 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:32:09 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:32:09 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:32:24 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:32:24 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:32:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:32:38 | syncing channels from database 
+[SYS] 2026/04/13 - 10:32:38 | channels synced from database 
+[SYS] 2026/04/13 - 10:32:39 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:32:39 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:32:54 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:32:54 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:33:09 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:33:09 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:33:25 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:33:25 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:33:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:33:38 | syncing channels from database 
+[SYS] 2026/04/13 - 10:33:38 | channels synced from database 
+[SYS] 2026/04/13 - 10:33:40 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:33:40 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:33:55 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:33:55 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:34:10 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:34:10 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:34:25 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:34:25 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:34:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:34:38 | syncing channels from database 
+[SYS] 2026/04/13 - 10:34:38 | channels synced from database 
+[SYS] 2026/04/13 - 10:34:40 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:34:40 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:34:55 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:34:55 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:35:10 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:35:10 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:35:25 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:35:25 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:35:37 | 正在更新数据看板数据... 
+[SYS] 2026/04/13 - 10:35:37 | 保存数据看板数据成功，共保存0条数据 
+[SYS] 2026/04/13 - 10:35:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:35:38 | syncing channels from database 
+[SYS] 2026/04/13 - 10:35:38 | channels synced from database 
+[SYS] 2026/04/13 - 10:35:40 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:35:40 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:35:55 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:35:55 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:36:10 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:36:10 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:36:25 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:36:25 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:36:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:36:38 | syncing channels from database 
+[SYS] 2026/04/13 - 10:36:38 | channels synced from database 
+[SYS] 2026/04/13 - 10:36:40 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:36:40 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:36:55 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:36:55 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:37:10 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:37:10 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:37:25 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:37:25 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:37:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:37:38 | syncing channels from database 
+[SYS] 2026/04/13 - 10:37:38 | channels synced from database 
+[SYS] 2026/04/13 - 10:37:40 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:37:40 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:37:55 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:37:55 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:38:10 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:38:10 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:38:25 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:38:25 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:38:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:38:38 | syncing channels from database 
+[SYS] 2026/04/13 - 10:38:38 | channels synced from database 
+[SYS] 2026/04/13 - 10:38:40 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:38:40 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:38:55 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:38:55 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:39:10 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:39:10 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:39:25 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:39:25 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:39:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:39:38 | syncing channels from database 
+[SYS] 2026/04/13 - 10:39:38 | channels synced from database 
+[SYS] 2026/04/13 - 10:39:40 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:39:40 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:39:55 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:39:55 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:40:10 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:40:10 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:40:25 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:40:25 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:40:37 | 正在更新数据看板数据... 
+[SYS] 2026/04/13 - 10:40:37 | 保存数据看板数据成功，共保存0条数据 
+[SYS] 2026/04/13 - 10:40:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:40:38 | syncing channels from database 
+[SYS] 2026/04/13 - 10:40:38 | channels synced from database 
+[SYS] 2026/04/13 - 10:40:40 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:40:40 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:40:55 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:40:55 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:41:10 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:41:10 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:41:25 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:41:25 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:41:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:41:38 | syncing channels from database 
+[SYS] 2026/04/13 - 10:41:38 | channels synced from database 
+[SYS] 2026/04/13 - 10:41:40 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:41:40 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:41:55 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:41:55 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:42:10 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:42:10 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:42:25 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:42:25 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:42:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:42:38 | syncing channels from database 
+[SYS] 2026/04/13 - 10:42:38 | channels synced from database 
+[SYS] 2026/04/13 - 10:42:40 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:42:40 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:42:55 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:42:55 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:43:10 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:43:10 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:43:25 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:43:25 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:43:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:43:38 | syncing channels from database 
+[SYS] 2026/04/13 - 10:43:38 | channels synced from database 
+[SYS] 2026/04/13 - 10:43:40 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:43:40 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:43:55 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:43:55 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:44:10 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:44:10 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:44:25 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:44:25 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:44:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:44:38 | syncing channels from database 
+[SYS] 2026/04/13 - 10:44:38 | channels synced from database 
+[SYS] 2026/04/13 - 10:44:40 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:44:40 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:44:55 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:44:55 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:45:10 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:45:10 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:45:25 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:45:25 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:45:37 | 正在更新数据看板数据... 
+[SYS] 2026/04/13 - 10:45:37 | 保存数据看板数据成功，共保存0条数据 
+[SYS] 2026/04/13 - 10:45:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:45:38 | syncing channels from database 
+[SYS] 2026/04/13 - 10:45:38 | channels synced from database 
+[SYS] 2026/04/13 - 10:45:40 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:45:40 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:45:55 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:45:55 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:46:10 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:46:10 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:46:25 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:46:25 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:46:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:46:38 | syncing channels from database 
+[SYS] 2026/04/13 - 10:46:38 | channels synced from database 
+[SYS] 2026/04/13 - 10:46:40 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:46:40 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:46:55 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:46:55 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:47:10 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:47:10 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:47:25 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:47:25 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:47:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:47:38 | syncing channels from database 
+[SYS] 2026/04/13 - 10:47:38 | channels synced from database 
+[SYS] 2026/04/13 - 10:47:40 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:47:40 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:47:55 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:47:55 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:48:10 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:48:10 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:48:25 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:48:25 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:48:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:48:38 | syncing channels from database 
+[SYS] 2026/04/13 - 10:48:38 | channels synced from database 
+[SYS] 2026/04/13 - 10:48:40 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:48:40 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:48:55 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:48:55 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:49:10 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:49:10 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:49:25 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:49:25 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:49:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:49:38 | syncing channels from database 
+[SYS] 2026/04/13 - 10:49:38 | channels synced from database 
+[SYS] 2026/04/13 - 10:49:40 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:49:40 | 任务进度轮询完成 
+[GIN] 2026/04/13 - 10:49:47 | api | 20260413024947175768877skSSIva1 | 200 |   24.002916ms |    192.168.65.1 |     GET /api/monitor/channels?limit=10
+[GIN] 2026/04/13 - 10:49:47 | api | 202604130249471753402949be8Dqjs | 200 |   27.521208ms |    192.168.65.1 |     GET /api/monitor/trends?hours=24
+[GIN] 2026/04/13 - 10:49:47 | api | 20260413024947175715627r4rBtkCU | 200 |   28.199791ms |    192.168.65.1 |     GET /api/monitor/alerts
+[GIN] 2026/04/13 - 10:49:47 | api | 20260413024947175730794iyENmCvq | 200 |   30.647333ms |    192.168.65.1 |     GET /api/monitor/summary
+[SYS] 2026/04/13 - 10:49:55 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:49:55 | 任务进度轮询完成 
+[GIN] 2026/04/13 - 10:49:57 | api | 20260413024957755419174Rwoao87q | 200 |    2.363042ms |    192.168.65.1 |     GET /api/monitor/trends?hours=24
+[GIN] 2026/04/13 - 10:49:57 | api | 20260413024957755428132Q4ZkxQrE | 200 |    3.727292ms |    192.168.65.1 |     GET /api/monitor/channels?limit=10
+[GIN] 2026/04/13 - 10:49:57 | api | 202604130249577554475071XJfrw0T | 200 |    4.643042ms |    192.168.65.1 |     GET /api/monitor/alerts
+[GIN] 2026/04/13 - 10:49:57 | api | 20260413024957755419132lV3P6Ozy | 200 |    7.268959ms |    192.168.65.1 |     GET /api/monitor/summary
+[SYS] 2026/04/13 - 10:50:10 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:50:10 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:50:25 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:50:25 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:50:37 | 正在更新数据看板数据... 
+[SYS] 2026/04/13 - 10:50:37 | 保存数据看板数据成功，共保存0条数据 
+[SYS] 2026/04/13 - 10:50:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:50:38 | syncing channels from database 
+[SYS] 2026/04/13 - 10:50:38 | channels synced from database 
+[SYS] 2026/04/13 - 10:50:40 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:50:40 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:50:55 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:50:55 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:51:10 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:51:10 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:51:25 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:51:25 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:51:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:51:38 | syncing channels from database 
+[SYS] 2026/04/13 - 10:51:38 | channels synced from database 
+[SYS] 2026/04/13 - 10:51:40 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:51:40 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:51:55 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:51:55 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:52:10 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:52:10 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:52:25 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:52:25 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:52:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:52:38 | syncing channels from database 
+[SYS] 2026/04/13 - 10:52:38 | channels synced from database 
+[SYS] 2026/04/13 - 10:52:40 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:52:40 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:52:55 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:52:55 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:53:10 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:53:10 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:53:25 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:53:25 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:53:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:53:38 | syncing channels from database 
+[SYS] 2026/04/13 - 10:53:38 | channels synced from database 
+[SYS] 2026/04/13 - 10:53:40 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:53:40 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:53:55 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:53:55 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:54:10 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:54:10 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:54:25 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:54:25 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:54:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:54:38 | syncing channels from database 
+[SYS] 2026/04/13 - 10:54:38 | channels synced from database 
+[SYS] 2026/04/13 - 10:54:40 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:54:40 | 任务进度轮询完成 
+[GIN] 2026/04/13 - 10:54:43 | api | 20260413025443145047625iOUETEhG | 200 |   25.136666ms |    192.168.65.1 |     GET /api/monitor/channels?limit=10
+[GIN] 2026/04/13 - 10:54:43 | api | 20260413025443144870333N7cRGssy | 200 |    29.57125ms |    192.168.65.1 |     GET /api/monitor/summary
+[GIN] 2026/04/13 - 10:54:43 | api | 20260413025443145830167lgaZVTe3 | 200 |   31.831125ms |    192.168.65.1 |     GET /api/monitor/trends?hours=24
+[GIN] 2026/04/13 - 10:54:43 | api | 20260413025443145937667LJHXr11c | 200 |   34.400833ms |    192.168.65.1 |     GET /api/monitor/alerts
+[SYS] 2026/04/13 - 10:54:55 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:54:55 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:55:10 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:55:10 | 任务进度轮询完成 
+[GIN] 2026/04/13 - 10:55:14 | api | 20260413025514335618042hPxSUTXs | 200 |   18.871292ms |    192.168.65.1 |     GET /api/monitor/channels?limit=10
+[GIN] 2026/04/13 - 10:55:14 | api | 20260413025514334728417v5XlLb0p | 200 |     21.3355ms |    192.168.65.1 |     GET /api/monitor/alerts
+[GIN] 2026/04/13 - 10:55:14 | api | 202604130255143347284597gu0PGSR | 200 |   34.858083ms |    192.168.65.1 |     GET /api/monitor/trends?hours=24
+[GIN] 2026/04/13 - 10:55:14 | api | 20260413025514334728417Aqw8eaiq | 200 |   39.624042ms |    192.168.65.1 |     GET /api/monitor/summary
+[GIN] 2026/04/13 - 10:55:16 | api | 20260413025516971202544vDQK89hI | 200 |    2.853625ms |    192.168.65.1 |     GET /api/monitor/trends?hours=24
+[GIN] 2026/04/13 - 10:55:16 | api | 20260413025516971382710Wn4oU785 | 200 |    4.580334ms |    192.168.65.1 |     GET /api/monitor/channels?limit=10
+[GIN] 2026/04/13 - 10:55:16 | api | 20260413025516970775127dV1x0Z7C | 200 |    6.591125ms |    192.168.65.1 |     GET /api/monitor/alerts
+[GIN] 2026/04/13 - 10:55:16 | api | 202604130255169710860854sXVLEB5 | 200 |    6.838417ms |    192.168.65.1 |     GET /api/monitor/summary
+[GIN] 2026/04/13 - 10:55:20 | api | 20260413025520236331503xyFqi5Px | 200 |     779.875µs |    192.168.65.1 |     GET /api/status
+[GIN] 2026/04/13 - 10:55:20 | api | 202604130255204605980878Xo2V8jb | 200 |     653.042µs |    192.168.65.1 |     GET /api/status
+[GIN] 2026/04/13 - 10:55:20 | api | 20260413025520570290712TrMJYRpj | 200 |    2.941042ms |    192.168.65.1 |     GET /api/log/?p=0&page_size=100&username=agt_968fdb99728b
+[GIN] 2026/04/13 - 10:55:20 | api | 20260413025520768220295iTnnXhTn | 200 |    3.034916ms |    192.168.65.1 |     GET /api/log/?p=0&page_size=100&username=agt_968fdb99728b
+[GIN] 2026/04/13 - 10:55:24 | api | 2026041302552463641922AyRLdEWr | 200 |    6.244333ms |    192.168.65.1 |     GET /api/monitor/trends?hours=24
+[GIN] 2026/04/13 - 10:55:24 | api | 2026041302552446930880I8ZbNKIX | 200 |   28.790709ms |    192.168.65.1 |     GET /api/monitor/summary
+[GIN] 2026/04/13 - 10:55:24 | api | 2026041302552463944214nqFyznBk | 200 |   23.001792ms |    192.168.65.1 |     GET /api/monitor/channels?limit=10
+[GIN] 2026/04/13 - 10:55:24 | api | 2026041302552463739880uE5OAH1i | 200 |   23.532917ms |    192.168.65.1 |     GET /api/monitor/alerts
+[GIN] 2026/04/13 - 10:55:24 | api | 20260413025524121252714V5uX1t3T | 200 |    4.407792ms |    192.168.65.1 |     GET /api/monitor/trends?hours=24
+[GIN] 2026/04/13 - 10:55:24 | api | 20260413025524121233589M8aamxla | 200 |    6.039958ms |    192.168.65.1 |     GET /api/monitor/channels?limit=10
+[GIN] 2026/04/13 - 10:55:24 | api | 20260413025524121279547Q0iaIk29 | 200 |    8.734583ms |    192.168.65.1 |     GET /api/monitor/alerts
+[GIN] 2026/04/13 - 10:55:24 | api | 2026041302552412123363083SWsyxQ | 200 |   19.184583ms |    192.168.65.1 |     GET /api/monitor/summary
+[GIN] 2026/04/13 - 10:55:24 | api | 20260413025524121355589Tc3gazfK | 200 |   27.742208ms |    192.168.65.1 |     GET /api/pricing
+[GIN] 2026/04/13 - 10:55:24 | api | 20260413025524121234589OHyeOeEy | 200 |   28.448625ms |    192.168.65.1 |     GET /api/models/?p=0&page_size=500
+[SYS] 2026/04/13 - 10:55:25 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:55:25 | 任务进度轮询完成 
+[GIN] 2026/04/13 - 10:55:26 | api | 2026041302552612598298fYYzCb9o | 200 |    1.745459ms |    192.168.65.1 |     GET /api/monitor/trends?hours=24
+[GIN] 2026/04/13 - 10:55:26 | api | 20260413025526133878813ZBXKXlA | 200 |    2.452167ms |    192.168.65.1 |     GET /api/monitor/channels?limit=10
+[GIN] 2026/04/13 - 10:55:26 | api | 2026041302552611571840cBhti7fZ | 200 |    4.721042ms |    192.168.65.1 |     GET /api/monitor/alerts
+[GIN] 2026/04/13 - 10:55:26 | api | 20260413025526110270067rcnZ3e2 | 200 |    6.523292ms |    192.168.65.1 |     GET /api/monitor/summary
+[GIN] 2026/04/13 - 10:55:26 | api | 20260413025526774820590xLrShYvq | 200 |    1.004625ms |    192.168.65.1 |     GET /api/status
+[GIN] 2026/04/13 - 10:55:26 | api | 20260413025526778402548ppAxdssF | 200 |    1.588542ms |    192.168.65.1 |     GET /api/monitor/trends?hours=24
+[GIN] 2026/04/13 - 10:55:26 | api | 20260413025526778698465cIxFA0jp | 200 |     4.04425ms |    192.168.65.1 |     GET /api/monitor/channels?limit=10
+[GIN] 2026/04/13 - 10:55:26 | api | 20260413025526778133923VPAzcL1M | 200 |    5.793292ms |    192.168.65.1 |     GET /api/monitor/alerts
+[GIN] 2026/04/13 - 10:55:26 | api | 20260413025526781423173XfGFlo89 | 200 |     3.24625ms |    192.168.65.1 |     GET /api/monitor/trends?hours=24
+[GIN] 2026/04/13 - 10:55:26 | api | 20260413025526781695632RyXhS9gG | 200 |        5.36ms |    192.168.65.1 |     GET /api/monitor/channels?limit=10
+[GIN] 2026/04/13 - 10:55:26 | api | 20260413025526777961548XSHhQTtD | 200 |   10.326666ms |    192.168.65.1 |     GET /api/monitor/summary
+[GIN] 2026/04/13 - 10:55:26 | api | 20260413025526781496007JIiqxnSO | 200 |   28.394708ms |    192.168.65.1 |     GET /api/monitor/alerts
+[GIN] 2026/04/13 - 10:55:26 | api | 20260413025526781424798EK3mIgME | 200 |   31.479875ms |    192.168.65.1 |     GET /api/monitor/summary
+[GIN] 2026/04/13 - 10:55:27 | api | 2026041302552789544007M26BN7c0 | 200 |     657.167µs |    192.168.65.1 |     GET /api/status
+[GIN] 2026/04/13 - 10:55:27 | api | 2026041302552788136965gkjgLr8S | 200 |    2.906958ms |    192.168.65.1 |     GET /api/log/?p=0&page_size=100&username=agt_968fdb99728b
+[GIN] 2026/04/13 - 10:55:27 | api | 20260413025527160482840AHMWCTSw | 200 |    1.916208ms |    192.168.65.1 |     GET /api/monitor/trends?hours=24
+[GIN] 2026/04/13 - 10:55:27 | api | 20260413025527160708340ppFMsjGJ | 200 |    6.166708ms |    192.168.65.1 |     GET /api/monitor/channels?limit=10
+[GIN] 2026/04/13 - 10:55:27 | api | 20260413025527160486257B0FWqlR9 | 200 |      11.118ms |    192.168.65.1 |     GET /api/monitor/alerts
+[GIN] 2026/04/13 - 10:55:27 | api | 202604130255271604847576ufmTqGR | 200 |   12.161458ms |    192.168.65.1 |     GET /api/monitor/summary
+[GIN] 2026/04/13 - 10:55:27 | api | 20260413025527247751298JdZ9Cf3D | 200 |    2.124458ms |    192.168.65.1 |     GET /api/log/?p=0&page_size=100&username=agt_968fdb99728b
+[SYS] 2026/04/13 - 10:55:37 | 正在更新数据看板数据... 
+[SYS] 2026/04/13 - 10:55:37 | 保存数据看板数据成功，共保存0条数据 
+[SYS] 2026/04/13 - 10:55:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:55:38 | syncing channels from database 
+[SYS] 2026/04/13 - 10:55:38 | channels synced from database 
+[SYS] 2026/04/13 - 10:55:40 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:55:40 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:55:56 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:55:56 | 任务进度轮询完成 
+[GIN] 2026/04/13 - 10:56:07 | api | 202604130256071644103873OKvD6CZ | 200 |    7.253667ms |    192.168.65.1 |     GET /api/pricing
+[GIN] 2026/04/13 - 10:56:07 | api | 20260413025607164417553RmIqb3o1 | 200 |   10.007625ms |    192.168.65.1 |     GET /api/models/?p=0&page_size=500
+[GIN] 2026/04/13 - 10:56:07 | api | 20260413025607195340720kDB2kh1V | 200 |    4.976708ms |    192.168.65.1 |     GET /api/pricing
+[GIN] 2026/04/13 - 10:56:07 | api | 20260413025607195580928deZCKZWm | 200 |       5.978ms |    192.168.65.1 |     GET /api/models/?p=0&page_size=500
+[SYS] 2026/04/13 - 10:56:11 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:56:11 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:56:26 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:56:26 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:56:37 | syncing options from database 
+[SYS] 2026/04/13 - 10:56:38 | syncing channels from database 
+[SYS] 2026/04/13 - 10:56:38 | channels synced from database 
+[SYS] 2026/04/13 - 10:56:41 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:56:41 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:56:56 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:56:56 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:57:11 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:57:11 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:57:26 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:57:26 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:57:37 | syncing options from database 
+[GIN] 2026/04/13 - 10:57:38 | api | 2026041302573879282595f9qzLTuj | 200 |   37.281958ms |    192.168.65.1 |     GET /api/models/?p=0&page_size=500
+[GIN] 2026/04/13 - 10:57:38 | api | 2026041302573879324804Fd3q7k30 | 200 |   37.912875ms |    192.168.65.1 |     GET /api/models/?p=0&page_size=500
+[GIN] 2026/04/13 - 10:57:38 | api | 2026041302573878480470r7grCOgq | 200 |   39.009917ms |    192.168.65.1 |     GET /api/models/?p=0&page_size=500
+[GIN] 2026/04/13 - 10:57:38 | api | 2026041302573878402429JcdkU21m | 200 |   38.784291ms |    192.168.65.1 |     GET /api/models/?p=0&page_size=500
+[GIN] 2026/04/13 - 10:57:38 | api | 2026041302573879037179x2Vk9bwS | 200 |   38.110667ms |    192.168.65.1 |     GET /api/models/?p=0&page_size=500
+[GIN] 2026/04/13 - 10:57:38 | api | 2026041302573879386762KtSRTZaD | 200 |    38.55125ms |    192.168.65.1 |     GET /api/models/?p=0&page_size=500
+[SYS] 2026/04/13 - 10:57:38 | syncing channels from database 
+[SYS] 2026/04/13 - 10:57:38 | channels synced from database 
+[SYS] 2026/04/13 - 10:57:41 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:57:41 | 任务进度轮询完成 
+[SYS] 2026/04/13 - 10:57:56 | 任务进度轮询开始 
+[SYS] 2026/04/13 - 10:57:56 | 任务进度轮询完成 

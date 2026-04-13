@@ -393,7 +393,7 @@ function mapRuntimePricingModelToSharedModel(
 
 function applyCatalogFilters(
   models: Model[],
-  { limit = 100, category }: ListModelsOptions,
+  { limit, category }: ListModelsOptions,
 ) {
   let result = models;
 
@@ -401,10 +401,15 @@ function applyCatalogFilters(
     result = result.filter((model) => model.category === category);
   }
 
-  return result
+  const filtered = result
     .filter((model) => Boolean(model.model_name))
-    .sort((a, b) => a.model_name.localeCompare(b.model_name))
-    .slice(0, limit);
+    .sort((a, b) => a.model_name.localeCompare(b.model_name));
+
+  if (typeof limit === 'number' && Number.isFinite(limit) && limit > 0) {
+    return filtered.slice(0, limit);
+  }
+
+  return filtered;
 }
 
 export async function listRuntimeModelCatalog(
@@ -478,12 +483,16 @@ async function fetchOpenRouterModels(): Promise<OpenRouterModel[]> {
   return Array.isArray(result.data) ? result.data : [];
 }
 
-function buildFallbackCatalog(limit: number, category?: string | null): Model[] {
+function buildFallbackCatalog(limit?: number, category?: string | null): Model[] {
   const filtered = category
     ? OFFICIAL_MODEL_CATALOG.filter((model) => model.category === category)
     : OFFICIAL_MODEL_CATALOG;
 
-  return filtered.slice(0, limit);
+  if (typeof limit === 'number' && Number.isFinite(limit) && limit > 0) {
+    return filtered.slice(0, limit);
+  }
+
+  return filtered;
 }
 
 export async function listModelCatalog(options: ListModelsOptions = {}): Promise<Model[]> {
@@ -499,7 +508,7 @@ export async function listModelCatalog(options: ListModelsOptions = {}): Promise
     console.warn('Failed to load runtime-enabled model catalog, falling back:', error);
   }
 
-  const { limit = 100, category } = options;
+  const { limit, category } = options;
   const { sharedById, sharedByName } = buildOfficialCatalogLookups();
 
   try {
