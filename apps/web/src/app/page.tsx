@@ -3,6 +3,7 @@ import { SITE_DESCRIPTION, SITE_TITLE, getAbsoluteUrl } from '@/config/site';
 import HomePageClient from '@/components/home/HomePageClient';
 import type { Model } from '@ai-gateway/shared-types';
 import { listModelCatalog } from '@/services/catalog/model-catalog.service';
+import { isModelPlaygroundAvailable } from '@/services/catalog/model-availability';
 
 function hasMeaningfulDescription(model: Model) {
   const description = (model.description || '').trim();
@@ -23,8 +24,8 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const models = await listModelCatalog({ limit: 24 });
-  const featuredModels = [...models]
+  const models = await listModelCatalog();
+  const featuredModels = [...models.filter(isModelPlaygroundAvailable)]
     .sort((a, b) => {
       const aScore = hasMeaningfulDescription(a) ? 1 : 0;
       const bScore = hasMeaningfulDescription(b) ? 1 : 0;

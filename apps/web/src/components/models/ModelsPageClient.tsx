@@ -23,6 +23,7 @@ import { copyToClipboard } from "@/utils/helpers";
 import { formatPricePerMillion } from "@/utils/modelPricing";
 import { useTranslation } from "@/hooks/useTranslation";
 import { isModelPlaygroundAvailable } from "@/services/catalog/model-availability";
+import { buildModelDetailHref } from "@/components/models/model-links";
 import {
   categoryStyles,
   formatContextLength,
@@ -630,7 +631,7 @@ export default function ModelsPageClient({
 
                 <div className="mt-auto grid grid-cols-2 gap-2.5 sm:gap-3 pt-4 sm:pt-6">
                   <Link
-                    href={`/models/${model.id}`}
+                    href={buildModelDetailHref(model.id)}
                     className="btn-secondary min-h-[48px] justify-center rounded-2xl border-border/80 bg-dark-light/30 px-3 py-2.5 text-[0.72rem] sm:text-xs font-semibold tracking-[0.04em] sm:tracking-[0.06em] no-underline hover:border-primary/30 hover:bg-white hover:text-primary transition-all"
                   >
                     <i className="fas fa-arrow-right mr-1.5 sm:mr-2 opacity-70" />

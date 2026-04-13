@@ -4,9 +4,11 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { buildModelDetailHref } from '@/components/models/model-links';
 import { useAppDispatch } from '@/store/hooks';
 import { showNotification } from '@/store/slices/notificationSlice';
 import { useTranslation } from '@/hooks/useTranslation';
+import { isModelPlaygroundAvailable } from '@/services/catalog/model-availability';
 import { formatPricePerMillion } from '@/utils/modelPricing';
 import { Model } from '@ai-gateway/shared-types';
 
@@ -355,7 +357,10 @@ export NEWAPI_API_KEY="your-api-key"
             </div>
 
             <div className="grid gap-4 sm:gap-6 lg:grid-cols-3">
-              {models.map((model) => (
+              {models.map((model) => {
+                const canOpenPlayground = isModelPlaygroundAvailable(model);
+
+                return (
                 <div key={model.id} className="editorial-panel group overflow-hidden border rounded-xl sm:rounded-[1.5rem] md:rounded-[2rem] bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
                   <div className="flex items-start justify-between border-b border-border bg-dark-light/40 px-4 py-3 sm:px-5 sm:py-4 md:px-6 md:py-5 group-hover:bg-primary/5 transition-colors duration-300">
                     <div>
@@ -388,13 +393,20 @@ export NEWAPI_API_KEY="your-api-key"
                     </div>
                     <div className="flex items-center justify-between border-t border-border pt-4 sm:pt-5 text-[0.65rem] sm:text-xs uppercase tracking-[0.14em] sm:tracking-[0.18em] font-semibold text-text-secondary">
                       <span className="flex items-center gap-1 sm:gap-1.5 bg-dark-light/50 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md"><i className="fas fa-layer-group opacity-50"/> {model.context_length.toLocaleString()} ctx</span>
-                      <Link href="/playground" className="text-primary no-underline hover:text-primary/80 flex items-center gap-1">
-                        {t.home.openInPlayground} <i className="fas fa-chevron-right text-[8px] sm:text-[10px]" />
-                      </Link>
+                      {canOpenPlayground ? (
+                        <Link href={`/playground?model=${model.id}`} className="text-primary no-underline hover:text-primary/80 flex items-center gap-1">
+                          {t.home.openInPlayground} <i className="fas fa-chevron-right text-[8px] sm:text-[10px]" />
+                        </Link>
+                      ) : (
+                        <Link href={buildModelDetailHref(model.id)} className="text-primary no-underline hover:text-primary/80 flex items-center gap-1">
+                          {t.modelsPage.viewDetails} <i className="fas fa-chevron-right text-[8px] sm:text-[10px]" />
+                        </Link>
+                      )}
                     </div>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </section>

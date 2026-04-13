@@ -2,12 +2,19 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import type { Model } from "@ai-gateway/shared-types";
 import ModelDetailPageClient from "@/components/models/ModelDetailPageClient";
+import { buildModelDetailHref } from "@/components/models/model-links";
 import { buildPageMetadata } from "@/config/site";
 import { listModelCatalog } from "@/services/catalog/model-catalog.service";
 import { getModelDetailInsights } from "@/services/models/model-detail.service";
 
 function normalizeModelId(modelId: string[] | string) {
-  return Array.isArray(modelId) ? modelId.join("/") : modelId;
+  const raw = Array.isArray(modelId) ? modelId.join("/") : modelId;
+
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return raw;
+  }
 }
 
 async function findModelById(modelId: string): Promise<Model | null> {
@@ -27,14 +34,14 @@ export async function generateMetadata({
     return buildPageMetadata({
       title: "Model Detail",
       description: "Model detail is not available for the requested model.",
-      path: `/models/${modelId}`,
+      path: buildModelDetailHref(modelId),
     });
   }
 
   return buildPageMetadata({
     title: `${model.model_name} | Model Detail`,
     description: model.description_en || model.description || model.model_name,
-    path: `/models/${model.id}`,
+    path: buildModelDetailHref(model.id),
   });
 }
 
