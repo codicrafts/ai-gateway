@@ -29,6 +29,8 @@ export interface Model {
   capabilities_en?: string[];
   source_url?: string;
   supported_endpoint_types?: string[];
+  bound_channel_types?: number[];
+  runtime_pricing_configured?: boolean;
 }
 
 export interface ApiKey {

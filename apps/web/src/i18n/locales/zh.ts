@@ -202,6 +202,7 @@ export const zh = {
     copyId: '复制 ID',
     copyModelId: '复制模型 ID',
     startTrial: '立即试用',
+    validateInPlayground: '去试验台验证',
     viewDetails: '查看详情',
     backToCatalog: '返回目录',
     openInPlayground: '在试验台打开',
@@ -245,6 +246,8 @@ export const zh = {
     detailIntegrationBody3: '真正上线前，仍然要回到控制台确认团队 API Key、可用模型范围和路由策略，避免目录可见但团队权限未开放。',
     modelIdLabel: '模型 ID',
     catalogReady: '目录已收录',
+    catalogAvailabilityNotice:
+      '目录收录，不代表当前团队可直接调用。只有已配置价格/倍率，或已启用 self-use mode 的模型，才会出现在试验台。',
     accessMethod: '接入方式',
     selectionNotes: '选型说明',
     selectionTitle: '怎么把选型和交付连起来',

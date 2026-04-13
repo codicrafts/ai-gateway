@@ -1,4 +1,6 @@
 import type { TeamInvitation } from '@ai-gateway/shared-types/team';
+import { TeamInvitationEmail } from '@/components/emails/TeamInvitationEmail';
+import { isResendConfigured, sendResendEmail } from '@/lib/resend';
 import { enqueueEmailNotification, markNotificationOutboxStatus } from '@/services/notification/notification-outbox.service';
 
 type InvitationEmailContext = {
@@ -6,30 +8,9 @@ type InvitationEmailContext = {
   inviterName?: string;
 };
 
-function isResendConfigured(): boolean {
-  return Boolean(process.env.RESEND_API_KEY && process.env.RESEND_FROM_EMAIL);
-}
-
-function buildInvitationEmailHtml(context: InvitationEmailContext): string {
-  const teamName = context.invitation.team_name || 'MeshRouter';
-  const inviterName = context.inviterName || context.invitation.inviter?.username || 'A teammate';
-  const inviteUrl = context.invitation.invite_url || '#';
-  const roleLabel = context.invitation.role;
-
-  return `
-    <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#111827;line-height:1.6;">
-      <h2 style="margin-bottom:12px;">You're invited to join ${teamName}</h2>
-      <p style="margin:0 0 12px;">${inviterName} invited you to join <strong>${teamName}</strong> as <strong>${roleLabel}</strong>.</p>
-      <p style="margin:0 0 20px;">Use the link below to review and respond to the invitation.</p>
-      <p style="margin:0 0 20px;">
-        <a href="${inviteUrl}" style="display:inline-block;background:#b8572b;color:#fff;text-decoration:none;padding:12px 20px;border-radius:999px;font-weight:600;">
-          Review invitation
-        </a>
-      </p>
-      <p style="margin:0 0 8px;color:#6b7280;font-size:14px;">Invitation link:</p>
-      <p style="margin:0;color:#374151;font-size:14px;word-break:break-all;">${inviteUrl}</p>
-    </div>
-  `;
+async function renderEmailToHtml(element: React.ReactElement): Promise<string> {
+  const { renderToStaticMarkup } = await import('react-dom/server');
+  return renderToStaticMarkup(element);
 }
 
 export async function sendTeamInvitationEmail(context: InvitationEmailContext): Promise<boolean> {
@@ -38,11 +19,14 @@ export async function sendTeamInvitationEmail(context: InvitationEmailContext): 
   }
 
   const subject = `Invitation to join ${context.invitation.team_name || 'MeshRouter'}`;
-  const html = buildInvitationEmailHtml(context);
+  const reactTemplate = TeamInvitationEmail({
+    invitation: context.invitation,
+    inviterName: context.inviterName,
+  });
   const outboxRecord = await enqueueEmailNotification({
     recipient: context.invitation.email,
     subject,
-    bodyHtml: html,
+    bodyHtml: await renderEmailToHtml(reactTemplate),
     metadata: {
       kind: 'team_invitation',
       invitation_id: context.invitation.id,
@@ -55,29 +39,21 @@ export async function sendTeamInvitationEmail(context: InvitationEmailContext): 
     return false;
   }
 
-  const response = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      from: process.env.RESEND_FROM_EMAIL,
-      to: [context.invitation.email],
-      reply_to: process.env.RESEND_REPLY_TO_EMAIL || undefined,
+  try {
+    await sendResendEmail({
+      to: context.invitation.email,
       subject,
-      html,
-    }),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
+      react: reactTemplate,
+      replyTo: process.env.RESEND_REPLY_TO_EMAIL || undefined,
+    });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : '发送邀请邮件失败';
     await markNotificationOutboxStatus(outboxRecord.id, {
       status: 'failed',
       provider: 'resend',
-      error_message: errorText,
+      error_message: errorMessage,
     });
-    throw new Error(`发送邀请邮件失败: ${errorText}`);
+    throw new Error(`发送邀请邮件失败: ${errorMessage}`);
   }
 
   await markNotificationOutboxStatus(outboxRecord.id, {

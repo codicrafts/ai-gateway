@@ -41,6 +41,33 @@ type StructuredResult = {
   text?: string;
 };
 
+function shouldHideModelAfterError(message: string) {
+  const normalized = message.toLowerCase();
+  return (
+    normalized.includes('ratio or price not set') ||
+    normalized.includes('倍率或价格未配置') ||
+    normalized.includes('not implemented')
+  );
+}
+
+function extractProblemModelNames(message: string) {
+  const result = new Set<string>();
+  const patterns = [
+    /模型\s+(.+?)\s+倍率或价格未配置/,
+    /Model\s+(.+?)\s+ratio or price not set/i,
+  ];
+
+  for (const pattern of patterns) {
+    const match = message.match(pattern);
+    const modelName = match?.[1]?.trim();
+    if (modelName) {
+      result.add(modelName);
+    }
+  }
+
+  return Array.from(result);
+}
+
 type JsonRecord = Record<string, unknown>;
 
 function asRecord(value: unknown): JsonRecord | null {
@@ -390,8 +417,8 @@ export default function PlaygroundPageClient({
   } = useAppSelector((s) => s.playground);
   const { currentUser, loading: authLoading } = useAppSelector((s) => s.auth);
 
-  const [platformModels] = useState<Model[]>(initialModels);
-  const [runtimeModels] = useState<Model[]>(gatewayModels);
+  const platformModels = initialModels;
+  const runtimeModels = gatewayModels;
   const [mode, setMode] = useState<PlaygroundMode>(
     teamApiKeys.some((key) => key.status === 'active') ? 'team_key' : 'platform',
   );
@@ -415,6 +442,7 @@ export default function PlaygroundPageClient({
   const [audioResponseFormat, setAudioResponseFormat] = useState('mp3');
   const [videoDuration, setVideoDuration] = useState('5');
   const [videoSize, setVideoSize] = useState('1280x720');
+  const [blockedModelNames, setBlockedModelNames] = useState<string[]>([]);
   const [rerankDocuments, setRerankDocuments] = useState(
     'MeshRouter unifies model access.\nTeams can validate first and integrate second.\nBilling and permissions stay visible in one place.',
   );
@@ -430,12 +458,14 @@ export default function PlaygroundPageClient({
 
   const availableModels =
     mode === 'team_key'
-      ? runtimeModels.filter((model) =>
-          selectedApiKey && selectedApiKey.models.length > 0
-            ? selectedApiKey.models.includes(model.model_name)
-            : true,
-        )
-      : platformModels;
+      ? runtimeModels
+          .filter((model) =>
+            selectedApiKey && selectedApiKey.models.length > 0
+              ? selectedApiKey.models.includes(model.model_name)
+              : true,
+          )
+          .filter((model) => !blockedModelNames.includes(model.model_name))
+      : platformModels.filter((model) => !blockedModelNames.includes(model.model_name));
 
   const selectedModelMeta =
     availableModels.find((model) => model.model_name === selectedModel) ||
@@ -679,10 +709,25 @@ export default function PlaygroundPageClient({
         dispatch(setTotalTokens(totalTokens + tokenCount));
       }
     } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : t.playgroundPage.requestFailed;
+
+      if (shouldHideModelAfterError(errorMessage)) {
+        const modelsToBlock = new Set<string>(extractProblemModelNames(errorMessage));
+        if (selectedModel) {
+          modelsToBlock.add(selectedModel);
+        }
+        setBlockedModelNames((current) =>
+          Array.from(new Set(current.concat(Array.from(modelsToBlock)))),
+        );
+        if (selectedModel) {
+          dispatch(setSelectedModel(''));
+        }
+      }
+
       dispatch(
         showNotification({
-          message:
-            error instanceof Error ? error.message : t.playgroundPage.requestFailed,
+          message: errorMessage,
           type: 'error',
         }),
       );
@@ -978,10 +1023,25 @@ export default function PlaygroundPageClient({
       if (selectedEndpointKind === 'text' && messages.at(-1)?.role === 'user') {
         dispatch(clearMessages());
       }
+      const errorMessage =
+        error instanceof Error ? error.message : t.playgroundPage.requestFailed;
+
+      if (shouldHideModelAfterError(errorMessage)) {
+        const modelsToBlock = new Set<string>(extractProblemModelNames(errorMessage));
+        if (selectedModel) {
+          modelsToBlock.add(selectedModel);
+        }
+        setBlockedModelNames((current) =>
+          Array.from(new Set(current.concat(Array.from(modelsToBlock)))),
+        );
+        if (selectedModel) {
+          dispatch(setSelectedModel(''));
+        }
+      }
+
       dispatch(
         showNotification({
-          message:
-            error instanceof Error ? error.message : t.playgroundPage.requestFailed,
+          message: errorMessage,
           type: 'error',
         }),
       );

@@ -2,6 +2,8 @@ import { getAuthenticatedAppUser } from '@/services/account/session.service';
 import { listGatewayConfiguredModels } from '@/services/gateway/gateway-model.service';
 import { fail, ok } from '@/server/api/responses';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   const appUser = await getAuthenticatedAppUser();
   if (!appUser) {

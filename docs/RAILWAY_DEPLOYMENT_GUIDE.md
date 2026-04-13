@@ -107,11 +107,10 @@ PAYMENT_PAYPAL_CHECKOUT_URL=https://pay.example.com/paypal
 PAYMENT_WEBHOOK_SECRET=replace-with-shared-secret
 PAYMENT_MANUAL_CONFIRM_ENABLED=false
 
-# 邮件服务
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=your-email@gmail.com
-SMTP_PASSWORD=your-app-password
+# 邮件服务（Resend）
+RESEND_API_KEY=re_xxx
+RESEND_FROM_EMAIL=MeshRouter <noreply@yourdomain.com>
+RESEND_REPLY_TO_EMAIL=support@yourdomain.com
 
 # 短信服务（国内 / 阿里云短信）
 SMS_PROVIDER=aliyun

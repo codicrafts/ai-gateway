@@ -50,11 +50,12 @@ export interface OneApiUser {
   created_time?: number
 }
 
-interface OneApiStatusResponse {
+export interface OneApiStatusResponse {
   success?: boolean
   quota_per_unit?: number
   data?: {
     quota_per_unit?: number
+    self_use_mode_enabled?: boolean
     [key: string]: unknown
   }
 }
@@ -473,6 +474,7 @@ async function adminRequest<T>(
   const response = await fetch(url, {
     ...options,
     headers,
+    cache: 'no-store',
   })
 
   const data = await response.json()
@@ -487,7 +489,7 @@ async function adminRequest<T>(
   return data as OneApiResponse<T>
 }
 
-async function getOneApiStatus(): Promise<OneApiStatusResponse> {
+export async function getOneApiStatus(): Promise<OneApiStatusResponse> {
   const response = await fetch(`${ONE_API_URL}/api/status`, {
     headers: {
       'Content-Type': 'application/json',
@@ -540,6 +542,7 @@ async function runtimeUserRequest<T>(
   const response = await fetch(url, {
     ...options,
     headers,
+    cache: 'no-store',
   })
 
   const data = await response.json().catch(() => null)

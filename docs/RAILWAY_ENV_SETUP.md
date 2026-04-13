@@ -83,6 +83,14 @@ RESEND_FROM_EMAIL=AI Gateway <noreply@example.com>
 RESEND_REPLY_TO_EMAIL=support@example.com
 ```
 
+联调时可以直接调用示例路由：
+
+```bash
+curl -X POST https://your-app.railway.app/api/send \
+  -H 'Content-Type: application/json' \
+  -d '{"to":"you@example.com","firstName":"Railway","subject":"Resend test"}'
+```
+
 ### 联系信息
 
 ```env

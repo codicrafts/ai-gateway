@@ -9,6 +9,8 @@ import { getAppUserById, sanitizeAppUser, upsertOAuthUser } from '@/services/acc
 import type { User } from '@ai-gateway/shared-types';
 import { getSiteUrl, SITE_DESCRIPTION, SITE_NAME, SITE_TITLE } from '@/config/site';
 
+export const dynamic = 'force-dynamic';
+
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
@@ -47,22 +49,27 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const session = await getServerSession(authOptions);
   let initialAuthUser: User | null = null;
 
-  if (session?.user?.id) {
-    const existingUser = await getAppUserById(session.user.id);
+  try {
+    const session = await getServerSession(authOptions);
 
-    if (existingUser) {
-      initialAuthUser = sanitizeAppUser(existingUser);
-    } else if (session.user.email) {
-      initialAuthUser = await upsertOAuthUser({
-        email: session.user.email,
-        name: session.user.name,
-        image: session.user.image,
-        provider: session.user.provider,
-      });
+    if (session?.user?.id) {
+      const existingUser = await getAppUserById(session.user.id);
+
+      if (existingUser) {
+        initialAuthUser = sanitizeAppUser(existingUser);
+      } else if (session.user.email) {
+        initialAuthUser = await upsertOAuthUser({
+          email: session.user.email,
+          name: session.user.name,
+          image: session.user.image,
+          provider: session.user.provider,
+        });
+      }
     }
+  } catch (error) {
+    console.error('Failed to bootstrap auth user in root layout:', error);
   }
 
   return (

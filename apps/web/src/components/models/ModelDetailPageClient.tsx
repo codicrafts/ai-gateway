@@ -5,6 +5,7 @@ import type { Model } from "@ai-gateway/shared-types";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useTranslation } from "@/hooks/useTranslation";
+import { isModelPlaygroundAvailable } from "@/services/catalog/model-availability";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { copyToClipboard } from "@/utils/helpers";
 import { formatPricePerMillion } from "@/utils/modelPricing";
@@ -52,6 +53,7 @@ export default function ModelDetailPageClient({
   };
 
   const description = getLocalizedModelDescription(model, locale);
+  const canOpenPlayground = isModelPlaygroundAvailable(model);
   const capabilityTags = getLocalizedCapabilityTags(
     model,
     locale,
@@ -185,12 +187,14 @@ export default function ModelDetailPageClient({
               </div>
 
               <div className="grid gap-2 sm:gap-3 sm:grid-cols-[auto_auto] lg:grid-cols-[auto_auto_auto] sm:items-center sm:justify-start">
-                <Link
-                  href={`/playground?model=${model.id}`}
-                  className="btn-primary btn-large justify-center no-underline rounded-full shadow-lg shadow-primary/20 hover:-translate-y-0.5 transition-transform duration-300 text-xs sm:text-sm px-4 py-2 sm:px-5 sm:py-2.5"
-                >
-                  {t.modelsPage.openInPlayground}
-                </Link>
+                {canOpenPlayground ? (
+                  <Link
+                    href={`/playground?model=${model.id}`}
+                    className="btn-primary btn-large justify-center no-underline rounded-full shadow-lg shadow-primary/20 hover:-translate-y-0.5 transition-transform duration-300 text-xs sm:text-sm px-4 py-2 sm:px-5 sm:py-2.5"
+                  >
+                    {t.modelsPage.validateInPlayground}
+                  </Link>
+                ) : null}
                 <button
                   onClick={() => {
                     copyToClipboard(model.id);

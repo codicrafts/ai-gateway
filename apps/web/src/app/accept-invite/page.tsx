@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useMemo, useEffect, useState } from 'react';
+import { Suspense, useMemo, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { TeamInvitation } from '@ai-gateway/shared-types/team';
 import { useAppSelector } from '@/store/hooks';
@@ -13,7 +13,7 @@ type InvitationResponse = {
   error?: string;
 };
 
-export default function AcceptInvitePage() {
+function AcceptInvitePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { currentUser } = useAppSelector((state) => state.auth);
@@ -235,5 +235,26 @@ export default function AcceptInvitePage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function AcceptInvitePageFallback() {
+  return (
+    <div className="min-h-screen bg-[var(--page-bg)] text-[var(--page-text)]">
+      <div className="mx-auto flex min-h-screen max-w-3xl items-center px-6 py-16">
+        <div className="editorial-panel w-full p-8 text-center text-text-secondary sm:p-10">
+          <i className="fas fa-spinner fa-spin mr-2" />
+          正在加载邀请页面...
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function AcceptInvitePage() {
+  return (
+    <Suspense fallback={<AcceptInvitePageFallback />}>
+      <AcceptInvitePageContent />
+    </Suspense>
   );
 }

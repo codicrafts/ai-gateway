@@ -1,4 +1,8 @@
 import { createHash, timingSafeEqual } from 'crypto';
+import type { ReactElement } from 'react';
+import { AccountVerificationEmail } from '@/components/emails/AccountVerificationEmail';
+import { PasswordResetEmail } from '@/components/emails/PasswordResetEmail';
+import { isResendConfigured, sendResendEmail } from '@/lib/resend';
 import { createServerSupabaseClient } from '@/lib/supabase';
 import { validateEmail } from '@/utils/helpers';
 
@@ -23,47 +27,27 @@ function generateVerificationCode(): string {
 }
 
 export function isAccountEmailConfigured(): boolean {
-  return Boolean(process.env.RESEND_API_KEY && process.env.RESEND_FROM_EMAIL);
+  return isResendConfigured();
 }
 
-async function sendAccountEmail(payload: { to: string; subject: string; html: string }): Promise<void> {
+async function sendAccountEmail(payload: { to: string; subject: string; react: ReactElement }): Promise<void> {
   if (!isAccountEmailConfigured()) {
     return;
   }
 
-  const response = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      from: process.env.RESEND_FROM_EMAIL,
-      to: [payload.to],
-      reply_to: process.env.RESEND_REPLY_TO_EMAIL || undefined,
-      subject: payload.subject,
-      html: payload.html,
-    }),
+  await sendResendEmail({
+    to: payload.to,
+    subject: payload.subject,
+    react: payload.react,
+    replyTo: process.env.RESEND_REPLY_TO_EMAIL || undefined,
   });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`发送邮件失败: ${errorText}`);
-  }
 }
 
 async function sendVerificationEmail(email: string, code: string): Promise<void> {
   await sendAccountEmail({
     to: email,
     subject: '你的登录验证码',
-    html: `
-      <div style="font-family:Arial,sans-serif;line-height:1.7;color:#1f2937;">
-        <h2 style="margin-bottom:12px;">登录验证码</h2>
-        <p>你正在使用邮箱验证码登录 MeshRouter。</p>
-        <p style="font-size:28px;font-weight:700;letter-spacing:6px;margin:24px 0;">${code}</p>
-        <p>验证码 10 分钟内有效。</p>
-      </div>
-    `,
+    react: AccountVerificationEmail({ code }),
   });
 }
 
@@ -75,20 +59,7 @@ export async function sendPasswordResetEmail(email: string, resetUrl: string, ex
   await sendAccountEmail({
     to: email,
     subject: '重置你的 MeshRouter 密码',
-    html: `
-      <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;line-height:1.7;color:#1f2937;">
-        <h2 style="margin-bottom:12px;">重置你的密码</h2>
-        <p style="margin:0 0 12px;">我们收到了你的密码重置请求。如果这是你本人操作，请点击下面的按钮继续。</p>
-        <p style="margin:20px 0;">
-          <a href="${resetUrl}" style="display:inline-block;background:#b8572b;color:#fff;text-decoration:none;padding:12px 20px;border-radius:999px;font-weight:600;">
-            打开重置页面
-          </a>
-        </p>
-        <p style="margin:0 0 12px;">${expiryText}</p>
-        <p style="margin:0 0 8px;color:#6b7280;font-size:14px;">如果按钮无法打开，请使用下面的链接：</p>
-        <p style="margin:0;color:#374151;font-size:14px;word-break:break-all;">${resetUrl}</p>
-      </div>
-    `,
+    react: PasswordResetEmail({ resetUrl, expiryText }),
   });
 }
 

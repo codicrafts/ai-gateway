@@ -202,6 +202,7 @@ export const en = {
     copyId: 'Copy ID',
     copyModelId: 'Copy Model ID',
     startTrial: 'Try Now',
+    validateInPlayground: 'Validate in Playground',
     viewDetails: 'View Details',
     backToCatalog: 'Back to Catalog',
     openInPlayground: 'Open in Playground',
@@ -245,6 +246,8 @@ export const en = {
     detailIntegrationBody3: 'Before going live, still return to the console and confirm team API keys, allowed model boundaries, and routing policy so catalog visibility does not get mistaken for production access.',
     modelIdLabel: 'Model ID',
     catalogReady: 'Catalog Ready',
+    catalogAvailabilityNotice:
+      'Listed in the catalog does not mean your team can call it right now. Only models with pricing or ratio configured, or with self-use mode enabled, appear in Playground.',
     accessMethod: 'Access Method',
     selectionNotes: 'Selection Notes',
     selectionTitle: 'How to connect selection with delivery',

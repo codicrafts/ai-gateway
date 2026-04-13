@@ -260,6 +260,18 @@ function resolveOutputPrice(
   return sharedModel?.output_price ?? 0;
 }
 
+function isRuntimePricingConfigured(pricingModel: OneApiPricingModel) {
+  if (pricingModel.quota_type === 0) {
+    return Number.isFinite(pricingModel.model_ratio) && (pricingModel.model_ratio || 0) > 0;
+  }
+
+  if (pricingModel.quota_type === 1) {
+    return Number.isFinite(pricingModel.model_price) && (pricingModel.model_price || 0) > 0;
+  }
+
+  return false;
+}
+
 function matchAdminMetaForRuntimeModel(
   modelName: string,
   metas: AdminModelMeta[],
@@ -388,6 +400,14 @@ function mapRuntimePricingModelToSharedModel(
               sharedModel || undefined,
             ),
           ),
+    bound_channel_types: Array.from(
+      new Set(
+        (adminMeta?.bound_channels || [])
+          .map((channel) => channel.type)
+          .filter((channelType) => Number.isFinite(channelType)),
+      ),
+    ),
+    runtime_pricing_configured: isRuntimePricingConfigured(pricingModel),
   } satisfies Model;
 }
 

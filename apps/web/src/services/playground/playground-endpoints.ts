@@ -1,5 +1,7 @@
 import type { Model } from '@ai-gateway/shared-types';
 
+const GEMINI_NATIVE_CHANNEL_TYPES = new Set([24, 41]);
+
 export type PlaygroundEndpointType =
   | 'openai'
   | 'anthropic'
@@ -126,7 +128,24 @@ export function normalizeModelEndpointTypes(model: Model | null): PlaygroundEndp
     }
   }
 
-  return Array.from(normalized);
+  const endpointTypes = Array.from(normalized);
+  const boundChannelTypes = (model?.bound_channel_types || []).filter((channelType) =>
+    Number.isFinite(channelType),
+  );
+
+  return endpointTypes.filter((endpointType) => {
+    if (endpointType !== 'gemini') {
+      return true;
+    }
+
+    if (boundChannelTypes.length === 0) {
+      return true;
+    }
+
+    return boundChannelTypes.some((channelType) =>
+      GEMINI_NATIVE_CHANNEL_TYPES.has(channelType),
+    );
+  });
 }
 
 export function supportsEndpoint(

@@ -22,6 +22,7 @@ import { showNotification } from "@/store/slices/notificationSlice";
 import { copyToClipboard } from "@/utils/helpers";
 import { formatPricePerMillion } from "@/utils/modelPricing";
 import { useTranslation } from "@/hooks/useTranslation";
+import { isModelPlaygroundAvailable } from "@/services/catalog/model-availability";
 import {
   categoryStyles,
   formatContextLength,
@@ -541,7 +542,10 @@ export default function ModelsPageClient({
             </section>
 
             <section className="grid gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {paginatedModels.map((model, index) => (
+            {paginatedModels.map((model, index) => {
+              const canOpenPlayground = isModelPlaygroundAvailable(model);
+
+              return (
               <article
                 key={model.id}
                 className="group flex h-full flex-col overflow-hidden rounded-xl sm:rounded-[1.5rem] md:rounded-[2rem] border border-border bg-white p-4 sm:p-5 md:p-8 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-primary/20"
@@ -649,16 +653,19 @@ export default function ModelsPageClient({
                     <i className="fas fa-copy mr-1.5 sm:mr-2 opacity-70" />
                     {t.modelsPage.copyId}
                   </button>
-                  <Link
-                    href={`/playground?model=${model.id}`}
-                    className="btn-primary col-span-2 min-h-[52px] justify-center rounded-2xl px-4 py-3 text-sm sm:text-[0.86rem] font-bold tracking-[0.06em] sm:tracking-[0.08em] no-underline shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all"
-                  >
-                    <i className="fas fa-sparkles mr-2 opacity-90" />
-                    {t.modelsPage.startTrial}
-                  </Link>
+                  {canOpenPlayground ? (
+                    <Link
+                      href={`/playground?model=${model.id}`}
+                      className="btn-primary col-span-2 min-h-[52px] justify-center rounded-2xl px-4 py-3 text-sm sm:text-[0.86rem] font-bold tracking-[0.06em] sm:tracking-[0.08em] no-underline shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all"
+                    >
+                      <i className="fas fa-sparkles mr-2 opacity-90" />
+                      {t.modelsPage.validateInPlayground}
+                    </Link>
+                  ) : null}
                 </div>
               </article>
-            ))}
+              );
+            })}
             </section>
 
             {totalPages > 1 ? (
